@@ -7,7 +7,14 @@ metadata:
 
 You are planning a new feature. This command helps you explore the feature space, assess its size, and decide on the best implementation path.
 
-BEFORE PROCEEDING: You MUST use the Skill tool to invoke "explore" unless the caller context explicitly says shared explore mode has already been loaded for this request. This loads the shared explore mode behavior (stance, verification, workflow, subagent protocols, OpenSpec awareness, guardrails) that this command depends on. Do not proceed until explore is loaded exactly once.
+FIRST STEP: You MUST use the Skill tool to invoke "enhance" with the user's request (below) as args, unless the request is empty or the caller context explicitly says the prompt has already been enhanced. The enhance instructions ("output only the rewritten prompt", "do not use Skill/Agent", "do not read files") apply ONLY to producing that rewrite. Then show the user:
+- the rewritten prompt under an "Enhanced prompt:" heading
+- a Feynman Echo of it (one or two plain sentences, as described below)
+- the question: "OK / sửa / dùng bản gốc?"
+
+Then END YOUR TURN and wait — this pause is intended. On the user's reply, take the confirmed version (edited, or the original if they choose it) as the working request; the Feynman Echo is done, do not repeat it. If the rewrite dropped or changed a detail of the original, point it out when you show it.
+
+BEFORE PROCEEDING: After the user confirms the prompt, you MUST use the Skill tool to invoke "explore" unless the caller context explicitly says shared explore mode has already been loaded for this request. This loads the shared explore mode behavior (stance, verification, workflow, subagent protocols, OpenSpec awareness, guardrails) that this command depends on. Do not proceed until explore is loaded exactly once.
 
 ---
 
