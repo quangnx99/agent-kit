@@ -435,6 +435,8 @@ When user says yes → use Agent tool with `subagent_type: "osf-verify"`.
 
 If the work added user-facing flows (UI screens, multi-step API journeys) or `openspec/changes/<name>/tdd.md` lists E2E pending ACs, offer the `e2e` skill before verifying: "Want e2e tests for the new flow? → Yes: I'll run /osf e2e". Never install an e2e framework without asking.
 
+If the work touched auth, permissions, payments, file/upload handling, external input parsing or secrets, offer the `security` skill before verifying: "Want a full security audit of the changed files? → Yes: I'll run /osf security <change-name>".
+
 ### After Verification (if spec was created)
 ```
 Verification complete. Want to archive this change?

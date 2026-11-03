@@ -5,7 +5,7 @@ metadata:
   kit: osf
 ---
 
-Available skills: analyze, apply, archive, autopilot, browser, chore, ci, clean-room, docker, docs, e2e, enhance, explain, explore, feat, fix, gap-audit, git, osf, perf, proposal, refactor, research, review, setup, tdd, test, uiux-design, verify
+Available skills: analyze, apply, archive, autopilot, browser, chore, ci, clean-room, docker, docs, e2e, enhance, explain, explore, feat, fix, gap-audit, git, osf, perf, proposal, refactor, research, review, security, setup, tdd, test, uiux-design, verify
 
 RUNTIME GUARD:
 This prompt is already the `osf` dispatcher. Do NOT invoke `osf` again. Resolve the target skill from ARGUMENTS and dispatch directly. Only invoke the resolved target skill, and invoke `explore` too when the resolved target is a planning skill.
@@ -54,6 +54,7 @@ KIT_CATALOG (presentation source of truth — group order and blurbs are fixed):
 | investigate | gap-audit | Checklist vs hệ thống → Gap Matrix |
 | investigate | explain | Giải thích code (Feynman) |
 | investigate | review | Review code quality |
+| investigate | security | Audit bảo mật đầy đủ (repo hoặc change), có report |
 | investigate | research | Tra web: docs, best practice, advisory |
 | investigate | browser | Reproduce bug qua dev-browser |
 | automation | autopilot | Pipeline tự động end-to-end |
@@ -104,6 +105,7 @@ LIST RULES (higher priority than dispatch — evaluate first):
   gap-audit   Checklist vs hệ thống → Gap Matrix
   explain     Giải thích code (Feynman)
   review      Review code quality
+  security    Audit bảo mật đầy đủ (repo hoặc change), có report
   research    Tra web: docs, best practice, advisory
   browser     Reproduce bug qua dev-browser
 
@@ -151,6 +153,7 @@ Dispatch rules:
    - impact analysis, dependency tracing, feasibility, blast radius, deep/quick analyze → `analyze`
    - requirements gap, checklist vs system, coverage audit, "còn thiếu gì", PM/spec function groups vs implementation, feature matrix, traceability → `gap-audit`
    - review code, code quality, missed impacts, hardcoded values → `review`
+   - security audit, pen test, vulnerability review, "check bảo mật", "soi security" → `security`
    - research docs, best practices, comparisons, advisories → `research`
    - project scaffolding, boilerplate, initial setup → `setup`
    - proposal/spec creation → `proposal`
