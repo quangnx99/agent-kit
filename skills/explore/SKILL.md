@@ -1,6 +1,6 @@
 ---
 name: "explore"
-description: "Shared explore/plan mode behavior for all planning commands (feat, fix, chore, refactor, perf, docs, test, ci, docker). Provides the stance, continuous verification, fluid workflow, subagent protocols, OpenSpec awareness, and guardrails."
+description: "Shared explore/plan mode behavior for all planning commands (brainstorm, fix, chore, refactor, perf, docs, test, ci, docker). Provides the stance, continuous verification, fluid workflow, subagent protocols, OpenSpec awareness, and guardrails."
 metadata:
   kit: osf
 ---
@@ -51,7 +51,7 @@ When the command is invoked, you MUST **completely reset** to explore/brainstorm
 一度正しく、永遠に動く — Do it right once, run forever. Every ambiguity you leave in the plan becomes a CRITICAL issue at verification. Every "probably" becomes a bug. Explore ruthlessly until there is zero fog.
 
 - **Curious, not prescriptive** - Ask questions that emerge naturally, don't follow a script
-- **Open threads, not interrogations** - Surface multiple interesting directions and let the user follow what resonates
+- **Relentless on decisions, silent on facts** - Interview the user until every decision in the design tree is settled (see Grilling Protocol). Never ask the user for a fact you can look up yourself
 - **Visual** - Use ASCII diagrams liberally when they'd help clarify thinking
 - **Adaptive** - Follow interesting threads, pivot when new information emerges
 - **Patient** - Don't rush to conclusions, let the shape of the problem emerge
@@ -139,14 +139,7 @@ This changes our approach because [reason].
 
 **Step 3: Surface only user-decision issues**
 
-If there are issues requiring **user input** (unclear requirements, scope decisions, trade-offs), consolidate and ask once:
-
-```
-I've been exploring and found some questions we should clarify:
-
-1. **[Topic 1]**: [question with A/B/★C/Other options]
-2. **[Topic 2]**: [question with A/B/★C/Other options]
-```
+If there are issues requiring **user input** (unclear requirements, scope decisions, trade-offs), add them to the design tree and ask them in the next round of the Grilling Protocol below.
 
 ### What NOT to Interrupt For
 
@@ -218,15 +211,58 @@ For each item:
 1. Explore the codebase to find the answer yourself
 2. Feynman check: explain your answer in one sentence. Can't simplify it? That's a real gap.
 3. Classify:
-   - ✅ Self-resolved (found in code, can explain clearly) → state finding, don't ask
-   - 🎨 Style choice (multiple valid options, no objective winner for this project) → ask with options
-   - ❓ Genuine confusion (can't determine from code, can't explain why one option fits) → ask with your confusion + options
+   - ✅ Self-resolved — a **fact** the code answers (existing pattern, current behavior, config) and you can explain it clearly → state finding, don't ask
+   - 🎨 Style choice (multiple valid options, no objective winner for this project) → add to the design tree
+   - ❓ Genuine confusion (can't determine from code, can't explain why one option fits) → add to the design tree with your confusion
+   - 🧭 **Decision** — it changes user-visible behavior, scope, data, or cost → add to the design tree, **even when you already have a ★ recommendation**. Having a good default does not make it your decision.
 
-Only surface 🎨 and ❓ items to the user. Weave ✅ findings into the teach-back naturally.
+Only surface 🎨, ❓ and 🧭 items to the user, through the Grilling Protocol rounds. Weave ✅ findings into the teach-back naturally.
 
 When presenting options to the user: explain each option in the user's language using Feynman Technique — one simple sentence on what's good, one on what's bad. No jargon. The user should understand the tradeoff without needing to look anything up.
 
-If you're about to ask the user more than 3 questions, you haven't explored enough. Go back and investigate.
+There is no cap on how many decisions you ask about. The cap is on **facts**: if a question could be answered by reading code, you haven't explored enough — go investigate instead of asking.
+
+---
+
+## Grilling Protocol (design tree)
+
+Adapted from the `grilling` skill in mattpocock/skills (MIT).
+
+**Autopilot gate:** if the caller context contains `CALLER_CONTEXT: autopilot-pipeline`, or the autopilot skill's AUTOPILOT OVERRIDES are loaded in this conversation, do NOT run rounds and do NOT ask the user. Walk the same tree yourself, take the ★ option for every decision, and list each one as `Assumed: <decision> → <★ choice>` in the locked requirement summary.
+
+Otherwise, interview the user until you reach a shared understanding. Map the work as a **design tree**: every decision branches into the decisions that hang off it.
+
+**Work the tree in rounds.** The **frontier** is every open decision whose prerequisites are already settled — the questions you can ask *now* without guessing at answers you haven't heard yet. Ask the whole frontier in one round, then wait for the answers. A question that depends on another question still open in this round belongs to a *later* round.
+
+Format a round like this, in the user's language:
+
+```
+**Vòng <n>** — <k> quyết định
+
+❓ **Q1 — <question title>**: <context in one or two sentences>
+   A. <option> — <good> / <bad>
+   B. <option> — <good> / <bad>
+   C. ★ <recommended option> — <why it fits this project>
+   D. Khác/Other: ___
+
+---
+
+❓ **Q2 — ...**
+
+Trả lời "ok" = chấp nhận tất cả ★. Hoặc trả lời theo số, ví dụ "Q1 A, Q2 ok".
+```
+
+**Go deep, not just wide.** After each round, every settled answer opens child branches. Before computing the next frontier, run these probes on each newly settled decision and add any branch that the code cannot answer:
+
+- **Failure** — what happens when this step fails, times out, or gets bad input?
+- **Boundary** — empty, huge, duplicate, concurrent, or out-of-order cases?
+- **Who else** — which other users, roles, services, or screens see or depend on this?
+- **Change over time** — existing data, migration, rollback, backward compatibility?
+- **Proof** — how will we know it works, and what exactly gets tested?
+
+**Facts are your job, decisions are the user's.** When a frontier question needs a fact from the codebase, look it up before the round — yourself, or via `osf-analyze` for structural questions. Only the questions downstream of a pending lookup wait; ask the rest of the frontier now.
+
+**Done when the frontier is empty**: every branch visited, nothing silently assumed. Then move to the Teach-back. Do not act on the tree until the user confirms the teach-back.
 
 ---
 
@@ -253,6 +289,7 @@ Before declaring "Ready", these shared items MUST pass. The command adds domain-
 
 - [ ] No unresolved "probably" / "should work" / "we'll figure it out" — every decision is made or explicitly marked out-of-scope
 - [ ] Every question asked to user had concrete options and received a concrete answer
+- [ ] Design tree frontier is empty — every settled decision was probed for child branches, and no behavior or scope decision was silently assumed
 
 Check the command's domain-specific Zero-Fog Checklist items too. If any item is ❌, go back and clarify.
 
@@ -327,6 +364,8 @@ D. Discuss more before implementation
    → Go back to planning or clarify remaining concerns
 E. Test-first (spec → failing tests → gate → implement)
    → Create OpenSpec change, generate tests that must fail, then implement until they pass
+F. Production (full gates, for work that ships to real users)
+   → spec → independent spec review → tests first → implement → e2e with stability gate → security review → verify → archive, ending with a READY / NOT READY verdict. Stops once only if the spec review finds decisions only you can make
 
 What's your call?
 ```
@@ -363,6 +402,7 @@ Tailor the wording to the actual plan when it helps (name the change, name the f
 - B (Spec-first) → In the SAME turn: (1) use Skill tool to invoke `proposal`, (2) read `✅ Spec created: <change-name>` from its output, (3) immediately use Agent tool with `subagent_type: "osf-apply"` passing the change name. Do NOT end your turn between proposal and osf-apply. Do NOT ask the user to confirm the spec before applying — the user already chose this chain.
 - C (Autopilot) → use Skill tool to invoke `autopilot` with the locked requirement summary and implementation review plan.
 - D (Discuss more) → continue exploring. No implementation.
+- F (Production) → use Skill tool to invoke `autopilot` with `--full`, the locked requirement summary, the implementation review plan, and every decision made in this session (answered rounds, accepted ★, `Assumed:` lines) verbatim. Autopilot runs in Mode B from this context.
 - E (Test-first) → In the SAME turn: (1) invoke `proposal`, (2) read `✅ Spec created: <change-name>`, (3) invoke the `tdd` skill with that change name. `tdd` runs the gate and launches osf-apply itself — do NOT launch osf-apply from here.
 
 ---
@@ -504,6 +544,8 @@ The template above is in English for prompt readability. When outputting the act
 | osf-tdd | Writes failing unit/integration tests from spec/plan with `[AC-n]` traceability, locks them in tdd.md | Do not call directly — invoke the `tdd` skill, which runs the gate and hands off to osf-apply |
 | osf-e2e | Writes and runs user-journey e2e tests (UI/API) against a local app after implementation | Do not call directly — invoke the `e2e` skill, which handles setup consent and fix rounds |
 | osf-verify | Verify implementation matches spec | User chooses to verify after implementation |
+| osf-spec-review | Fresh-context spec gate: decisions → concrete scenarios, production checklist | Do not call directly — autopilot Full runs it after the spec |
+| osf-security | Security review of the change (authz, injection, secrets, deps) | Do not call directly — autopilot Full runs it after e2e |
 | osf-archive | Archive completed change to openspec/changes/archive/ | User chooses to finalize after verification (only if spec was created) |
 
 The command may list additional subagents in its "Extra Subagents" section.
@@ -528,6 +570,8 @@ The command may list additional subagents in its "Extra Subagents" section.
 - **Don't accept fog** - When user says "probably", "etc", "something like", "should work", "we'll figure it out" — STOP and clarify. These words mean the requirement is not defined. Undefined requirements become CRITICAL issues at verification.
 - **Don't ask naked questions** - NEVER ask a decision question without concrete options (A/B/C + "Other"). Place recommended option last (before "Other"), marked with ★.
 - **Don't end discovery with fog** - The Zero-Fog Checklist is mandatory. If any item fails, you are NOT ready.
+- **Don't stop after one round** - Answers open new branches. Recompute the frontier and keep grilling until it is empty.
+- **Don't decide for the user** - A ★ recommendation is a proposal, not a decision. Behavior, scope, data and cost decisions always go to the user (except in autopilot, where they are listed as assumptions).
 - **Don't ask implementation path early** - Never ask Small/direct, Spec-first, or Autopilot while requirement questions remain unresolved. Ask it only after Feynman teach-back is confirmed and Zero-Fog Checklist passes.
 - **Don't show code in planning** - The review plan describes behavior changes and affected areas only. Do not include code snippets, diffs, or implementation details that belong to osf-apply.
 - **Don't ask implementation path without a reviewed plan** - Before asking Small/direct, Spec-first, or Autopilot, create a reviewable implementation plan, self-review it for zero fog, revise if needed, then show it to the user.
@@ -540,4 +584,4 @@ The command may list additional subagents in its "Extra Subagents" section.
 - **Do stress-test before ending** - Run through the command's stress-test items using the Stress-test Protocol (self-answer first, only surface gaps)
 - **Do offer implementation options** - After planning is solid, offer clear paths: small (direct apply), large (proposal + apply), or discuss more
 - **Do keep workflow fluid** - User can go back to plan, switch paths, or pause anytime. No linear lock-in.
-- **Do redirect to other commands** - If user wants a different type of work, suggest the appropriate command: `/feat`, `/fix`, `/chore`, `/refactor`, `/perf`, `/docs`, `/test`, `/ci`, `/docker`
+- **Do redirect to other commands** - If user wants a different type of work, suggest the appropriate command: `/brainstorm`, `/fix`, `/chore`, `/refactor`, `/perf`, `/docs`, `/test`, `/ci`, `/docker`

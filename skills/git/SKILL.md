@@ -437,7 +437,7 @@ Confirm? [yes/no]
 3. Suggest next steps:
 
 ```
-1. Create the plan → /feat resolve-{action}-conflicts-{YYYYMMDD}
+1. Create the plan → /osf brainstorm resolve-{action}-conflicts-{YYYYMMDD}
 2. Already have a plan? → osf-apply subagent
 3. After resolution → /git {action} again to finalize
 ```
@@ -460,7 +460,7 @@ PRINCIPLES
 - Trade-offs in human terms, not raw diffs
 - User MUST confirm decisions before routing to proposal
 - proposal description must be self-contained
-- Do NOT auto-invoke `/feat` or `osf-apply` — suggest and let user decide
+- Do NOT auto-invoke `/osf brainstorm` or `osf-apply` — suggest and let user decide
 - Every decision (auto or confirmed) appears in final summary
 - If stash was used, always remind at the end
 - Force push requires double confirmation

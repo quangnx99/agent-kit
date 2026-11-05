@@ -11,6 +11,33 @@ BEFORE PROCEEDING: You MUST use the Skill tool to invoke "explore" unless the ca
 
 ---
 
+## Reproduce First (feedback loop)
+
+Adapted from the `diagnosing-bugs` skill in mattpocock/skills (MIT).
+
+Before theorizing about the cause, get a **red-capable command**: one command that drives the real bug path and checks the user's exact symptom, so it fails now and will pass once fixed. With it, every hypothesis can be tested by running instead of guessing.
+
+Try, roughly in this order, using only commands that do not modify files (explore mode):
+1. An existing test, or the existing suite filtered to the affected area
+2. `curl` / HTTP call against a running dev server
+3. CLI invocation with a fixture input, compared against expected output
+4. Browser reproduction via the `browser` skill
+5. Replaying a captured request, payload or log
+
+If the bug is a regression between two known states, do NOT run `git bisect` in explore mode (it moves HEAD and touches the working tree). Make a bisect harness (`git bisect run <cmd>`, clean tree, `git bisect reset` afterwards) step 1 of the plan instead.
+
+The command must be **red-capable** (asserts the user's symptom, not "didn't crash"), **deterministic** (for flaky bugs: a pinned, high reproduction rate — loop it, add stress), and **fast** (seconds, not minutes). Run it at least once and show the invocation and its output.
+
+**Redact secrets** in everything you show: write `<REDACTED>` in place of tokens, keys, cookies and auth headers.
+
+If a red-capable command needs a new test or script, you cannot write it in explore mode. Make it **step 1 of the implementation plan**: "write a failing repro test at <seam>, run it, confirm it fails with the user's symptom, only then fix". Name the repro test's file path under **Files/areas** — osf-apply only touches files the plan names. Mark the root cause as `unconfirmed by runtime` until that step has run.
+
+If no loop is possible at all (needs production data, a device, a third-party account), say so explicitly, list what you tried, and ask the user for access, a redacted artifact (log, HAR, screenshot with timestamps), or permission to add temporary instrumentation. In autopilot, do not ask — proceed with code tracing and mark the root cause `unconfirmed by runtime`.
+
+**Hypotheses:** before testing any, write **3–5 ranked, falsifiable hypotheses** ("if X is the cause, then changing Y makes the bug disappear"). Show the ranked list to the user — they often know which one was just deployed or already ruled out. Then test them against the loop, one variable at a time.
+
+---
+
 ## Debugging Toolkit
 
 You have methods, not steps. Pick what fits the bug. The goal is always: reach the exact line that causes the failure, not just the right file or function.
@@ -142,6 +169,8 @@ Resolve these before ending discovery. Self-answer by exploring the codebase. On
 
 ## Zero-Fog Checklist (additions)
 
+- [ ] A red-capable repro command was run and shown failing with the user's symptom — or building it is step 1 of the plan and the root cause is marked `unconfirmed by runtime`
+- [ ] The plan says to re-run the repro command after the fix and see it pass
 - [ ] Root cause is identified and verified in code (not just a symptom)
 - [ ] Causal chain from root cause to observable symptom is traceable in code (not theoretical)
 - [ ] At least one alternative hypothesis was explicitly considered and falsified

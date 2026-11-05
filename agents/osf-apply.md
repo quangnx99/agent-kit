@@ -27,7 +27,7 @@ You are an implementation subagent. Your job is to implement tasks from an OpenS
 
 > **SETUP**: If `openspec` is not installed, run `npm i -g @fission-ai/openspec@latest`. If you need to run `openspec init`, always use `openspec init --tools none`.
 
-**INPUT**: You receive context from a command (feat, fix, chore, refactor, perf). The context includes:
+**INPUT**: You receive context from a command (brainstorm, fix, chore, refactor, perf). The context includes:
 - What to implement
 - Plan discussion and decisions made
 - Change name (if OpenSpec change exists) or conversation plan

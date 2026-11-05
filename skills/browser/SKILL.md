@@ -580,9 +580,9 @@ Provide the diagnosis as context for `/osf apply` to pick up.
 
 **COMPLEX** (multi-file, breaking change, needs design decisions, architectural impact):
 
-Tell the user (in their language) that the bug is complex and needs planning before fixing. Suggest running `/osf feat` to explore the approach first, then `/osf apply`.
+Tell the user (in their language) that the bug is complex and needs planning before fixing. Suggest running `/osf brainstorm` to explore the approach first, then `/osf apply`.
 
-Provide the diagnosis as starting context for `/osf feat`.
+Provide the diagnosis as starting context for `/osf brainstorm`.
 
 **UNCERTAIN** (can't determine root cause, need more investigation):
 
@@ -683,8 +683,8 @@ Summarize all findings:
 ### 6. ROUTE
 
 For each finding, suggest next step:
-- Critical bugs → trace root cause (switch to REPRODUCE mode for each), then route to `/osf apply` or `/osf feat`
-- Warnings → batch into a single `/osf apply` session or `/osf feat` if architectural
+- Critical bugs → trace root cause (switch to REPRODUCE mode for each), then route to `/osf apply` or `/osf brainstorm`
+- Warnings → batch into a single `/osf apply` session or `/osf brainstorm` if architectural
 - Info → note for later, no immediate action needed
 
 ---
@@ -695,7 +695,7 @@ For each finding, suggest next step:
 
 **Purpose**: You are a QA tester. Walk through a specific user flow, document everything you find, and deliver a structured test report. You do NOT modify code — report only.
 
-**REPORT-ONLY RULE (MANDATORY)**: In QA TEST mode, you NEVER modify code, NEVER route to `/osf apply`, NEVER route to `/osf feat` or `/osf fix`. Your only output is a test report. If you catch yourself about to edit a file or suggest running `/osf apply`, STOP.
+**REPORT-ONLY RULE (MANDATORY)**: In QA TEST mode, you NEVER modify code, NEVER route to `/osf apply`, NEVER route to `/osf brainstorm` or `/osf fix`. Your only output is a test report. If you catch yourself about to edit a file or suggest running `/osf apply`, STOP.
 
 ### 1. PARSE
 
@@ -895,14 +895,14 @@ Exception: If the user explicitly asks to keep evidence files (e.g., for a bug r
 
 ## Guardrails
 
-- **NEVER modify code in QA TEST mode** — Mode C is report-only. No edits, no `/osf apply`, no `/osf feat`, no `/osf fix`. Your output is a test report, period.
+- **NEVER modify code in QA TEST mode** — Mode C is report-only. No edits, no `/osf apply`, no `/osf brainstorm`, no `/osf fix`. Your output is a test report, period.
 - **NEVER skip codebase mapping** — Always use `codebase-retrieval` before and during browser interaction. Browser evidence without code context is just symptoms.
 - **NEVER inject JavaScript for interactions** — Use Playwright locator actions (click, fill, hover) inside dev-browser scripts. The whole point is to reproduce what users experience.
 - **NEVER diagnose without evidence** — Every claim needs a screenshot, console message, or code reference.
 - **Screenshot liberally** — When in doubt, take a screenshot. Evidence you don't need is better than evidence you don't have.
 - **Check console after EVERY action** — Use `page.on("console")` and `page.on("pageerror")` to capture errors. Silent JavaScript errors are the most common hidden bugs.
 - **One bug at a time in REPRODUCE mode** — Don't mix multiple bug investigations. Each gets its own reproduce → trace → report cycle.
-- **Respect the routing** — Don't fix bugs yourself. Diagnose and route to `/osf apply` or `/osf feat`. Your job is evidence and diagnosis, not implementation.
+- **Respect the routing** — Don't fix bugs yourself. Diagnose and route to `/osf apply` or `/osf brainstorm`. Your job is evidence and diagnosis, not implementation.
 - **No fog in diagnosis** — If your reasoning contains "probably", "likely", "should work" — you need more evidence. Go back to the browser or the codebase.
 - **Always use quoted heredoc** — `<<'SCRIPT'` not `<<SCRIPT`. Prevents shell variable expansion from breaking your scripts.
 
@@ -912,7 +912,7 @@ Exception: If the user explicitly asks to keep evidence files (e.g., for a bug r
 
 After diagnosis (Mode A/B only — Mode C does NOT route):
 - Simple fix → `/osf apply` (pass diagnosis as context)
-- Complex fix → `/osf feat` then `/osf apply`
+- Complex fix → `/osf brainstorm` then `/osf apply`
 - More bugs to investigate → stay in `/osf browser`
 - Want to verify full implementation → `/osf verify`
 - Want QA test report for a specific flow → `/osf browser e2e [flow] [url]`

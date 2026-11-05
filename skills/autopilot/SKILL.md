@@ -1,6 +1,6 @@
 ---
 name: "autopilot"
-description: "Autonomous pipeline — assesses work complexity, then runs the appropriate pipeline (Full/Verified/Light) without stopping."
+description: "Autonomous pipeline — assesses work complexity, then runs the appropriate pipeline (Full/Verified/Light). Full = spec → spec gate → tdd → implement → e2e → security → verify → archive, with a production-readiness verdict. Args: [request] [--full] [--no-tdd] [--no-e2e]."
 metadata:
   kit: osf
 ---
@@ -37,11 +37,11 @@ If you catch yourself writing code content inside a tool call, that is the red f
 
 Before you read any code, before you explore anything, before you do ANYTHING else:
 
-1. Classify the work type from the user's request: feat, fix, chore, refactor, perf, docs, test, ci, docker
+1. Classify the work type from the user's request: brainstorm, fix, chore, refactor, perf, docs, test, ci, docker
 2. Announce: "Autopilot: classifying as **[type]**"
 3. Use the Skill tool to invoke the classified domain command and `explore` in parallel:
    - Invoke the classified domain command with the user's request plus this context: `CALLER_CONTEXT: shared explore mode has already been loaded for this request. Do not invoke the explore skill again.`
-   - Invoke `explore` with the same user request as context.
+   - Invoke `explore` with the same user request plus this context: `CALLER_CONTEXT: autopilot-pipeline`.
 
 You MUST make both Skill tool calls before proceeding. If the domain skill sees the caller context above, it must skip its own `explore` invocation. If you find yourself reading code or exploring the codebase without having made these calls, STOP and make them now.
 
@@ -52,7 +52,8 @@ You MUST make both Skill tool calls before proceeding. If the domain skill sees 
 - You do NOT present "Ready to Implement" options. After exploration, go straight to pipeline assessment.
 - You do NOT ask about verify or archive. Run the selected pipeline without stops.
 - Continuous Verification still applies — but you self-resolve everything, never surface to user.
-- Stress-test Protocol still applies — but ALL items are self-resolved (no 🎨 or ❓ surfaced).
+- Stress-test Protocol still applies — but ALL items are self-resolved (no 🎨, ❓ or 🧭 surfaced).
+- Grilling Protocol still applies — walk the design tree yourself, take every ★, and list each as `Assumed: …` in the locked requirement summary. Never ask a round.
 
 ---
 
@@ -67,7 +68,9 @@ You MUST make both Skill tool calls before proceeding. If the domain skill sees 
 - Gather the plan summary, key decisions, and scope from conversation history
 - Skip exploration, proceed directly to PIPELINE
 
-To detect: if the conversation contains a prior planning session (from `/feat`, `/fix`, `/chore`, etc.) with a teach-back or "Ready to Implement" summary, use Mode B. Otherwise, use Mode A.
+To detect: if the conversation contains a prior planning session (from `/brainstorm`, `/fix`, `/chore`, etc.) with a teach-back or "Ready to Implement" summary, use Mode B. Otherwise, use Mode A.
+
+An invocation from explore (option F or C) that carries a locked requirement summary or a decision list is **always Mode B**, even though it has arguments such as `--full`. Never re-explore or re-decide what the user already decided.
 
 ---
 
@@ -117,7 +120,7 @@ Announce to user:
 ```
 ## Autopilot: Exploration Complete
 
-**Type**: [feat/fix/chore/...]
+**Type**: [brainstorm/fix/chore/...]
 **What**: [1-2 sentence summary]
 **Key decisions**:
 - [decision 1 — based on [codebase pattern / research]]
@@ -132,7 +135,11 @@ Starting pipeline: [selected pipeline]
 
 After exploration (Mode A) or gathering context (Mode B), assess the work to select the right pipeline. This is YOUR judgment call — consider scope, risk, sensitivity, and complexity.
 
-**Full** — spec → tdd → implement → e2e → verify → archive
+**`--full` in the request** → skip the assessment and run **Full**. Announce `**Pipeline**: Full — forced by --full`.
+
+**Collect the decision list (all pipelines with a spec).** In Mode B, gather from the conversation, verbatim: the locked requirement summary, "Decisions made", every answered grilling question with the chosen option, every ★ the user accepted with "ok", and every `Assumed:` line. In Mode A, it is your own decisions from exploration step 3, each as `Assumed: <decision> → <choice> (based on <pattern/research>)`. This list is passed to osf-spec-review — subagents have no conversation history, so anything not in the list cannot be checked.
+
+**Full** — spec → spec gate → tdd → implement → e2e → security → verify → archive
 - Complex work (4+ tasks, multi-component, needs design decisions)
 - Sensitive areas (security, auth, payments, data integrity, encryption)
 - High blast radius (many files, cross-cutting changes, public API changes)
@@ -159,11 +166,15 @@ Announce your assessment:
 
 Before invoking the first pipeline step, use the TodoWrite tool to lay out every step of the selected pipeline as a todo list. This list is your forward-momentum anchor.
 
+For Full, also run `git rev-parse HEAD` once and keep the result as the **diff base** for osf-security.
+
 For **Full Pipeline**:
 - Create spec (in_progress)
+- Spec gate (osf-spec-review)
 - TDD gate (tests first)
 - Implement
 - E2E tests
+- Security review
 - Verify
 - Resolve CRITICALs if any
 - Archive
@@ -193,24 +204,28 @@ All steps in the selected pipeline run as ONE continuous action in the SAME turn
 **Hand-off rule:** The moment a step's tool call returns, your VERY NEXT action is the next step's tool call. No closing text, no summaries, no "does this look good?" — just the next tool call.
 
 **Red flags that mean you are about to wrongly stop:**
-- You just saw `✅ Spec created: <change-name>` from the proposal skill and your draft reply looks like a status update → STOP drafting, invoke the `tdd` skill NOW with the change name (or osf-apply if `--no-tdd`).
+- You just saw `✅ Spec created: <change-name>` from the proposal skill and your draft reply looks like a status update → STOP drafting, call osf-spec-review NOW (Full pipeline, Step 1a).
+- You just saw `Gate: PASS` from osf-spec-review → STOP drafting, invoke the `tdd` skill NOW with the change name (or osf-apply if `--no-tdd`).
 - You just saw `✅ TDD gate passed: <change-name>` → STOP drafting, call osf-apply NOW with the change name + TEST LOCK block.
 - You just saw osf-apply finish and you're about to tell the user "implementation complete" → STOP, call the next step NOW (Full pipeline: the `e2e` skill; Verified pipeline: osf-verify).
-- You just saw `✅ E2E complete: <change-name>` or `⚠️ E2E skipped: <change-name>` → STOP drafting, call osf-verify NOW.
+- You just saw `✅ E2E complete: <change-name>` or `⚠️ E2E skipped: <change-name>` → STOP drafting, call osf-security NOW (Full pipeline, Step 2c).
+- You just saw `Gate: PASS` from osf-security → STOP drafting, call osf-verify NOW.
 - You just saw osf-verify return 0 CRITICALs on Full pipeline → call osf-archive NOW.
 - Any time you catch yourself writing a paragraph that ends the turn while the pipeline still has steps left → STOP, make the next tool call instead.
 
 **Parse contract for proposal output:** The proposal skill prints `✅ Spec created: <change-name>`. Extract `<change-name>` from that line. That IS the completion signal. Do not wait for anything else, do not ask the user to confirm the change name.
 
 **Only legitimate stop points:**
+0. **Spec gate needs the user (Mode B only)** — osf-spec-review returned DECISION items. Ask them as one grilling round and end the turn. This is the only planned stop; see Step 1a for the resume contract.
+0b. Spec gate still FAIL after 2 update rounds, or security still FAIL after 2 fix rounds → stop and report. Never build on a spec with known gaps, and never call a change with an open security CRITICAL done.
 1. Verify-fix loop hits 3 rounds with CRITICALs remaining → stop and report (as documented in Step 4).
 1b. TDD gate returns FAIL → stop and report its reasons (never implement without the gate).
 2. A subagent returns a hard error you cannot route around → stop and report.
 3. Final pipeline step finished successfully → print the Done announcement.
 
-### Full Pipeline (spec → tdd → implement → e2e → verify → archive)
+### Full Pipeline (spec → spec gate → tdd → implement → e2e → security → verify → archive)
 
-If the user's request contains `--no-tdd`, skip Step 1b: after the spec, go straight to osf-apply (and drop the "TDD gate" todo). If it contains `--no-e2e`, skip Step 2b: after osf-apply, go straight to osf-verify (and drop the "E2E tests" todo).
+If the user's request contains `--no-tdd`, skip Step 1b: after the spec gate passes, go straight to osf-apply (and drop the "TDD gate" todo). If it contains `--no-e2e`, skip Step 2b: after osf-apply, go straight to osf-security (and drop the "E2E tests" todo); the production verdict is then NOT READY. The spec gate and security review are never skipped in Full.
 
 **Step 1: Create Spec**
 Use the Skill tool to invoke `proposal`. The proposal skill has full conversation context. In the invocation arguments, include this line so proposal knows it must NOT print turn-ending language:
@@ -222,9 +237,26 @@ CALLER_CONTEXT: autopilot-pipeline
 When proposal returns with `✅ Spec created: <change-name>`:
 - Extract `<change-name>` from that line.
 - Your very next response must contain exactly two tool calls and **zero text before them**:
-  1. TodoWrite — mark "Create spec" completed, mark "TDD gate" in_progress.
-  2. Skill `tdd` — args: `<change-name>` plus the line `CALLER_CONTEXT: autopilot-pipeline`.
-- If you find yourself drafting any text (status update, "now writing tests...", "spec is ready", summary, transition sentence), STOP the draft and emit the two tool calls instead.
+  1. TodoWrite — mark "Create spec" completed, mark "Spec gate" in_progress.
+  2. Agent (`subagent_type: "osf-spec-review"`) — brief below.
+- If you find yourself drafting any text (status update, "spec is ready", summary, transition sentence), STOP the draft and emit the two tool calls instead.
+
+**Step 1a: Spec gate (osf-spec-review)**
+The Agent call above IS Step 1a. Brief:
+```
+Change name: <change-name>
+Decisions:
+<the decision list collected in Assess Pipeline, verbatim, one per line>
+Previous review: <last spec review report, only on a re-review>
+```
+
+When the report returns:
+- **Gate: PASS** → next response, two tool calls, zero text before them: (1) TodoWrite — mark "Spec gate" completed, "TDD gate" in_progress; (2) Skill `tdd` — args: `<change-name>` plus `CALLER_CONTEXT: autopilot-pipeline`.
+- **CRITICAL items only** → Skill `proposal` with `Change name: <change-name>`, `Spec review findings:` (the CRITICAL list verbatim) and `CALLER_CONTEXT: autopilot-pipeline`; then re-run osf-spec-review with `Previous review:`. Max 2 update rounds (stop point 0b).
+- **DECISION items exist:**
+  - **Mode A** → take the ★ option for each, add `Assumed: <decision> → <★ choice>` to the decision list, and update the spec as for CRITICAL items, passing the choices with the findings.
+  - **Mode B** → stop point 0. Print a short spec digest (requirements, scenario count, decisions encoded) and the DECISION items as one grilling round (A/B/★/Khác, `"ok" = chấp nhận tất cả ★`), then end the turn.
+  - **Resume contract (Mode B):** the user's next message is the answer to that round. Re-create the Full todo list if it is gone, add the answers to the decision list, invoke `proposal` with the findings plus the answers, re-run osf-spec-review, and on PASS continue with Step 1b in the same turn — from then on the pipeline is non-stop again.
 
 **Step 1b: TDD gate (tests first)**
 The Skill call above IS Step 1b. The tdd skill delegates test writing to osf-tdd and prints `✅ TDD gate passed: <change-name> (…)`.
@@ -246,8 +278,16 @@ When osf-apply returns, your very next response must contain exactly two tool ca
 The Skill call above IS Step 2b. The e2e skill delegates to osf-e2e and prints `✅ E2E complete: <change-name> (…)`, or `⚠️ E2E skipped: <change-name> — …` when the project has no e2e framework (autopilot never installs one). Either line is the completion signal.
 
 When that line appears, your very next response must contain exactly two tool calls and **zero text before them**:
-  1. TodoWrite — mark "E2E tests" completed, mark "Verify" in_progress.
-  2. Agent (`subagent_type: "osf-verify"`) — pass the change name. App defects found by e2e are failing locked tests: osf-verify reports them as CRITICAL and the Step 4 loop fixes them through osf-apply with the TEST LOCK block.
+  1. TodoWrite — mark "E2E tests" completed, mark "Security review" in_progress.
+  2. Agent (`subagent_type: "osf-security"`) — brief: `Change name: <change-name>` and `Diff base: <the diff base recorded before the pipeline started>`.
+
+Remember the e2e line's counts — app defects and unstable tests still go through verify (Step 4), and an `⚠️ E2E skipped` makes the production verdict NOT READY.
+
+**Step 2c: Security review**
+The Agent call above IS Step 2c. When the report returns:
+- **Gate: PASS** → next response, two tool calls, zero text before them: (1) TodoWrite — mark "Security review" completed, "Verify" in_progress; (2) Agent (`subagent_type: "osf-verify"`) — pass the change name. App defects found by e2e are failing locked tests: osf-verify reports them as CRITICAL and the Step 4 loop fixes them through osf-apply with the TEST LOCK block.
+- **Gate: FAIL** → loop in the same turn: Agent `osf-apply` with the change name, the security CRITICALs as fix instructions (fix the root cause on the server, not a UI-only check), SCOPE DISCIPLINE and the TEST LOCK block; then re-run osf-security with `Previous review:`. Max 2 rounds (stop point 0b). Verify runs after security, so its test and stability runs catch regressions from these fixes.
+- Carry every security WARNING into the Done report.
 
 **Step 3: Independent Verify**
 The Agent call above IS Step 3. If `openspec/changes/<change-name>/tdd.md` exists, osf-verify runs the TDD check itself (lock hashes, locked tests, coverage); include the TEST LOCK block in every osf-apply fix brief of Step 4. When osf-verify returns, immediately proceed to Step 4 in the same turn.
@@ -258,6 +298,8 @@ After osf-verify returns its report, check for CRITICALs:
 - **0 CRITICALs** → your next response must contain exactly two tool calls and **zero text before them**:
   1. TodoWrite — mark "Verify" completed, mark "Resolve CRITICALs" completed (or remove), mark "Archive" in_progress.
   2. Agent (`subagent_type: "osf-archive"`) — pass the change name.
+  
+  **Exception — fixes ran after security:** if at least one verify-fix round changed code (e2e app defects are fixed here, after Step 2c), first re-run osf-security once with `Previous review:` so those fixes are reviewed too. PASS → archive as above. FAIL → stop point 0b (report, do not archive).
 - **CRITICALs exist** → loop in the same turn:
   1. Update TodoWrite — mark "Resolve CRITICALs" in_progress.
   2. Use Agent tool with `subagent_type: "osf-apply"` — pass the change name + CRITICAL issues as fix instructions. Do NOT fix code yourself.
@@ -317,9 +359,25 @@ Announce completion based on pipeline used:
 ## ✅ Autopilot Complete
 
 **Change**: <change-name>
-**Pipeline**: spec ✓ → tdd ✓ → implement ✓ → e2e ✓ → verify ✓ → archive ✓
-**Verify rounds**: [N]
+**Pipeline**: spec ✓ → spec gate ✓ → tdd ✓ → implement ✓ → e2e ✓ → security ✓ → verify ✓ → archive ✓
+**Rounds**: spec gate [N] · security [N] · verify [N]
+
+**Production verdict**: READY | NOT READY
+<NOT READY whenever any of these is true — list each that applies:>
+- e2e skipped (no framework) or e2e stability gate not reached
+- unspecified behaviors or test disputes reported by e2e
+- security WARNING the user has not accepted
+- verify WARNING about failing/unstable tests or env blockers
+- decisions taken as `Assumed:` that the user never confirmed (Mode A)
+
+**Assumed decisions** (confirm or change these):
+- <every Assumed line — or "none">
+
+**Evidence**: <e2e trace/screenshot paths, one per journey>
+**Warnings**: <security, e2e, verify warnings — or "none">
 ```
+
+Never report READY to be agreeable. READY means every gate above actually ran and passed; if a gate was skipped, say NOT READY and why.
 
 **Verified:**
 ```
@@ -354,8 +412,8 @@ Options:
 ## Guardrails
 
 - **IDENTITY GATE applies at all times** — see ORCHESTRATOR IDENTITY GATE above. You explore and plan, osf-apply writes code. No exceptions, not even for 1-line changes. When osf-verify reports issues, delegate fixes to osf-apply via Agent tool, then re-verify via osf-verify. Never skip re-verify after fixing.
-- **PIPELINE IS NON-STOP** — see "PIPELINE IS NON-STOP" in the Pipeline section above. Never end your turn between pipeline steps. After proposal prints `✅ Spec created: <change-name>`, the NEXT action is the `tdd` skill (osf-apply only with `--no-tdd`); after `✅ TDD gate passed`, the NEXT action is osf-apply; after osf-apply on the Full pipeline, the NEXT action is the `e2e` skill (osf-verify only with `--no-e2e`) — not a status message, not a confirmation prompt.
-- Never stop to ask the user during the pipeline — run all selected pipeline steps without interruption; archive only exists in the Full pipeline
+- **PIPELINE IS NON-STOP** — see "PIPELINE IS NON-STOP" in the Pipeline section above. Never end your turn between pipeline steps. After proposal prints `✅ Spec created: <change-name>`, the NEXT action is osf-spec-review (Full) or the `tdd` skill; after spec gate PASS, the NEXT action is the `tdd` skill (osf-apply only with `--no-tdd`); after `✅ TDD gate passed`, the NEXT action is osf-apply; after osf-apply on the Full pipeline, the NEXT action is the `e2e` skill (osf-security only with `--no-e2e`); after e2e, osf-security; after security PASS, osf-verify — not a status message, not a confirmation prompt.
+- Never stop to ask the user during the pipeline — except stop point 0 (spec gate DECISION items in Mode B); archive only exists in the Full pipeline
 - Cold start exploration must be thorough — same depth as interactive brainstorm
 - All autonomous decisions must be grounded in codebase patterns or web research, never guessed
 - Verify-fix loop max 3 rounds — don't loop forever

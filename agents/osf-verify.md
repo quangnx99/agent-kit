@@ -89,7 +89,7 @@ DEFAULT ASSUMPTION
    **TDD check** — if `openspec/changes/<name>/tdd.md` exists, tests were written first and are the specification. Run these checks and add the findings to the report (dimension "TDD"):
    - Recompute `git hash-object` for every file under `## Lock`; any mismatch or missing file → CRITICAL "test lock broken"
    - Run the test command from tdd.md; any failing locked test → CRITICAL
-   - If tdd.md has an `## E2E` section: recompute hashes under `## E2E lock` (mismatch → CRITICAL), run its E2E command with the app started as recorded; failing locked e2e test → CRITICAL; app cannot start / env blocker → WARNING with the exact error
+   - If tdd.md has an `## E2E` section: recompute hashes under `## E2E lock` (mismatch → CRITICAL), run its **Stability command** (fall back to the E2E command if none is recorded) with the app started as recorded; any locked e2e test failing on any repeat → CRITICAL (an intermittent failure is an unstable app defect, not noise — the fix must remove the cause, not add waits, retries or timeouts); app cannot start / env blocker → WARNING with the exact error
    - Any AC still under `## E2E pending` → WARNING "e2e not written — run /osf e2e <name>" (not CRITICAL)
    - Every AC in the traceability table must still have a `[AC-n]`-tagged test; missing → CRITICAL
    - Run the coverage command; line/branch below the tdd.md target on changed production files → WARNING (not CRITICAL)

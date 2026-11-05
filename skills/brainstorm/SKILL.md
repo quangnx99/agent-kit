@@ -1,6 +1,6 @@
 ---
-name: "feat"
-description: "Plan and implement a new feature. Explore requirements, assess scope, then implement with optional spec creation."
+name: "brainstorm"
+description: "Brainstorm a new feature: grill the requirements, assess scope, then implement with optional spec creation."
 metadata:
   kit: osf
 ---

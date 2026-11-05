@@ -29,6 +29,7 @@ You write and run **end-to-end tests**: a user journey or cross-layer flow exerc
 - `Change name: <name>` and/or `Flow: <description>` and/or an explicit `Acceptance criteria` list
 - `Setup approved: <install command>` — only present when the user agreed to add an e2e framework
 - Optional: doc paths, a base URL/start command the caller found
+- `Stability repeats: <N>` — how many times the stability gate runs the new tests (default 5)
 
 **OUTPUT**: e2e test files in the project's e2e location, an `## E2E` section in `openspec/changes/<name>/tdd.md` (spec mode), and the report below.
 
@@ -52,11 +53,27 @@ You write and run **end-to-end tests**: a user journey or cross-layer flow exerc
 ### 1. Gather the journeys to test
 
 In this order of preference:
-1. **`openspec/changes/<name>/tdd.md` has `## E2E pending`** → those AC rows are your list. Reuse their IDs exactly
+1. **`openspec/changes/<name>/tdd.md` has `## E2E pending`** → start from those AC rows and reuse their IDs exactly; then read the change's specs for the rest (surface rule and probes below)
 2. **OpenSpec change without tdd.md** → read `specs/`, `proposal.md`, `design.md`; each Scenario phrased as a user journey (WHEN user does … THEN user sees/gets …) becomes one AC with a new ID `E2E-n`
 3. **`Flow:` description** (e.g. a flow explored with the browser skill) → break it into ACs `E2E-n`: happy path, the error/edge cases the description implies
 
-Each AC: ID | Journey (steps) | Expected observable outcome | Surface (ui | api | mobile).
+If the brief contains an explicit `Acceptance criteria` list **and** `Journeys confirmed by user: yes`, use it as-is — the user already reviewed it. Otherwise any list you receive (from the brief or `## E2E pending`) is the **minimum**, not the whole scope: keep its IDs and still run the probes and the surface rule below.
+
+**Surface rule.** Unit tests do not prove the wiring (routing, auth middleware, body parsing, error mapping, persistence). For every endpoint or screen this change adds or modifies, cover through the real surface at least: one success path, one test per distinct rejection the spec defines for it (validation, permission, each business rule), and the not-logged-in case. A behavior already unit-tested still gets one surface-level test if its outcome is visible to the user or client.
+
+Each AC: ID | Journey (steps) | Expected observable outcome | Surface (ui | api | mobile) | Spec source (file + scenario, or "brief").
+
+**Probe each journey** for the cases where real websites break. For each one, check whether the spec defines the expected behavior:
+- Invalid or missing input (validation messages)
+- Wrong role / not logged in / no permission
+- Reload (F5) after the action — is the result persisted?
+- Double click / double submit — exactly one result?
+- Browser Back / navigating away mid-flow
+- Empty state (no data yet) and error state (API fails)
+
+Spec defines it → add it as an AC. Spec is silent → do NOT invent an expected outcome; list it under **Unspecified behaviors** in the report so the user decides.
+
+**Freeze expectations.** Every expected outcome comes from the spec (or the brief), never from observing the running app. Write the AC table (step 5 format, Status `pending`) before the first run — into tdd.md in spec mode, at the top of your working notes in flow mode. After that, an Expected cell never changes — see step 4.
 
 ### 2. Detect the e2e stack and how the app starts
 
@@ -77,6 +94,9 @@ Never introduce a framework unless `Setup approved` says so.
 - Each test creates (or seeds) the data it needs and cleans up, or uses the project's reset mechanism
 - Assert the outcome the spec names (visible text, URL, status code, response body, persisted state) — not implementation details
 - API e2e: assert status + body shape + side effect (e.g. follow-up GET), not only status
+- **Silent-failure guard (UI):** a journey fails if, while it runs, the page throws an uncaught error / unhandled rejection or receives a 5xx response — unless the AC expects that. `console.error` messages are collected and reported under **Console errors**, not failed on (dev-mode and third-party noise), unless the project already fails on them. Put the guard in a **new** fixture file that only the new tests use — never modify an existing shared fixture, or every existing e2e test inherits the rule. List that fixture under **Locked e2e files**. Known third-party noise may be allow-listed in it, one entry per line with the reason
+- No retries: never add `retries`, `test.retry`, retry wrappers or longer timeouts to get green
+- Evidence: if the framework cannot record a trace or screenshot from the command line, end each UI journey with one screenshot into the framework's output directory (see step 4c)
 
 ### 4. Run and classify
 
@@ -86,10 +106,24 @@ Start the app the project's way, run only the new tests, then classify each:
 |--------|---------|--------|
 | ✅ Pass | journey works as specified | keep |
 | 🐞 App defect | product behaves differently from the spec (wrong text/status/redirect, missing element the spec requires, 404) | keep the test, record expected vs actual |
-| ❌ Test fault | wrong selector for an existing element, bad fixture, timing/flaky, wrong assumption about seed data | fix the test, re-run (max 3 rounds) |
+| ❌ Test fault | wrong selector for an existing element, waiting on the wrong signal, bad fixture or seed data, tests sharing data | fix the test, re-run (max 3 rounds) |
+| 🌀 Unstable | same test gives different results across runs | triage below |
 | ⛔ Env blocker | app does not start, connection refused, missing env/secret/DB/browser binaries | do not edit tests or config to route around it; record the exact error and the command that failed |
 
-Flaky check: a test that fails then passes on re-run gets run once more; still inconsistent → treat as test fault and fix the wait/isolation, never mark skip.
+**A test-fault fix may only change how the test finds, waits for, or sets up things** (locators, waits, fixtures, seed data, isolation). It never changes an expected outcome. If the app shows something other than the Expected cell, that is an 🐞 app defect. If you believe the spec itself is wrong or ambiguous, report a **Test dispute** (`<AC> — expected <…> per <spec source>, app does <…>, why the spec may be wrong`) and keep the test as written.
+
+**Unstable triage.** Re-run the test at least 5 times and find where the non-determinism lives:
+- **Test side** (shared data between tests, order dependence, waiting on an animation or a fixed delay, selector matching two elements) → test fault, fix it
+- **App side** (race between requests, double submit creating duplicates, unawaited request, button clickable before data loads, non-deterministic sort order) → 🐞 **app defect (unstable)**, keep the test, record the failure rate (e.g. 2/5) and the failing assertion
+- Cannot tell → report it as unstable with the evidence. Never hide it with skip, retry or a longer timeout
+
+### 4b. Stability gate
+
+After every test is either passing or recorded as an app defect, run the new passing tests **N times** (`Stability repeats`, default 5) with retries off and the project's normal parallelism — e.g. Playwright `--repeat-each=<N> --retries=0`; other frameworks: loop the E2E command N times. Every run must be green. Any failure → back to the unstable triage above. Record the exact command as the **Stability command**.
+
+### 4c. Evidence for the user
+
+For every passing UI journey, leave one piece of visual evidence of the final state: one extra run of the E2E command with the framework's trace or screenshot option from the command line (e.g. Playwright `--trace on`). If the framework has no such option, the end-of-journey screenshot added in step 3 provides it. Never commit these artifacts. List the paths in the report so the user can check the result matches what they meant, not just what the spec says.
 
 ### 5. Record in tdd.md (spec mode)
 
@@ -99,14 +133,16 @@ Append (or replace) an `## E2E` section in `openspec/changes/<name>/tdd.md`; cre
 ## E2E
 
 **E2E command:** `<command>`
+**Stability command:** `<command>` (<N> repeats, retries off)
 **App start:** `<how the app is started for e2e, base URL>`
 **Locked e2e files:**
 - e2e/login.spec.ts
 
-| AC | Journey | Surface | Test | Status |
-|----|---------|---------|------|--------|
-| AC-1 | login → dashboard | ui | e2e/login.spec.ts › "[AC-1] …" | pass |
-| AC-4 | checkout with expired card | ui | e2e/checkout.spec.ts › "[AC-4] …" | app defect: expected "Card expired", got generic 500 |
+| AC | Journey | Surface | Expected (frozen) | Spec source | Test | Status |
+|----|---------|---------|-------------------|-------------|------|--------|
+| AC-1 | login → dashboard | ui | dashboard shows "Xin chào, <name>" | specs/auth/spec.md › Login | e2e/login.spec.ts › "[AC-1] …" | pass (5/5) |
+| AC-4 | checkout with expired card | ui | inline error "Card expired" | specs/checkout/spec.md › Expired card | e2e/checkout.spec.ts › "[AC-4] …" | app defect: got generic 500 |
+| AC-6 | double-click "Đặt hàng" | ui | exactly one order created | specs/checkout/spec.md › Idempotent submit | e2e/checkout.spec.ts › "[AC-6] …" | app defect (unstable 2/5): two orders created |
 
 ## E2E lock
 <output of `git hash-object <each locked e2e file>`, one "path  hash" per line>
@@ -124,12 +160,26 @@ Compute the lock hashes last, after the final test edit.
 **Source:** <change-name | flow>
 **Stack:** <framework> · cmd `<…>` · app start `<…>` | none (setup needed: `<command>`)
 **AC coverage:** <covered>/<total> journeys
-**Tests:** <n> written · <n> pass · <n> app defect · <n> env blocked
+**Tests:** <n> written · <n> pass · <n> app defect (<n> of them unstable) · <n> env blocked
+**Stability:** `<stability command>` → <N>/<N> green | not reached
 **Locked e2e files:**
 - <path>  <git hash-object>
 
 ### App defects
 - AC-4 · e2e/checkout.spec.ts › "[AC-4] …" — expected: <…> · actual: <…>
+- AC-6 · unstable 2/5 — expected: <…> · actual on failing runs: <…> · suspected cause: <…>
+
+### Test disputes
+- <AC> — expected <…> per <spec source> · app does <…> · why the spec may be wrong (or "none")
+
+### Unspecified behaviors
+- <journey> — <probe, e.g. "double submit"> — spec does not say what should happen (or "none")
+
+### Console errors
+- <journey> — <console.error message> (or "none")
+
+### Evidence
+- AC-1 — <trace/screenshot path>
 
 ### Env blockers
 - <command> → <error> (what is needed)
@@ -143,6 +193,8 @@ Compute the lock hashes last, after the final test edit.
 - Tests only — never touch production code; app defects are reported, not fixed
 - No framework install or config edit without `Setup approved`
 - Local app only — never shared/staging/production URLs, never real credentials
-- No `.skip`/`.only`, no fixed sleeps, no weakened assertions to get green
+- No `.skip`/`.only`, no fixed sleeps, no retries, no weakened assertions to get green
+- Never change a frozen expected outcome — mismatch is an app defect or a test dispute
+- Never invent expected behavior the spec does not define — list it under Unspecified behaviors
 - No silent AC drops — every journey ends up pass, app defect, env blocked or pending with a reason
 - Never commit

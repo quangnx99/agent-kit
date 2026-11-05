@@ -92,7 +92,7 @@ Tool priority: codebase-retrieval (understand broad context and find related cod
 
 Run only the dimensions relevant to the changed code. Skip dimensions that don't apply.
 
-**Always run:** Impact Gaps, Hardcoded Values, Project Rules, Security, Simplification
+**Always run:** Impact Gaps, Hardcoded Values, Project Rules, Security, Simplification, Code Smells
 **Run if code has UI/frontend components:** UI/UX Feedback
 **Run if code has async operations, I/O, or external calls:** Error Handling
 **Run if code has data fetching, loops, subscriptions, or heavy computation:** Performance & Memory
@@ -221,6 +221,31 @@ Severity guide for this dimension:
 - WARNING: most anti-patterns listed above (they work today but will hurt under growth)
 - SUGGESTION: copy-paste with only 2 instances, mild coupling that's contained within one module
 
+### 10. Code Smells (Fowler baseline)
+
+A fixed smell baseline from Fowler's *Refactoring* ch.3, adapted from the `code-review` skill in mattpocock/skills (MIT). It applies even when the project documents no standards. Two rules bind it:
+
+- **Project rules win.** If CLAUDE.md or project conventions endorse something a smell would flag, suppress it. Skip anything a linter already enforces.
+- **Always a judgement call.** Label each as "possible <smell>", never as a hard violation.
+
+Match each against the changed code (*what it is* → *how to fix*):
+
+- **Mysterious Name** — name doesn't reveal what it does or holds → rename; if no honest name comes, the design is murky
+- **Feature Envy** — a method uses another object's data more than its own → move it onto the data it envies
+- **Data Clumps** — the same few fields/params keep travelling together → bundle them into one type
+- **Primitive Obsession** — a string/number stands in for a domain concept → give the concept its own small type
+- **Repeated Switches** — the same `switch`/`if` cascade on the same type recurs → polymorphism, or one shared map
+- **Shotgun Surgery** — one logical change forces scattered edits across many files → gather what changes together
+- **Divergent Change** — one module is edited for several unrelated reasons → split so each changes for one reason
+- **Speculative Generality** — abstraction, params or hooks for needs the spec doesn't have → delete, inline back
+- **Message Chains** — long `a.b().c().d()` navigation → hide the walk behind one method
+- **Middle Man** — a class/function that mostly just delegates → cut it, call the real target
+- **Refused Bequest** — a subclass ignores or overrides most of what it inherits → composition instead
+
+Duplicated code is already covered by Simplification and Anti-Patterns — don't report it twice.
+
+Severity: SUGGESTION by default; WARNING for Shotgun Surgery or Divergent Change that this diff makes worse.
+
 ---
 
 ## Report Format
@@ -245,6 +270,7 @@ Present findings as a structured report:
 | Error Handling | X issues |
 | Performance & Memory | X issues |
 | Anti-Patterns | X issues |
+| Code Smells | X possible smells |
 
 Only include dimensions that were run. Omit rows for skipped dimensions.
 
@@ -263,8 +289,8 @@ Only include dimensions that were run. Omit rows for skipped dimensions.
 ### Severity Classification
 
 - **CRITICAL**: Security vulnerabilities, data loss risks, broken functionality, missing impact updates that will cause runtime errors, memory leaks that grow unbounded, global mutable state shared across modules, implicit ordering that can cause data corruption
-- **WARNING**: Rule violations, hardcoded values that should be config, impact gaps that may cause subtle bugs, missing error handling on user-facing paths, missing UI feedback on primary actions, structural anti-patterns that work today but will break under growth (tight coupling, god objects, manual state sync, string-based dispatch, unbounded scans, hardcoded capacity)
-- **SUGGESTION**: Simplification opportunities, style improvements, minor code quality issues, performance optimizations for non-hot paths, copy-paste with only 2 instances, mild coupling contained within one module
+- **WARNING**: Rule violations, hardcoded values that should be config, impact gaps that may cause subtle bugs, missing error handling on user-facing paths, missing UI feedback on primary actions, structural anti-patterns that work today but will break under growth (tight coupling, god objects, manual state sync, string-based dispatch, unbounded scans, hardcoded capacity), Shotgun Surgery or Divergent Change that this diff makes worse
+- **SUGGESTION**: Simplification opportunities, other possible code smells, style improvements, minor code quality issues, performance optimizations for non-hot paths, copy-paste with only 2 instances, mild coupling contained within one module
 
 Be conservative with CRITICAL — only for things that will break or are security risks.
 

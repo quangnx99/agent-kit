@@ -5,7 +5,7 @@ metadata:
   kit: osf
 ---
 
-Available skills: analyze, apply, archive, autopilot, browser, chore, ci, clean-room, docker, docs, e2e, enhance, explain, explore, feat, fix, gap-audit, git, osf, perf, proposal, refactor, research, review, security, setup, tdd, test, uiux-design, verify
+Available skills: analyze, apply, archive, autopilot, brainstorm, browser, chore, ci, clean-room, docker, docs, e2e, enhance, explain, explore, fix, gap-audit, git, osf, perf, proposal, refactor, research, review, security, setup, tdd, test, uiux-design, verify
 
 RUNTIME GUARD:
 This prompt is already the `osf` dispatcher. Do NOT invoke `osf` again. Resolve the target skill from ARGUMENTS and dispatch directly. Only invoke the resolved target skill, and invoke `explore` too when the resolved target is a planning skill.
@@ -26,6 +26,8 @@ Supporting subagents (used internally by skills):
 - osf-researcher — Web research (technical docs, best practices, comparisons, security advisories)
 - osf-uiux-designer — UI/UX design analysis and reports
 - osf-verify — Verify implementation matches spec
+- osf-spec-review — Adversarial spec gate before tests/code (used by autopilot Full)
+- osf-security — Security review of one change before verify (used by autopilot Full)
 
 Aliases:
 - auto → autopilot
@@ -34,7 +36,7 @@ KIT_CATALOG (presentation source of truth — group order and blurbs are fixed):
 
 | group | skill | blurb |
 |---|---|---|
-| planning | feat | Tính năng mới |
+| planning | brainstorm | Brainstorm tính năng mới |
 | planning | fix | Sửa bug, tìm root cause |
 | planning | chore | Bảo trì, thay đổi trực tiếp |
 | planning | refactor | Dọn code, không đổi behavior |
@@ -75,13 +77,13 @@ Group headings for list output:
 LIST RULES (higher priority than dispatch — evaluate first):
 
 1. If "$0" is exactly one of: `list`, `ls`, `--list`, `-l`, run the list flow and STOP. Do not dispatch. Do not infer a skill.
-2. Print the catalog **exactly** in this structure (use KIT_CATALOG for skill order and blurbs; do **not** invent blurbs from frontmatter `description`). Header count is always the KIT_CATALOG size (28). Do not scan `~/.claude/skills` or any other disk path — KIT_CATALOG is the source of truth.
+2. Print the catalog **exactly** in this structure (use KIT_CATALOG for skill order and blurbs; do **not** invent blurbs from frontmatter `description`). Header count is always the KIT_CATALOG size (30). Do not scan `~/.claude/skills` or any other disk path — KIT_CATALOG is the source of truth.
 
 ```
-**OSF kit — 28 skills**
+**OSF kit — 30 skills**
 
 **Planning** (explore → implement, có thể tạo spec)
-  feat        Tính năng mới
+  brainstorm  Brainstorm tính năng mới
   fix         Sửa bug, tìm root cause
   chore       Bảo trì, thay đổi trực tiếp
   refactor    Dọn code, không đổi behavior
@@ -124,7 +126,7 @@ LIST RULES (higher priority than dispatch — evaluate first):
 
 **Supporting subagents:**
   osf-analyze, osf-apply, osf-archive, osf-clean-room,
-  osf-e2e, osf-gap-audit, osf-researcher, osf-tdd, osf-uiux-designer, osf-verify
+  osf-e2e, osf-gap-audit, osf-researcher, osf-security, osf-spec-review, osf-tdd, osf-uiux-designer, osf-verify
 ```
 
 3. STOP. No Skill tool. No further dispatch.
@@ -138,7 +140,7 @@ Dispatch rules:
 3. Intent inference (only when "$0" is empty or not an exact skill/alias match) must never resolve to `explore` or `osf`. Those names are listable/internal only for exact "$0" match (`explore`) or blocked (`osf`).
 4. Use the most specific match:
    - bug fix, broken behavior, error, regression, "sửa lỗi" → `fix`
-   - new feature, enhancement, "thêm tính năng" → `feat`
+   - new feature, enhancement, "thêm tính năng", brainstorm, idea, "lên ý tưởng" → `brainstorm`
    - refactor, cleanup without behavior change → `refactor`
    - performance, speed, latency, optimization → `perf`
    - docs, README, guide, comments → `docs`
@@ -166,7 +168,7 @@ Dispatch rules:
    - enhance/rewrite/clarify a prompt, "làm rõ prompt", "viết lại prompt" → `enhance`
    - fully autonomous end-to-end workflow → `autopilot`
 5. If the request could reasonably map to multiple skills and no best match is clear, ask the user which skill to run. Do not guess when intent is ambiguous.
-6. Planning skills are: feat, fix, chore, refactor, perf, docs, test, ci, docker, setup.
+6. Planning skills are: brainstorm, fix, chore, refactor, perf, docs, test, ci, docker, setup.
 7. Invoke the resolved skill:
    - Claude Code: Skill tool. Prefer `osf:<name>` when this kit is a plugin; fall back to `<name>`.
    - OMP: `read skill://<name>` then follow that file. Never look for a Skill tool.

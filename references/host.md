@@ -11,14 +11,14 @@ Claude Code vs OMP. Dispatcher (`osf` skill) already encodes this. Do not copy t
 
 ## Load explore (planning skills)
 
-feat, fix, chore, refactor, perf, docs, test, ci, docker, setup.
+brainstorm, fix, chore, refactor, perf, docs, test, ci, docker, setup.
 
 - **Claude Code:** Skill tool `osf:explore` or `explore`, in parallel with the planning skill.
 - **OMP:** `read skill://explore` once. Skip if `CALLER_CONTEXT` says explore is already loaded.
 
 ## Spawn supporting agents
 
-osf-analyze, osf-apply, osf-archive, osf-clean-room, osf-e2e, osf-gap-audit, osf-researcher, osf-tdd, osf-uiux-designer, osf-verify.
+osf-analyze, osf-apply, osf-archive, osf-clean-room, osf-e2e, osf-gap-audit, osf-researcher, osf-security, osf-spec-review, osf-tdd, osf-uiux-designer, osf-verify.
 
 - **Claude Code:** Agent tool `subagent_type: "<name>"`
 - **OMP:** `task` with `agent: "<name>"`. No Agent tool / `subagent_type`.

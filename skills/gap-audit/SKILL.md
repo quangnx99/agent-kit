@@ -131,7 +131,7 @@ Questions only the user can answer.
 
 A. Deepen match on [IDs] (more search / optional browser smoke)
 B. /osf analyze deep on a Missing item before design (blast radius)
-C. /osf feat or /osf proposal for P0 backlog slice
+C. /osf brainstorm or /osf proposal for P0 backlog slice
 D. Save Gap Matrix to a file path the user names
 E. Done — matrix is enough
 ```
@@ -159,7 +159,7 @@ After the matrix, for a **single** backlog item about to be built:
 - No Present without evidence
 - No silent row drops
 - No hard-coded product folder/enum names in this skill
-- Do not expand into full solution design unless user asks (point to feat/proposal)
+- Do not expand into full solution design unless user asks (point to brainstorm/proposal)
 - If the request is clearly blast radius of a code change, stop and tell them to use `analyze`
 
 ## ARGS

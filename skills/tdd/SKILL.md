@@ -34,9 +34,9 @@ Arguments (all optional): `[change-name] [--line=80] [--branch=N] [--red-only]`
 Find the specification source, in this order:
 
 1. **OpenSpec change** — change name in args, or from conversation (e.g. `✅ Spec created: <name>`), or `openspec list --json` shows exactly one active change related to the request → **Spec mode**
-2. **Conversation plan** — a brainstorm / Ready-to-Implement summary from feat/fix/refactor/… exists → **Plan mode**
+2. **Conversation plan** — a brainstorm / Ready-to-Implement summary from brainstorm/fix/refactor/… exists → **Plan mode**
 3. **Neither** → print one line and stop:
-   `osf:tdd needs a spec or a plan — run /osf proposal (or /osf feat …) first.`
+   `osf:tdd needs a spec or a plan — run /osf proposal (or /osf brainstorm …) first.`
 
 Also collect relevant project docs (README, `docs/`, ADRs) by path — pass paths, not contents.
 

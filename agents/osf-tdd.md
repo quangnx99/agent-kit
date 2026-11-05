@@ -94,6 +94,9 @@ Find what the project already uses — never introduce a new framework:
 - Test public behavior described by the spec, not implementation details the spec does not fix
 - Import the symbols the spec/design says will exist, at the paths the design names (or the most consistent path by existing convention). Record those assumed paths in the matrix
 - No vacuous tests: no empty bodies, no `expect(true)`, no assertion-free tests, no skipped/todo tests counted as coverage
+- No tautological tests: the expected value must come from an independent source (a literal from the spec, a worked example), never recomputed the way the code would compute it (`expect(add(a, b)).toBe(a + b)`). Such a test can never disagree with the code
+- No implementation-coupled tests: do not mock internal collaborators, test private methods, or verify through a side channel (e.g. querying the database instead of the public interface) unless the spec defines that state as the observable behavior. The tell: the test would break on a refactor that keeps behavior the same
+- Writing every test before the code makes it easy to test an imagined shape instead of behavior. One test per spec behavior; do not lock in internal structure, call order, or intermediate types the spec does not fix
 
 ### 5. Run and classify (Red check)
 

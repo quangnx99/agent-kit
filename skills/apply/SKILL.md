@@ -23,7 +23,7 @@ Before launching the subagent, gather context from the current conversation:
 
 1. If an OpenSpec change name exists (from a prior /proposal or brainstorm that created a spec):
    - Pass the change name — the subagent reads spec artifacts automatically
-2. If no spec but there's a conversation plan (from /feat, /fix, etc. brainstorm):
+2. If no spec but there's a conversation plan (from /brainstorm, /fix, etc.):
    - Summarize: what was discussed, key decisions, requirements, scope
 3. If user provides explicit arguments:
    - Pass those directly

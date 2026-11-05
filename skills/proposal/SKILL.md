@@ -41,12 +41,11 @@ Evaluate the conversation context to decide the next phase.
 - Proceed to Phase 2 (Create)
 
 **If context is vague** (missing key decisions, multiple possible approaches):
-- Do focused exploration (2-3 rounds max)
-- Ask clarifying questions
-- Investigate codebase if relevant
-- When sufficient clarity emerges, proceed to Phase 2
+- Investigate the codebase first — facts the code can answer are never questions for the user
+- Interview the user in rounds, with no fixed round cap: each round asks every open decision whose prerequisites are already settled, each with options A/B/★/Khác and "ok" accepting every ★. After each round, add the follow-up decisions the answers opened (failure path, edge cases, who else is affected, existing data, how to test) and ask the next round
+- When no open decision remains, proceed to Phase 2
 
-**Bias toward action.** If you can make reasonable assumptions, go to Phase 2. Only explore when the ambiguity would lead to fundamentally wrong artifacts.
+**Bias toward action on details, not on decisions.** Fill in low-impact details and facts yourself. Anything that changes user-visible behavior, scope, data, or cost goes to the user. In autopilot (`CALLER_CONTEXT: autopilot-pipeline`), never ask: take the ★ option and list each as `Assumed: <decision> → <choice>` in proposal.md.
 
 ---
 
@@ -101,6 +100,16 @@ Once the request is clear:
 - Use `template` as structure — fill in its sections
 - **`context` and `rules` are constraints for YOU, not content for the file** — never copy them into output
 - **Always write artifact files in English** — regardless of conversation language
+- **Every decision reaches a scenario.** Collect every decision from the conversation: answered grilling questions, accepted ★ options, `Assumed:` lines, stress-test answers, edge cases and error paths named in the teach-back. Each must be encoded in a spec scenario whose THEN is observable and concrete (exact message, status code, resulting state, count) — never "handles gracefully" or "shows an error". End proposal.md with:
+  ```
+  ## Decision coverage
+  | Decision | Spec scenario |
+  |----------|---------------|
+  | Double submit creates one order | specs/checkout/spec.md › Requirement: Idempotent submit › Scenario: double click |
+  ```
+  A decision with no scenario is a bug in the spec, not a detail for later. The `osf-spec-review` gate audits this table.
+- **Production concerns in design.md.** For what applies to this change, state: error handling per failure point, authorization rules, concurrency/idempotency, data migration and backward compatibility, limits (pagination, sizes, rate limits), logging of failure paths without secrets, and how to roll back
+- **Updating after a spec review.** When the caller passes `Spec review findings:`, update the existing change in place: add or sharpen exactly the scenarios the CRITICAL items name, encode the user's answers to DECISION items, and extend `## Decision coverage`. Do not rewrite unrelated parts
 - **Annotate verify points in tasks.md** — For the last task of each major group or any high-risk task, append a verify annotation: `← (verify: what to check)`. This tells the verifier WHERE to deep-check and WHAT to look for. Place annotations on tasks that are end-of-flow (everything before must work for this to work) or high-risk (complex logic, integration points, security). Example:
   ```
   1. Setup database

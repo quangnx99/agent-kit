@@ -1,6 +1,6 @@
 # OSF kit
 
-30 OpenSpec-flow skills and 10 supporting agents for Claude Code and OMP.
+30 OpenSpec-flow skills and 12 supporting agents for Claude Code and OMP.
 
 Marketplace `osf-kit`, plugin `osf`, `source: "./"`.
 
@@ -23,8 +23,8 @@ Claude Code TUI (if the marketplace is not registered yet):
 
 Restart the OMP session after install.
 
-- Claude Code: `/osf:osf list` · `/osf:feat …`
-- OMP: `/skill:osf list` · `/skill:osf feat …`
+- Claude Code: `/osf:osf list` · `/osf:brainstorm …`
+- OMP: `/skill:osf list` · `/skill:osf brainstorm …`
 
 ## Update
 
@@ -43,7 +43,7 @@ Version is pinned in `plugin.json`. Bump it on every release or users will not g
 
 ## Kit
 
-Planning: feat, fix, chore, refactor, perf, docs, test, ci, docker, setup
+Planning: brainstorm, fix, chore, refactor, perf, docs, test, ci, docker, setup
 
 Spec: proposal, tdd, apply, e2e, verify, archive
 
@@ -54,4 +54,4 @@ Automation: autopilot, git, clean-room, uiux-design
 
 Internal: explore, osf
 
-Agents: osf-analyze, osf-apply, osf-archive, osf-clean-room, osf-e2e, osf-gap-audit, osf-researcher, osf-tdd, osf-uiux-designer, osf-verify
+Agents: osf-analyze, osf-apply, osf-archive, osf-clean-room, osf-e2e, osf-gap-audit, osf-researcher, osf-security, osf-spec-review, osf-tdd, osf-uiux-designer, osf-verify
