@@ -5,7 +5,7 @@ metadata:
   kit: osf
 ---
 
-Available skills: analyze, apply, archive, autopilot, brainstorm, browser, chore, ci, clean-room, docker, docs, e2e, enhance, explain, explore, fix, gap-audit, git, osf, perf, proposal, refactor, research, review, security, setup, tdd, team, test, uiux-design, verify
+Available skills: agents, analyze, apply, archive, autopilot, brainstorm, browser, chore, ci, clean-room, docker, docs, e2e, enhance, explain, explore, fix, gap-audit, git, osf, perf, proposal, refactor, research, review, security, setup, tdd, team, test, uiux-design, verify
 
 RUNTIME GUARD:
 This prompt is already the `osf` dispatcher. Do NOT invoke `osf` again. Resolve the target skill from ARGUMENTS and dispatch directly. Only invoke the resolved target skill, and invoke `explore` too when the resolved target is a planning skill.
@@ -64,6 +64,7 @@ KIT_CATALOG (presentation source of truth — group order and blurbs are fixed):
 | investigate | browser | Reproduce bug qua dev-browser |
 | automation | autopilot | Pipeline tự động end-to-end (--parallel=N) |
 | automation | team | Đội PM/BA/DEV/QA/SEC chạy song song, rồi pipeline |
+| automation | agents | Xem trực quan agent đang làm gì |
 | automation | git | commit/pull/push/merge/rebase/log |
 | automation | clean-room | Port feature từ repo ngoài |
 | automation | uiux-design | Phân tích & đề xuất UI/UX |
@@ -81,10 +82,10 @@ Group headings for list output:
 LIST RULES (higher priority than dispatch — evaluate first):
 
 1. If "$0" is exactly one of: `list`, `ls`, `--list`, `-l`, run the list flow and STOP. Do not dispatch. Do not infer a skill.
-2. Print the catalog **exactly** in this structure (use KIT_CATALOG for skill order and blurbs; do **not** invent blurbs from frontmatter `description`). Header count is always the KIT_CATALOG size (31). Do not scan `~/.claude/skills` or any other disk path — KIT_CATALOG is the source of truth.
+2. Print the catalog **exactly** in this structure (use KIT_CATALOG for skill order and blurbs; do **not** invent blurbs from frontmatter `description`). Header count is always the KIT_CATALOG size (32). Do not scan `~/.claude/skills` or any other disk path — KIT_CATALOG is the source of truth.
 
 ```
-**OSF kit — 31 skills**
+**OSF kit — 32 skills**
 
 **Planning** (explore → implement, có thể tạo spec)
   brainstorm  Brainstorm tính năng mới
@@ -118,6 +119,7 @@ LIST RULES (higher priority than dispatch — evaluate first):
 **Automation**
   autopilot   Pipeline tự động end-to-end (--parallel=N)
   team        Đội PM/BA/DEV/QA/SEC chạy song song, rồi pipeline
+  agents      Xem trực quan agent đang làm gì
   git         commit/pull/push/merge/rebase/log
   clean-room  Port feature từ repo ngoài
   uiux-design Phân tích & đề xuất UI/UX
@@ -173,6 +175,7 @@ Dispatch rules:
    - enhance/rewrite/clarify a prompt, "làm rõ prompt", "viết lại prompt" → `enhance`
    - fully autonomous end-to-end workflow → `autopilot`
    - a squad/team of roles working at once, "spawn nhiều agent", "đội PM BA DEV", max parallel, burn spare tokens for speed → `team`
+   - visualize/monitor agents, "agent đang làm gì", dashboard agent, which agents ran in parallel → `agents`
 5. If the request could reasonably map to multiple skills and no best match is clear, ask the user which skill to run. Do not guess when intent is ambiguous.
 6. Planning skills are: brainstorm, fix, chore, refactor, perf, docs, test, ci, docker, setup.
 7. Invoke the resolved skill:

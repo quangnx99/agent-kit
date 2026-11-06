@@ -1,7 +1,10 @@
 {
   "name": "osf",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "private": true,
+  "scripts": {
+    "test": "node --test \"test/**/*.test.mjs\""
+  },
   "description": "OSF kit — OpenSpec-flow skills and agents for Claude Code and OMP",
   "license": "MIT",
   "keywords": [
