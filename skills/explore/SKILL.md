@@ -171,6 +171,8 @@ This tells you:
 - Their names, schemas, and status
 - What the user might be working on
 
+Also read the main specs in `openspec/specs/` for every capability the plan touches. A requirement there that the new behavior contradicts (a fixed list, a limit, an old message) is part of the work: it goes into **Files/areas** together with the tests that lock it, as "update to match".
+
 ### When no change exists
 
 Think freely. When insights crystallize, offer implementation options (see "Ending Discovery" below).
@@ -299,10 +301,10 @@ When all items pass, prepare a locked requirement summary and an implementation 
 
 Do NOT ask how to implement yet if the user has not confirmed the teach-back.
 
-Before asking Small/direct, Spec-first, or Autopilot, draft this internally:
+Before asking Small/direct, Spec-first, or Auto, draft this internally:
 
 **Implementation review plan**
-- **Files/areas**: [specific files if known; otherwise exact areas and how osf-apply should locate them]
+- **Files/areas**: [specific files if known; otherwise exact areas and how osf-apply should locate them — including main specs in `openspec/specs/` and existing tests that must change to match]
 - **Behavior changes to make**:
   - [plain-language behavior/result change, not code]
 - **Out of scope**:
@@ -358,8 +360,8 @@ A. Small/direct (1-3 tasks, single component, straightforward)
    → Implement directly without spec
 B. Spec-first (larger or design-sensitive work)
    → Create OpenSpec change, then implement (chained without stop)
-C. ★ Autopilot (smart autonomous mode)
-   → Chooses Full, Verified, or Light based on impact and complexity
+C. ★ Auto — tự động chọn flow tốt nhất
+   → Picks and runs the rest end to end: the shortest chain that still ships exactly what we decided — e.g. spec → tdd → code → e2e → security → verify, or code → verify for small work. Always ends with verify against these decisions
 D. Discuss more before implementation
    → Go back to planning or clarify remaining concerns
 E. Test-first (spec → failing tests → gate → implement)
@@ -400,7 +402,7 @@ Tailor the wording to the actual plan when it helps (name the change, name the f
 **Routing the user's choice (non-stop contract):**
 - A (Small/direct) → use Agent tool with `subagent_type: "osf-apply"`. Pass plan context.
 - B (Spec-first) → In the SAME turn: (1) use Skill tool to invoke `proposal`, (2) read `✅ Spec created: <change-name>` from its output, (3) immediately use Agent tool with `subagent_type: "osf-apply"` passing the change name. Do NOT end your turn between proposal and osf-apply. Do NOT ask the user to confirm the spec before applying — the user already chose this chain.
-- C (Autopilot) → use Skill tool to invoke `autopilot` with the locked requirement summary and implementation review plan.
+- C (Auto) → use Skill tool to invoke `autopilot` with the locked requirement summary, the implementation review plan, and every decision made in this session (answered rounds, accepted ★, `Assumed:` lines) verbatim. No `--full`: autopilot composes the chain itself (see its Assess Pipeline) and runs in Mode B.
 - D (Discuss more) → continue exploring. No implementation.
 - F (Production) → use Skill tool to invoke `autopilot` with `--full`, the locked requirement summary, the implementation review plan, and every decision made in this session (answered rounds, accepted ★, `Assumed:` lines) verbatim. Autopilot runs in Mode B from this context.
 - E (Test-first) → In the SAME turn: (1) invoke `proposal`, (2) read `✅ Spec created: <change-name>`, (3) invoke the `tdd` skill with that change name. `tdd` runs the gate and launches osf-apply itself — do NOT launch osf-apply from here.
@@ -445,15 +447,15 @@ When user chooses Path 2 → use Agent tool with `subagent_type: "osf-apply"`. P
 
 Either path can be test-first: if the user asks for TDD / tests before code, invoke the `tdd` skill after `proposal` (Path 1) or directly with the plan context (Path 2) instead of launching osf-apply — `tdd` launches osf-apply after its gate.
 
-### Autopilot
+### Auto (autopilot)
 
-Autopilot is smart autonomous mode. It assesses impact, risk, sensitivity, and complexity, then chooses the right path:
+Auto is smart autonomous mode. It assesses impact, risk, sensitivity, and complexity, picks a backbone, then switches each optional step on or off from the facts:
 
-- Full: spec → tdd → implement → e2e → verify → archive (`--no-tdd` / `--no-e2e` to skip a step)
-- Verified: implement → verify
-- Light: implement only
+- Full: spec → spec gate → tdd → implement → e2e → security ‖ verify → archive, with tdd / e2e / security dropped when they do not apply
+- Verified: implement → verify, plus security when the change touches a sensitive area
+- Light: implement only — never after a brainstorm; planned work always ends with verify
 
-When user chooses Autopilot → use the Skill tool to invoke `autopilot` with the locked requirement summary and implementation review plan. Do not manually chain proposal, osf-apply, or osf-verify from explore mode.
+When user chooses Auto → use the Skill tool to invoke `autopilot` with the locked requirement summary and implementation review plan. Do not manually chain proposal, osf-apply, or osf-verify from explore mode.
 
 ### After Implementation
 
