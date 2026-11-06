@@ -398,9 +398,17 @@ test('pipeline: current step is the latest wave with a running agent', () => {
 });
 
 test('pipeline: active session between steps waits on the next step; skill start makes a step active', () => {
+  // No e2e evidence and no step ran in an earlier round: the next step is unknown.
   const waiting = pipelineOf([skillCall('sa', 'osf:autopilot', 'x', 0), wave('m1', 1, ['a1', 'osf:osf-apply'])], { mainMtimeMs: NOW });
-  assert.deepEqual(waiting.pipeline.current, ['e2e']);
-  assert.equal(stepMap(waiting.pipeline).e2e.state, 'waiting');
+  assert.deepEqual(waiting.pipeline.current, []);
+  assert.equal(waiting.pipeline.waiting, true);
+  assert.equal(waiting.pipeline.finished, false);
+  assert.equal(stepMap(waiting.pipeline).e2e.state, 'pending');
+
+  // Only E2E needs evidence: after the spec gate, TDD is still named as next.
+  const knownNext = pipelineOf([skillCall('sa', 'osf:autopilot', 'x', 0), wave('mG', 1, ['g1', 'osf:osf-spec-review'])], { mainMtimeMs: NOW });
+  assert.deepEqual(knownNext.pipeline.current, ['tdd'], 'steps other than e2e are still named');
+  assert.equal(stepMap(knownNext.pipeline).tdd.state, 'waiting');
 
   const spec = pipelineOf([skillCall('sa', 'osf:autopilot', 'x', 0), skillCall('sp', 'osf:proposal', 'y', 1)], { mainMtimeMs: NOW });
   assert.deepEqual(spec.pipeline.current, ['spec']);
@@ -556,4 +564,43 @@ test('standalone: cut last agent stops at that step; running agent is the curren
   assert.deepEqual(run.pipeline.steps.map((x) => x.key), ['verify']);
   assert.deepEqual(run.pipeline.current, ['verify']);
   assert.equal(run.pipeline.finished, false);
+});
+
+test('labels: PowerShell maps like Bash', () => {
+  assert.deepEqual(toolLabel('PowerShell', { command: 'npm test' }), { verb: 'Đang chạy test', verbPast: 'Đã chạy test', object: '' });
+  assert.equal(toolLabel('PowerShell', { command: 'git status --short' }).object, 'git status');
+  assert.equal(toolLabel('PowerShell', { command: 'npm install -g x' }).verb, 'Đang cài package');
+  assert.deepEqual(toolLabel('PowerShell', { command: 'Get-ChildItem  src' }), { verb: 'Đang chạy lệnh', verbPast: 'Đã chạy lệnh', object: 'Get-ChildItem src' });
+});
+
+test('waiting after a coding loop: gates are next (not E2E) and keep earlier-round agents apart', () => {
+  const s = pipelineOf([
+    skillCall('sa', 'osf:autopilot', 'build it', 0),
+    wave('m1', 1, ['a1', 'osf:osf-apply']),
+    wave('m2', 10, ['s1', 'osf:osf-security'], ['v1', 'osf:osf-verify']),
+    wave('m3', 12, ['a2', 'osf:osf-apply']),
+  ], { mainMtimeMs: NOW });
+  const p = s.pipeline;
+  const st = stepMap(p);
+  assert.equal(p.round, 2);
+  assert.equal(p.waiting, true);
+  assert.deepEqual(p.current, ['security', 'verify'], 'no e2e evidence: the gates from round 1 are next');
+  assert.equal(st.security.state, 'waiting');
+  assert.equal(st.e2e.state, 'pending');
+  assert.deepEqual(st.security.prevAgentIds, ['g-s1'], 'round-1 gate agents are earlier-round agents');
+  assert.deepEqual(st.verify.prevAgentIds, ['g-v1']);
+  assert.deepEqual(st.coding.prevAgentIds, ['g-a1']);
+  assert.deepEqual(st.coding.agentIds, ['g-a1', 'g-a2']);
+
+  // With e2e evidence from round 1, E2E is named as next again.
+  const e2e = pipelineOf([
+    skillCall('sa', 'osf:autopilot', 'build it', 0),
+    wave('m1', 1, ['a1', 'osf:osf-apply']),
+    wave('m2', 5, ['e1', 'osf:osf-e2e']),
+    wave('m3', 10, ['s1', 'osf:osf-security'], ['v1', 'osf:osf-verify']),
+    wave('m4', 12, ['a2', 'osf:osf-apply']),
+  ], { mainMtimeMs: NOW });
+  assert.deepEqual(e2e.pipeline.current, ['e2e']);
+  assert.equal(stepMap(e2e.pipeline).e2e.state, 'waiting');
+  assert.deepEqual(stepMap(e2e.pipeline).e2e.prevAgentIds, ['g-e1']);
 });

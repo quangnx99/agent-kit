@@ -160,6 +160,9 @@ main { max-width: 1240px; margin: 0 auto; padding: 28px var(--gutter) 56px; }
 #otherChip { margin-left: auto; min-width: 84px; justify-content: center; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 .gridempty { margin: 0; padding: 8px 0; color: var(--muted); }
+.prevhead { margin: 20px 0 10px; color: var(--faint); }
+.prevgrid { opacity: .72; }
+.prevgrid:empty { display: none; }
 .agent { appearance: none; position: relative; width: 100%; min-width: 0; height: 102px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; text-align: left; cursor: pointer; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--shadow-card); transition: background-color .18s, border-color .18s; }
 .agent::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent-c, transparent); transition: background-color .25s; }
 .agent[data-status="running"] { --accent-c: var(--running); border-color: color-mix(in srgb, var(--running) 35%, var(--border)); animation: cardpulse 2.4s ease-in-out infinite; }
@@ -366,7 +369,9 @@ main { max-width: 1240px; margin: 0 auto; padding: 28px var(--gutter) 56px; }
           <button type="button" class="chip" id="otherChip" hidden></button>
         </div>
         <div class="grid" id="grid"></div>
-        <p class="gridempty" id="gridEmpty" hidden>Bước này chưa có agent.</p>
+        <p class="gridempty" id="gridEmpty" hidden></p>
+        <p class="eyebrow prevhead" id="prevHead" hidden>Vòng trước</p>
+        <div class="grid prevgrid" id="prevGrid"></div>
       </section>
     </div>
   </div>
@@ -416,6 +421,18 @@ const $ = (id) => document.getElementById(id);
 const phone = matchMedia('(max-width: 719px)');
 const wide = matchMedia('(min-width: 1024px)');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+// The agents block moves into a stepper slot on phone and can be detached while
+// the stepper rebuilds, so its elements are held here, never looked up by id.
+const AB = {
+  block: $('agentsBlock'), home: $('agentsHome'), title: $('gridTitle'), back: $('backBtn'), other: $('otherChip'),
+  grid: $('grid'), empty: $('gridEmpty'), prevHead: $('prevHead'), prevGrid: $('prevGrid'),
+};
+function homeAgentsBlock() {
+  if (AB.block.parentNode === AB.home) return;
+  const focused = document.activeElement;
+  AB.home.append(AB.block);
+  if (focused && focused !== document.activeElement && AB.block.contains(focused)) focused.focus({ preventScroll: true });
+}
 
 const S = {
   project: null, sessions: [], sessionsLoaded: false, sessionsSig: '', sessionId: null, data: null, es: null, sessTimer: null,
@@ -480,9 +497,9 @@ function ago(iso) {
   if (s < 60) return `${Math.floor(s)} giây trước`;
   if (s < 3600) return `${Math.floor(s / 60)} phút trước`;
   if (s < 86400) return `${Math.floor(s / 3600)} giờ trước`;
-  return new Date(t).toLocaleDateString();
+  return new Date(t).toLocaleDateString('vi-VN');
 }
-const hhmm = (iso) => { const t = msOf(iso); return t == null ? '' : new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
+const hhmm = (iso) => { const t = msOf(iso); return t == null ? '' : new Date(t).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }); };
 const keyOf = (a) => a.parentToolUseId || a.id;
 const shortType = (t) => String(t || '').replace(/^osf:/, '');
 const isBusy = (a) => a.status === 'running' || a.status === 'stalled';
@@ -656,10 +673,11 @@ function logWarnings(d) {
 function resetView() {
   for (const c of S.cards.values()) c.remove();
   S.cards.clear();
+  homeAgentsBlock(); // before the stepper (and the slot holding the block) is cleared
   $('stepper').replaceChildren();
   S.nodes.clear(); S.positions = []; S.stepSig = ''; S.loopCount = -1; S.curSig = ''; S.viewPos = null;
   $('heroTitle').textContent = '';
-  $('agentsHome').append($('agentsBlock'));
+  $('heroMeta').textContent = '';
 }
 
 function renderAll() {
@@ -679,27 +697,30 @@ function renderContent(d) {
   $('stepCard').hidden = !pipe;
 
   let list;
+  let prevList = [];
   if (pipe) {
     renderStepper(p);
     const pos = currentViewPos(p);
     const g = S.positions.find((x) => x.id === pos);
     const keys = g ? g.keys : [];
-    list = keys.flatMap((k) => S.stepBy[k].agentIds).map((id) => S.byId.get(id)).filter(Boolean).sort(byStatus);
-    setText($('gridTitle'), `Agent ở bước ${g ? g.label : ''}`);
+    const toAgents = (ids) => ids.map((id) => S.byId.get(id)).filter(Boolean).sort(byStatus);
+    list = toAgents(keys.flatMap((k) => curIdsOf(k)));
+    prevList = toAgents(keys.flatMap((k) => prevIdsOf(k)));
+    setText(AB.title, `Agent ở bước ${g ? g.label : ''}`);
     for (const [id, n] of S.nodes) setAttr(n.btn, 'aria-pressed', id === pos ? 'true' : 'false');
-    $('backBtn').hidden = !S.viewPos;
+    AB.back.hidden = !S.viewPos;
     const others = p.otherAgentIds.length;
-    $('otherChip').hidden = !others;
-    setText($('otherChip'), `Khác (${others}) ›`);
-    setAttr($('otherChip'), 'aria-label', `Agent khác, ${others} agent`);
+    AB.other.hidden = !others;
+    setText(AB.other, `Khác (${others}) ›`);
+    setAttr(AB.other, 'aria-label', `Agent khác, ${others} agent`);
   } else {
     list = d.agents.slice().sort(newest);
-    setText($('gridTitle'), `Tất cả agent (${list.length})`);
-    $('backBtn').hidden = true;
-    $('otherChip').hidden = true;
+    setText(AB.title, `Tất cả agent (${list.length})`);
+    AB.back.hidden = true;
+    AB.other.hidden = true;
   }
   announceChanges(d, renderHero(d, p));
-  renderGrid(list);
+  renderGrid(list, prevList);
   placeAgentsBlock(pipe);
   if (pipe) requestAnimationFrame(() => { drawLoop(p); scrollCurrent(p); });
   renderDrawer();
@@ -710,11 +731,26 @@ function currentViewPos(p) {
   S.viewPos = null;
   return defaultPos(p);
 }
+// A step's agents split by round: earlier-round agents show under "Vòng trước".
+function prevIdsOf(k) { const s = S.stepBy[k]; return (s && s.prevAgentIds) || []; }
+function curIdsOf(k) {
+  const s = S.stepBy[k];
+  if (!s) return [];
+  const prev = new Set(prevIdsOf(k));
+  return s.agentIds.filter((id) => !prev.has(id));
+}
+// Default view: the current step(s); while waiting, the waiting step if it has
+// agents, else the latest step with agents in the current round, else the
+// latest step with any agents.
 function defaultPos(p) {
-  const has = (k) => S.stepBy[k] && S.stepBy[k].agentIds.length;
-  if (p.current.some(has)) return posOf(p.current.find(has));
-  for (let i = S.positions.length - 1; i >= 0; i--) if (S.positions[i].keys.some(has)) return S.positions[i].id;
-  return p.current.length ? posOf(p.current[0]) : (S.positions[0] && S.positions[0].id);
+  const st = (k) => S.stepBy[k];
+  const hasAny = (k) => !!(st(k) && st(k).agentIds.length);
+  const hasThisRound = (k) => curIdsOf(k).some((id) => { const a = S.byId.get(id); return a && a.round === p.round; });
+  const latest = (fn) => { for (let i = S.positions.length - 1; i >= 0; i--) if (S.positions[i].keys.some(fn)) return S.positions[i].id; return null; };
+  const cur = p.current.filter(st);
+  const waiting = cur.length && cur.every((k) => st(k).state === 'waiting');
+  if (cur.length && (!waiting || cur.some(hasAny))) return posOf(cur.find(hasAny) || cur[0]);
+  return latest(hasThisRound) || latest(hasAny) || (cur.length ? posOf(cur[0]) : (S.positions[0] && S.positions[0].id));
 }
 
 // ---------- hero ----------
@@ -742,8 +778,9 @@ function renderHero(d, p) {
     const label = cur.map((s) => s.label).join(' ‖ ');
     stepLabel = cur.map((s) => s.label).join(' và ');
     eyebrow = 'ĐANG Ở BƯỚC';
-    if (cur.length && cur.every((s) => s.state === 'waiting')) {
-      mode = 'waiting'; title = 'Đang chờ bước tiếp theo'; meta = `Tiếp theo: ${label}`;
+    if ((cur.length && cur.every((s) => s.state === 'waiting')) || (!cur.length && p.waiting)) {
+      mode = 'waiting'; title = 'Đang chờ bước tiếp theo';
+      meta = cur.length ? `Tiếp theo: ${label}` : 'Đang chờ agent tiếp theo';
     } else {
       mode = 'active'; title = label || '—';
       const ids = cur.flatMap((s) => s.agentIds).map((id) => S.byId.get(id)).filter(Boolean);
@@ -824,6 +861,7 @@ function renderStepper(p) {
   if (sig !== S.stepSig) {
     S.stepSig = sig;
     S.nodes.clear();
+    homeAgentsBlock(); // the old slots are about to be dropped
     ol.replaceChildren(...positions.map((pos, idx) => {
       const btn = el('button', { type: 'button', class: 'node', 'aria-pressed': 'false', onclick: () => onNode(pos.id) });
       const dots = el('span', { class: 'dots', 'aria-hidden': 'true' });
@@ -911,7 +949,7 @@ function onNode(id) {
   S.viewPos = id === defaultPos(S.data.pipeline) ? null : id;
   renderContent(S.data);
 }
-$('backBtn').addEventListener('click', () => {
+AB.back.addEventListener('click', () => {
   S.viewPos = null;
   renderContent(S.data);
   const pos = defaultPos(S.data.pipeline);
@@ -963,8 +1001,8 @@ function scrollCurrent(p) {
   sc.scrollTo({ left: sc.scrollLeft + nr.left - sr.left - (sr.width - nr.width) / 2, behavior: reduced.matches ? 'auto' : 'smooth' });
 }
 function placeAgentsBlock(pipe) {
-  const block = $('agentsBlock');
-  let target = $('agentsHome');
+  const block = AB.block;
+  let target = AB.home;
   if (pipe && phone.matches) {
     const n = S.nodes.get(currentViewPos(S.data.pipeline));
     if (n) target = n.slot;
@@ -1024,13 +1062,13 @@ function updateCard(c, a) {
   setText(agoEl, ago(a.lastActivityAt || a.startedAt));
   setAttr(c, 'aria-pressed', S.drawer && S.drawer.mode === 'agent' && S.drawer.key === keyOf(a) ? 'true' : 'false');
 }
-function renderGrid(list) {
-  const grid = $('grid');
+function renderGrid(list, prevList = []) {
   const want = list.map(keyOf);
-  const wantSet = new Set(want);
+  const wantPrev = prevList.map(keyOf);
+  const wantSet = new Set([...want, ...wantPrev]);
   for (const [k, c] of S.cards) if (!wantSet.has(k)) { c.remove(); S.cards.delete(k); }
   let fresh = 0;
-  for (const a of list) {
+  for (const a of list.concat(prevList)) {
     const k = keyOf(a);
     let c = S.cards.get(k);
     if (!c) {
@@ -1042,12 +1080,16 @@ function renderGrid(list) {
     updateCard(c, a);
   }
   const focused = document.activeElement;
-  want.forEach((k, i) => {
+  const order = (grid, keys) => keys.forEach((k, i) => {
     const c = S.cards.get(k);
     if (grid.children[i] !== c) grid.insertBefore(c, grid.children[i] || null);
   });
-  if (focused && focused !== document.activeElement && grid.contains(focused)) focused.focus({ preventScroll: true });
-  $('gridEmpty').hidden = list.length > 0;
+  order(AB.grid, want);
+  order(AB.prevGrid, wantPrev);
+  if (focused && focused !== document.activeElement && AB.block.contains(focused)) focused.focus({ preventScroll: true });
+  AB.empty.hidden = list.length > 0;
+  setText(AB.empty, prevList.length ? 'Vòng này chưa có agent ở bước này.' : 'Bước này chưa có agent.');
+  AB.prevHead.hidden = !prevList.length;
 }
 function syncPressed() {
   for (const [k, c] of S.cards) setAttr(c, 'aria-pressed', S.drawer && S.drawer.mode === 'agent' && S.drawer.key === k ? 'true' : 'false');
@@ -1078,13 +1120,13 @@ function closeDrawer(restore) {
   const o = S.opener;
   S.opener = null;
   if (!restore || !o) return;
-  const target = o.chip ? $('otherChip') : S.cards.get(o.key);
+  const target = o.chip ? AB.other : S.cards.get(o.key);
   if (target && !target.hidden && document.contains(target)) target.focus({ preventScroll: true });
 }
 $('drawerClose').addEventListener('click', () => closeDrawer(true));
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.drawer) { e.preventDefault(); closeDrawer(true); } });
 $('dBack').addEventListener('click', () => openDrawer({ mode: 'others' }, { chip: true }));
-$('otherChip').addEventListener('click', () => {
+AB.other.addEventListener('click', () => {
   if (S.drawer && S.drawer.mode === 'others') closeDrawer(true);
   else openDrawer({ mode: 'others' }, { chip: true });
 });

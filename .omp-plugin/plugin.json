@@ -1,7 +1,7 @@
 {
   "name": "osf",
   "description": "OSF kit — 32 OpenSpec-flow skills and 15 supporting agents for Claude Code and OMP",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "author": {
     "name": "Sơn",
     "email": "son18122001@gmail.com"

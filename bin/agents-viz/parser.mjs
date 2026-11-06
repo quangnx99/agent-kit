@@ -132,7 +132,7 @@ export function toolLabel(name, input) {
     case 'Edit': case 'MultiEdit': return lbl('Đang sửa', 'Đã sửa', basename(str('file_path')));
     case 'Write': return lbl('Đang tạo', 'Đã tạo', basename(str('file_path')));
     case 'NotebookEdit': return lbl('Đang sửa notebook', 'Đã sửa notebook', basename(str('notebook_path')));
-    case 'Bash': {
+    case 'Bash': case 'PowerShell': {
       const cmd = stripCd(str('command')).replace(/\s+/g, ' ');
       if (TEST_CMD.test(cmd)) return lbl('Đang chạy test', 'Đã chạy test');
       const git = /^git\s+([A-Za-z][\w-]*)/.exec(cmd);
@@ -518,8 +518,11 @@ function stateOf(agents) {
 /**
  * Maps agents onto the osf pipeline steps and finds the current step.
  * Sets agent.step on every agent; returns
- * {kind, finished, stopped, stoppedAt, round, steps:[{key,label,state,agentIds,attempts,round,startedAt,endedAt}],
+ * {kind, finished, stopped, stoppedAt, waiting, round,
+ *  steps:[{key,label,state,agentIds,prevAgentIds,attempts,round,startedAt,endedAt}],
  *  current:[key], loops:[{from,to,round}], otherAgentIds}.
+ * waiting: active session between steps; current is [] when the next step is unknown.
+ * prevAgentIds: the step's agents from a round before its latest one.
  * Step state: pending | waiting | running | stalled | cut | done | skipped.
  */
 export function computePipeline({ agents, waves, skills, mainMtimeMs, now }) {
@@ -642,6 +645,7 @@ export function computePipeline({ agents, waves, skills, mainMtimeMs, now }) {
   let finished = false;
   let stopped = false;
   let stoppedAt = null;
+  let waiting = false; // active session between steps (next step may be unknown)
   for (let i = stepped.length - 1; i >= 0 && !current.length; i--) {
     const { groups } = stepped[i];
     const busy = [...groups.values()].flat().some((a) => a.status === 'running' || a.status === 'stalled');
@@ -691,9 +695,16 @@ export function computePipeline({ agents, waves, skills, mainMtimeMs, now }) {
         stoppedAt = reached.reduce((m, k) => (m == null || STEP_IDX[k] > STEP_IDX[m] || (STEP_IDX[k] === STEP_IDX[m] && k === 'security') ? k : m), null) || keys[0];
       }
     } else {
-      const next = keys.find((k) => state[k] !== 'done' && state[k] !== 'skipped');
-      if (!next) finished = true;
-      else {
+      waiting = true;
+      const open = keys.filter((k) => state[k] !== 'done' && state[k] !== 'skipped');
+      let next = open[0];
+      // E2E runs only when the project has an e2e framework; without any e2e
+      // agent or osf:e2e call we cannot claim it is next. Prefer the next step
+      // that ran in an earlier round (the gates after a coding loop), else unknown.
+      const e2eSeen = info.e2e && (info.e2e.all.length > 0 || hasSkill('e2e'));
+      if (next === 'e2e' && !e2eSeen) next = open.find((k) => k !== 'e2e' && info[k].all.length > 0);
+      if (!open.length) { finished = true; waiting = false; }
+      else if (next) {
         current = next === 'security' || next === 'verify'
           ? ['security', 'verify'].filter((k) => state[k] !== 'done' && state[k] !== 'skipped')
           : [next];
@@ -709,8 +720,12 @@ export function computePipeline({ agents, waves, skills, mainMtimeMs, now }) {
     if (s.latest && (st === 'done' || st === 'cut')) {
       endedAt = s.latest.map((a) => a.endedAt || a.lastActivityAt).filter(Boolean).sort().pop() || null;
     }
+    // Agents from a round before this step's latest round (a step reset by a
+    // coding loop and not re-run yet: every agent it has is from an earlier round).
+    const stepRound = s.round ?? round;
+    const prevAgentIds = s.all.filter((id) => { const a = byId.get(id); return a && a.round != null && a.round < stepRound; });
     return {
-      key: k, label: STEP_LABEL[k], state: st, agentIds: s.all, attempts: s.attempts,
+      key: k, label: STEP_LABEL[k], state: st, agentIds: s.all, prevAgentIds, attempts: s.attempts,
       round: s.round, startedAt: s.firstTs || (k === 'spec' && proposalSkill ? proposalSkill.ts : null), endedAt,
     };
   });
@@ -719,6 +734,7 @@ export function computePipeline({ agents, waves, skills, mainMtimeMs, now }) {
     finished,
     stopped,
     stoppedAt,
+    waiting,
     round,
     steps,
     current,
