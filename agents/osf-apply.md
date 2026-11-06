@@ -101,9 +101,33 @@ Stop before any Edit/Write. Return this and yield control:
 - Run independent batches in PARALLEL as concurrent osf-apply subagents
 - Run dependent batches SEQUENTIALLY, passing prior results forward in the next prompt
 - Each batch should be self-contained: list its own files, tasks, and acceptance criteria
+- Re-dispatch with the `apply` skill's PARALLEL FAN-OUT (`--parallel=N`) and a `Batch:` block per worker
 ```
 
 Do not start implementation after emitting this. The orchestrator re-dispatches.
+
+## BATCH MODE (parallel fan-out)
+
+When your brief contains a `Batch:` block, you are one of several osf-apply workers running at the same time in the same working tree. These rules override the normal steps:
+
+- Scope = exactly `Files you own`. A task needs a file outside that list → do not touch it; finish what you can and report `Needs file: <path> — <why>`
+- Skip the SCOPE SIZE GATE — the orchestrator already sized your batch. If it still does not fit, implement what fits and report the rest as not done
+- Do NOT edit tasks.md and do NOT tick checkboxes. The orchestrator ticks them from your report
+- Run only the tests that cover your own files (filter by path or test name). Never run the full suite, repo-wide lint or type-check — other batches are mid-edit
+- A build or type error in a file another batch owns is expected mid-wave: report it as `Cross-batch: <file> — <error>` and continue if you can. Never fix it
+- Use `Interfaces from earlier waves` as given; do not redesign them
+- Final output in batch mode (replaces "Implementation Complete"):
+
+```
+## ✅ Batch <A> Complete
+
+**Tasks done:** <task IDs>
+**Tasks not done:** <task IDs — reason, or none>
+**Files changed:** <list>
+**Interfaces created for later waves:** <symbol — file — signature, or none>
+**Own tests:** <command> → pass | <n> failing
+**Cross-batch / Needs file / Test dispute:** <…, or none>
+```
 
 ## File Editing Discipline
 
@@ -294,7 +318,7 @@ When implementing directly from conversation plan without an openspec change:
 - If task is ambiguous, pause and ask before implementing
 - If implementation reveals issues, pause and suggest artifact updates
 - Keep code changes minimal and scoped to each task
-- **Real-time task tracking** — Mark each task `[x]` the MOMENT it's done. Never batch checkbox updates.
+- **Real-time task tracking** — Mark each task `[x]` the MOMENT it's done. Never batch checkbox updates. (Exception: BATCH MODE — never touch tasks.md, report IDs instead.)
 - Pause on errors, blockers, or unclear requirements - don't guess
 - Use contextFiles from CLI output, don't assume specific file names
 - **Never commit** — writing code and marking tasks complete is your job. Committing is the user's responsibility.

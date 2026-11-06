@@ -1,6 +1,6 @@
 # OSF kit
 
-30 OpenSpec-flow skills and 12 supporting agents for Claude Code and OMP.
+31 OpenSpec-flow skills and 15 supporting agents for Claude Code and OMP.
 
 Marketplace `osf-kit`, plugin `osf`, `source: "./"`.
 
@@ -50,8 +50,17 @@ Spec: proposal, tdd, apply, e2e, verify, archive
 Investigate: analyze, gap-audit, explain, review, security, research, browser
 Utility: enhance
 
-Automation: autopilot, git, clean-room, uiux-design
+Automation: autopilot, team, git, clean-room, uiux-design
 
 Internal: explore, osf
 
-Agents: osf-analyze, osf-apply, osf-archive, osf-clean-room, osf-e2e, osf-gap-audit, osf-researcher, osf-security, osf-spec-review, osf-tdd, osf-uiux-designer, osf-verify
+Agents: osf-analyze, osf-apply, osf-archive, osf-ba, osf-clean-room, osf-e2e, osf-gap-audit, osf-pm, osf-qa, osf-researcher, osf-security, osf-spec-review, osf-tdd, osf-uiux-designer, osf-verify
+
+## Parallel
+
+Stages stay in order (spec → tests → code → gates); fan-out happens inside a stage, in the same working tree.
+
+- `/osf:apply <change> --parallel=N` — N osf-apply workers on file-disjoint batches, waves for dependencies, orchestrator ticks tasks.md
+- `/osf:tdd <change> --parallel=N` — one osf-tdd part per spec capability, merged into tdd.md
+- `/osf:autopilot … --parallel=N` — fans out analyze, tdd, implement; runs osf-security ‖ osf-verify together
+- `/osf:team <request> [--parallel=N]` — PM, BA, DEV, QA, SEC (and researcher) kick off in one message, reports are merged, then autopilot Full runs with N workers. Trades tokens for wall-clock time.

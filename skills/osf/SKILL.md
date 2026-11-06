@@ -5,7 +5,7 @@ metadata:
   kit: osf
 ---
 
-Available skills: analyze, apply, archive, autopilot, brainstorm, browser, chore, ci, clean-room, docker, docs, e2e, enhance, explain, explore, fix, gap-audit, git, osf, perf, proposal, refactor, research, review, security, setup, tdd, test, uiux-design, verify
+Available skills: analyze, apply, archive, autopilot, brainstorm, browser, chore, ci, clean-room, docker, docs, e2e, enhance, explain, explore, fix, gap-audit, git, osf, perf, proposal, refactor, research, review, security, setup, tdd, team, test, uiux-design, verify
 
 RUNTIME GUARD:
 This prompt is already the `osf` dispatcher. Do NOT invoke `osf` again. Resolve the target skill from ARGUMENTS and dispatch directly. Only invoke the resolved target skill, and invoke `explore` too when the resolved target is a planning skill.
@@ -27,7 +27,10 @@ Supporting subagents (used internally by skills):
 - osf-uiux-designer — UI/UX design analysis and reports
 - osf-verify — Verify implementation matches spec
 - osf-spec-review — Adversarial spec gate before tests/code (used by autopilot Full)
-- osf-security — Security review of one change before verify (used by autopilot Full)
+- osf-security — Security review of one change before verify (used by autopilot Full); `Mode: threat-model` before code (used by team)
+- osf-pm — Team kickoff: goals, stories, walked decision tree, draft AC (used by team)
+- osf-ba — Team kickoff: capabilities + Requirement/Scenario WHEN/THEN draft (used by team)
+- osf-qa — Team kickoff: test stack, AC by level, e2e journeys (used by team)
 
 Aliases:
 - auto → autopilot
@@ -48,7 +51,7 @@ KIT_CATALOG (presentation source of truth — group order and blurbs are fixed):
 | planning | setup | Scaffold project từ boilerplate |
 | spec | proposal | Tạo spec (proposal/design/tasks) |
 | spec | tdd | Sinh test trước, gate 100% AC rồi mới code |
-| spec | apply | Implement theo spec/plan |
+| spec | apply | Implement theo spec/plan (--parallel=N) |
 | spec | e2e | Test e2e cho user journey sau khi code |
 | spec | verify | Đối chiếu implementation vs spec |
 | spec | archive | Archive change đã xong |
@@ -59,7 +62,8 @@ KIT_CATALOG (presentation source of truth — group order and blurbs are fixed):
 | investigate | security | Audit bảo mật đầy đủ (repo hoặc change), có report |
 | investigate | research | Tra web: docs, best practice, advisory |
 | investigate | browser | Reproduce bug qua dev-browser |
-| automation | autopilot | Pipeline tự động end-to-end |
+| automation | autopilot | Pipeline tự động end-to-end (--parallel=N) |
+| automation | team | Đội PM/BA/DEV/QA/SEC chạy song song, rồi pipeline |
 | automation | git | commit/pull/push/merge/rebase/log |
 | automation | clean-room | Port feature từ repo ngoài |
 | automation | uiux-design | Phân tích & đề xuất UI/UX |
@@ -77,10 +81,10 @@ Group headings for list output:
 LIST RULES (higher priority than dispatch — evaluate first):
 
 1. If "$0" is exactly one of: `list`, `ls`, `--list`, `-l`, run the list flow and STOP. Do not dispatch. Do not infer a skill.
-2. Print the catalog **exactly** in this structure (use KIT_CATALOG for skill order and blurbs; do **not** invent blurbs from frontmatter `description`). Header count is always the KIT_CATALOG size (30). Do not scan `~/.claude/skills` or any other disk path — KIT_CATALOG is the source of truth.
+2. Print the catalog **exactly** in this structure (use KIT_CATALOG for skill order and blurbs; do **not** invent blurbs from frontmatter `description`). Header count is always the KIT_CATALOG size (31). Do not scan `~/.claude/skills` or any other disk path — KIT_CATALOG is the source of truth.
 
 ```
-**OSF kit — 30 skills**
+**OSF kit — 31 skills**
 
 **Planning** (explore → implement, có thể tạo spec)
   brainstorm  Brainstorm tính năng mới
@@ -97,7 +101,7 @@ LIST RULES (higher priority than dispatch — evaluate first):
 **Spec workflow** (OpenSpec)
   proposal    Tạo spec (proposal/design/tasks)
   tdd         Sinh test trước, gate 100% AC rồi mới code
-  apply       Implement theo spec/plan
+  apply       Implement theo spec/plan (--parallel=N)
   e2e         Test e2e cho user journey sau khi code
   verify      Đối chiếu implementation vs spec
   archive     Archive change đã xong
@@ -112,7 +116,8 @@ LIST RULES (higher priority than dispatch — evaluate first):
   browser     Reproduce bug qua dev-browser
 
 **Automation**
-  autopilot   Pipeline tự động end-to-end
+  autopilot   Pipeline tự động end-to-end (--parallel=N)
+  team        Đội PM/BA/DEV/QA/SEC chạy song song, rồi pipeline
   git         commit/pull/push/merge/rebase/log
   clean-room  Port feature từ repo ngoài
   uiux-design Phân tích & đề xuất UI/UX
@@ -125,8 +130,8 @@ LIST RULES (higher priority than dispatch — evaluate first):
 **Aliases:** auto → autopilot
 
 **Supporting subagents:**
-  osf-analyze, osf-apply, osf-archive, osf-clean-room,
-  osf-e2e, osf-gap-audit, osf-researcher, osf-security, osf-spec-review, osf-tdd, osf-uiux-designer, osf-verify
+  osf-analyze, osf-apply, osf-archive, osf-ba, osf-clean-room,
+  osf-e2e, osf-gap-audit, osf-pm, osf-qa, osf-researcher, osf-security, osf-spec-review, osf-tdd, osf-uiux-designer, osf-verify
 ```
 
 3. STOP. No Skill tool. No further dispatch.
@@ -167,6 +172,7 @@ Dispatch rules:
    - clean-room, port feature from external repo, clean-room reimplementation → `clean-room`
    - enhance/rewrite/clarify a prompt, "làm rõ prompt", "viết lại prompt" → `enhance`
    - fully autonomous end-to-end workflow → `autopilot`
+   - a squad/team of roles working at once, "spawn nhiều agent", "đội PM BA DEV", max parallel, burn spare tokens for speed → `team`
 5. If the request could reasonably map to multiple skills and no best match is clear, ask the user which skill to run. Do not guess when intent is ambiguous.
 6. Planning skills are: brainstorm, fix, chore, refactor, perf, docs, test, ci, docker, setup.
 7. Invoke the resolved skill:

@@ -533,6 +533,8 @@ The template above is in English for prompt readability. When outputting the act
 
 **No background mode — ever.** NEVER use `run_in_background` for any subagent. All subagents must run in foreground (parallel foreground is OK).
 
+**Fan out independent questions.** When two or more briefs do not depend on each other's answers — osf-analyze per root or per dimension group, osf-researcher for an external fact next to a structural question — launch them as separate Agent calls in ONE message and wait for all. Each gets one narrow question; never split one question across agents. The Briefing Protocol still applies, one 📋 block listing every agent in the message. Implementation fan-out is not yours: when the user asks for parallel workers (`--parallel=N`) or the work splits into file-disjoint batches, route implementation through the `apply` skill (which runs the PARALLEL FAN-OUT) instead of a direct osf-apply call, and never run two osf-apply from explore mode yourself. One bookkeeping exception to the identity gate checkpoint: ticking `- [x]` in tasks.md after a fan-out wave and copying `tdd-<capability>.md` parts into tdd.md are not code changes; they are the only Edits explore mode ever makes.
+
 ### Shared Subagent Table
 
 | Subagent | Specialty | When to Use |
@@ -547,6 +549,7 @@ The template above is in English for prompt readability. When outputting the act
 | osf-spec-review | Fresh-context spec gate: decisions → concrete scenarios, production checklist | Do not call directly — autopilot Full runs it after the spec |
 | osf-security | Security review of the change (authz, injection, secrets, deps) | Do not call directly — autopilot Full runs it after e2e |
 | osf-archive | Archive completed change to openspec/changes/archive/ | User chooses to finalize after verification (only if spec was created) |
+| osf-pm · osf-ba · osf-qa | Team kickoff roles: product shape · behavior scenarios · test plan | Do not call directly — the `team` skill spawns them with DEV (osf-analyze) and SEC (osf-security threat-model) in one message |
 
 The command may list additional subagents in its "Extra Subagents" section.
 

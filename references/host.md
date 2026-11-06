@@ -22,3 +22,12 @@ osf-analyze, osf-apply, osf-archive, osf-clean-room, osf-e2e, osf-gap-audit, osf
 
 - **Claude Code:** Agent tool `subagent_type: "<name>"`
 - **OMP:** `task` with `agent: "<name>"`. No Agent tool / `subagent_type`.
+
+## Spawn agents in parallel (`--parallel=N`, `team`)
+
+Fan-out means several agent calls in ONE message, foreground, then wait for all. Never `run_in_background`.
+
+- **Claude Code:** several Agent tool invokes in the same response.
+- **OMP:** several `task` calls in the same response.
+
+Workers share the working tree. Safety comes from the briefs (disjoint files, no tasks.md edits, no full-suite runs), not from the host.

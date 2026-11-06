@@ -1,6 +1,6 @@
 ---
 name: "tdd"
-description: "Test-first gate. Generate failing unit/integration tests from spec/docs/plan, require 100% acceptance-criteria coverage before any coding, then hand off to implementation with tests locked and report real line/branch coverage. User-journey ACs are left pending for osf:e2e. Args: [change-name] [--line=80] [--branch=N] [--red-only]."
+description: "Test-first gate. Generate failing unit/integration tests from spec/docs/plan, require 100% acceptance-criteria coverage before any coding, then hand off to implementation with tests locked and report real line/branch coverage. User-journey ACs are left pending for osf:e2e. Args: [change-name] [--line=80] [--branch=N] [--red-only] [--parallel=N] — N osf-tdd workers, one per spec capability."
 metadata:
   kit: osf
 ---
@@ -26,9 +26,10 @@ TEST LOCK — tests were written first and are the specification.
 
 ## Step 0: Parse arguments and find the source
 
-Arguments (all optional): `[change-name] [--line=80] [--branch=N] [--red-only]`
+Arguments (all optional): `[change-name] [--line=80] [--branch=N] [--red-only] [--parallel=N]`
 - `--line` default **80** (percent, on production files changed by this work); `--branch` default off
 - `--red-only`: stop after the gate (no implementation)
+- `--parallel=N`: max concurrent osf-tdd workers, default **1**. Spec mode only — see Step 1 PARTS
 - Input containing `CALLER_CONTEXT: autopilot-pipeline` behaves like `--red-only` plus the autopilot output contract (Step 3)
 
 Find the specification source, in this order:
@@ -63,6 +64,24 @@ Line target: <N>%  Branch target: <M%|off>
 Docs: <paths>
 ```
 
+### PARTS (`--parallel=N` > 1, spec mode)
+
+List `openspec/changes/<name>/specs/*/spec.md`. One capability file → one worker, ignore `--parallel`. Two or more → one osf-tdd **part** per capability, up to `N` Agent calls in ONE message (more capabilities than `N` → further waves). Each part gets the spec-mode brief plus:
+
+```
+Part: <capability> (<k> of <m>)
+Spec file you own: openspec/changes/<name>/specs/<capability>/spec.md
+AC ID range: AC-<k>01 … AC-<k>99 (never reuse another part's range)
+Matrix file: openspec/changes/<name>/tdd-<capability>.md — do NOT write tdd.md
+Other parts own: <their spec files> — never edit their test files or fixtures
+Shared fixtures/helpers you need: create new ones with a <capability>- prefix; never edit existing shared ones
+Red check: run only your own test files
+```
+
+Behaviors that live only in design.md go to the part whose capability they serve, else to part 1 — say so in each brief.
+
+**Merge (after all parts return)** — write `openspec/changes/<name>/tdd.md` from the part files. This is the one exception to "osf-tdd writes the lock": merging is copying, never editing. Test command = the project's suite command (parts must agree; if they differ, use the project's and note it). Locked test files = union. Traceability, Assumed interfaces, Unclear, E2E pending = the parts' sections concatenated, rows verbatim. `## Lock` = every part's Lock lines verbatim. Then go to Step 2 with the merged file — the hash check there is what proves the merge changed nothing. Two parts that wrote the same file → Gate FAIL ("part overlap: <file>").
+
 ## Step 2: Gate
 
 Read the `## 🔴 TDD Red Phase Report`.
@@ -71,13 +90,13 @@ Read the `## 🔴 TDD Red Phase Report`.
 - **Gate: PASS** → independently confirm before trusting it:
   1. Run the reported test command once → it must fail (Red). If everything passes, the gate is FAIL ("nothing to implement").
   2. `grep -rnoE "\[AC-[0-9]+\]"` over the locked files → every AC ID that is neither Unclear nor E2E pending appears.
-  3. Confirm the lock: `git hash-object <locked files>` must match the hashes osf-tdd recorded (`## Lock` in `openspec/changes/<name>/tdd.md`, or the report in plan mode). Mismatch → FAIL. You only read and compare — osf-tdd writes the lock.
+  3. Confirm the lock: `git hash-object <locked files>` must match the hashes osf-tdd recorded (`## Lock` in `openspec/changes/<name>/tdd.md`, or the report in plan mode). Mismatch → FAIL. You only read and compare — osf-tdd writes the lock (in PARTS mode you copied it; a mismatch means the merge or a part is wrong).
 
 ## Step 3: Hand off
 
 **Autopilot** (`CALLER_CONTEXT: autopilot-pipeline`): print ONLY this line and return in the same turn — no summary, no "ready", no next-step suggestions:
 ```
-✅ TDD gate passed: <change-name> (<covered>/<total> AC, <n> tests locked)
+✅ TDD gate passed: <change-name> (<covered>/<total> AC, <n> tests locked, <m> parts)
 ```
 
 **`--red-only`**: print the gate summary and stop.
@@ -117,6 +136,7 @@ Final output:
 **Source:** <change-name | plan>
 **Requirement coverage:** <covered>/<total> AC (100%)
 **Tests:** <n> locked (unit <n> · integration <n>) · all passing · lock intact ✓
+**Parts:** <m> parallel parts merged (or "1")
 **E2E pending:** <n> AC → `/osf e2e <change-name>` (or "none")
 **Code coverage (changed files):** line <x>% (target <N>%)<, branch <y>% (target <M>%)>
 **Warnings:** <below-target files, pre-existing tests, unclear ACs — or "none">
@@ -125,6 +145,8 @@ Final output:
 Do not run e2e, verify or archive yourself — the user (or autopilot) routes that.
 
 ## Guardrails
+
+- A part whose result is terminated early / PARTIAL / missing its report header did not finish: re-launch that part with the same brief before merging
 
 - Never write tests or production code yourself — osf-tdd and osf-apply do
 - Never start implementation while the gate is FAIL
