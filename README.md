@@ -69,12 +69,12 @@ Stages stay in order (spec → tests → code → gates); fan-out happens inside
 
 `/osf:agents` (or `node bin/agents-viz/server.mjs [--no-open] [--port=N] [--project=<dir>]`) opens `http://127.0.0.1:4317` (next free port up to 4330; a second call reuses the running server).
 
-- Sessions of a project, newest first; live updates for a running session, replay for past ones
-- Call tree: session → skill → agents, one row per wave (Agent calls in the same message ran in parallel)
-- Per agent: brief, tool timeline, what it is doing now, final report
-- Status: running, done, cut (API / rate-limit error, or no final report), stalled (no write for >10 min); osf agent types with no running instance are listed as idle or not spawned
-- An unfinished agent with no write for 2–10 min still shows as running; it turns stalled only after 10 min
-- Agents are grouped under the skill Claude Code attributes them to (`attributionSkill`), else under the most recent skill call before them
+- Pick a project and a session in the header (newest first, `· đang chạy` marks a live one); a running session updates live, a past one replays
+- Pipeline stepper: Kickoff (team runs only) → Spec → Spec gate → TDD → Coding → E2E → Security ‖ Verify → Archive. The current step is highlighted at the top ("Đang ở bước Coding · vòng 2"); re-runs show `×N`, steps that did not run show `bỏ qua` (e.g. `--no-e2e`), and a fix loop from the gates back to Coding is drawn as `↺ vòng N`
+- Agent cards for the selected step (click any step to see its agents): what each agent is doing right now in plain words ("Đang sửa tag.js", "Đang chạy test"), with running agents first; agents outside the pipeline sit behind the `Khác (n)` chip. A session without an osf pipeline shows all its agents as a plain grid
+- Click a card to open the side panel: **Đang làm** (current action, live) and **Vừa làm** (last 5 actions); a finished agent shows its one-line result instead
+- Status (icon + text): Đang chạy, Xong, Bị cắt (API / rate-limit error, or no final report), Treo (no write for >10 min). An unfinished agent with no write for 2–10 min still shows as running
+- Respects light/dark mode and reduced motion; keyboard and screen-reader friendly
 
 Read-only: it reads `~/.claude/projects/**` transcripts, binds 127.0.0.1 only, needs no hooks and no dependencies (Node only). Claude Code only — OMP sessions are not supported.
 

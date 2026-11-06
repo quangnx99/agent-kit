@@ -82,14 +82,89 @@ function truncate(s, max = TARGET_MAX) {
   return one.length > max ? one.slice(0, max - 1) + '…' : one;
 }
 
+// Keeps the end of a long value (paths: the file name matters, not the drive).
+function truncateStart(s, max = TARGET_MAX) {
+  const one = String(s).replace(/\s+/g, ' ').trim();
+  return one.length > max ? '…' + one.slice(one.length - max + 1) : one;
+}
+
+const PATH_KEYS = new Set(['file_path', 'notebook_path', 'path']);
+const CD_PREFIX = /^\s*cd\s+(?:"[^"]*"|'[^']*'|[^\s&;]+)\s*(?:&&|;)\s*/;
+
+// Drops leading `cd "<dir>" &&` hops so the real command stays visible.
+export function stripCd(command) {
+  let c = String(command || '');
+  for (let i = 0; i < 5 && CD_PREFIX.test(c); i++) c = c.replace(CD_PREFIX, '');
+  return c.trim();
+}
+
 export function toolTarget(input) {
   if (!input || typeof input !== 'object') return '';
   const keys = ['file_path', 'notebook_path', 'command', 'pattern', 'path', 'url',
     'query', 'skill', 'description', 'prompt'];
   for (const k of keys) {
-    if (typeof input[k] === 'string' && input[k]) return truncate(input[k]);
+    if (typeof input[k] !== 'string' || !input[k]) continue;
+    if (PATH_KEYS.has(k)) return truncateStart(input[k]);
+    if (k === 'command') return truncate(stripCd(input[k]) || input[k]);
+    return truncate(input[k]);
   }
   return '';
+}
+
+// ---------- human labels ----------
+
+const LABEL_OBJECT_MAX = 60;
+const basename = (p) => String(p || '').split(/[\\/]/).filter(Boolean).pop() || '';
+const TEST_CMD = /^(?:npm (?:run )?test|npx vitest|vitest|npx jest|jest|pytest|python3? -m pytest|node --test|go test|cargo test)\b/;
+const INSTALL_CMD = /^(?:npm (?:i|install)|pnpm add|yarn add|pip3? install)\b/;
+
+const lbl = (verb, verbPast, object = '') => ({ verb, verbPast, object: truncate(object, LABEL_OBJECT_MAX) });
+
+export const STARTING_LABEL = lbl('Đang khởi động agent…', 'Đã khởi động agent', '');
+
+// Plain-language label for one tool call: {verb, verbPast, object}.
+export function toolLabel(name, input) {
+  const i = input && typeof input === 'object' ? input : {};
+  const str = (k) => (typeof i[k] === 'string' ? i[k] : '');
+  const tool = String(name || '');
+  switch (tool) {
+    case 'Read': return lbl('Đang đọc', 'Đã đọc', basename(str('file_path')));
+    case 'Edit': case 'MultiEdit': return lbl('Đang sửa', 'Đã sửa', basename(str('file_path')));
+    case 'Write': return lbl('Đang tạo', 'Đã tạo', basename(str('file_path')));
+    case 'NotebookEdit': return lbl('Đang sửa notebook', 'Đã sửa notebook', basename(str('notebook_path')));
+    case 'Bash': {
+      const cmd = stripCd(str('command')).replace(/\s+/g, ' ');
+      if (TEST_CMD.test(cmd)) return lbl('Đang chạy test', 'Đã chạy test');
+      const git = /^git\s+([A-Za-z][\w-]*)/.exec(cmd);
+      if (git) return lbl('Đang thao tác git', 'Đã thao tác git', `git ${git[1]}`);
+      if (INSTALL_CMD.test(cmd)) return lbl('Đang cài package', 'Đã cài package');
+      return lbl('Đang chạy lệnh', 'Đã chạy lệnh', truncate(cmd, 40));
+    }
+    case 'Grep': return lbl('Đang tìm', 'Đã tìm', str('pattern') ? `"${truncate(str('pattern'), LABEL_OBJECT_MAX - 2)}"` : '');
+    case 'Glob': return lbl('Đang liệt kê tệp', 'Đã liệt kê tệp', str('pattern'));
+    case 'Skill': return lbl('Đang dùng skill', 'Đã dùng skill', str('skill').replace(/^osf:/, ''));
+    case 'Agent': case 'Task': return lbl('Đang giao việc cho agent', 'Đã giao việc', str('description'));
+    case 'WebSearch': return lbl('Đang tìm trên web', 'Đã tìm trên web', truncate(str('query'), 30));
+    case 'WebFetch': {
+      let host = '';
+      try { host = new URL(str('url')).hostname; } catch { /* not a URL */ }
+      return lbl('Đang đọc trang', 'Đã đọc trang', host);
+    }
+    case 'TodoWrite': return lbl('Đang cập nhật checklist', 'Đã cập nhật checklist');
+    default: break;
+  }
+  if (/^mcp__codebase-retrieval__/.test(tool)) return lbl('Đang tra cứu codebase', 'Đã tra cứu codebase');
+  const mcp = /^mcp__(.+?)__/.exec(tool);
+  if (mcp) return lbl('Đang gọi công cụ', 'Đã gọi công cụ', mcp[1]);
+  if (/^Task[A-Z]/.test(tool)) return lbl('Đang cập nhật checklist', 'Đã cập nhật checklist');
+  return lbl('Đang dùng', 'Đã dùng', tool);
+}
+
+// First "Gate:" / "## " line of a final report, without the markdown hashes.
+export function resultLine(report) {
+  const lines = String(report || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const hit = lines.find((l) => /^#{1,3}\s*Gate:/.test(l) || /^Gate:/.test(l) || /^## /.test(l)) || lines[0] || '';
+  return truncate(hit.replace(/^#+\s*/, '').replace(/\*\*/g, ''), 100);
 }
 
 // ---------- status ----------
@@ -180,7 +255,7 @@ export function parseAgentTranscript(records) {
       if (!c || c.type !== 'tool_use') continue;
       lastToolIdx = assistants.length - 1;
       toolUseIds.push(c.id);
-      timeline.push({ tool: c.name, target: toolTarget(c.input), ts: rec.timestamp || null });
+      timeline.push({ tool: c.name, target: toolTarget(c.input), label: toolLabel(c.name, c.input), ts: rec.timestamp || null });
       if (AGENT_TOOLS.has(c.name)) {
         agentCalls.push({ toolUseId: c.id, messageId: (rec.message && rec.message.id) || rec.uuid, ts: rec.timestamp, input: c.input || {} });
       }
@@ -219,7 +294,7 @@ export function parseMainTranscript(records) {
       const m = t && CMD_RE.exec(t);
       if (m) {
         const a = ARGS_RE.exec(t);
-        skills.push({ id: `cmd-${rec.uuid || order}`, name: m[1], args: truncate(a ? a[1] : '', 300), ts: rec.timestamp || null, source: 'command', order });
+        skills.push({ id: `cmd-${rec.uuid || order}`, name: m[1], args: truncate(a ? a[1] : '', 300), rawArgs: a ? a[1] : '', ts: rec.timestamp || null, source: 'command', order });
         if (!title) title = `/${m[1]} ${a ? a[1] : ''}`;
       }
       if (!title && t && !rec.toolUseResult && !rec.isMeta) title = stripTags(t);
@@ -236,7 +311,7 @@ export function parseMainTranscript(records) {
       if (!b || b.type !== 'tool_use') continue;
       const input = b.input || {};
       if (b.name === 'Skill') {
-        skills.push({ id: b.id, name: String(input.skill || 'skill'), args: truncate(input.args || '', 300), ts: rec.timestamp || null, source: 'tool', order, calledBy: rec.attributionSkill || null });
+        skills.push({ id: b.id, name: String(input.skill || 'skill'), args: truncate(input.args || '', 300), rawArgs: String(input.args || ''), ts: rec.timestamp || null, source: 'tool', order, calledBy: rec.attributionSkill || null });
       } else if (AGENT_TOOLS.has(b.name)) {
         calls.push({ toolUseId: b.id, messageId: (rec.message && rec.message.id) || rec.uuid, ts: rec.timestamp || null, input, order, attributionSkill: rec.attributionSkill || null });
       }
@@ -382,14 +457,273 @@ export function parseSession({ mainText, mainMtimeMs, mainTruncated = false, age
   const counts = { running: 0, done: 0, cut: 0, stalled: 0 };
   for (const a of out) counts[a.status] = (counts[a.status] || 0) + 1;
 
+  for (const a of out) {
+    const busy = a.status === 'running' || a.status === 'stalled';
+    a.doingNowLabel = a.placeholder && busy ? STARTING_LABEL : (a.lastTool ? a.lastTool.label : null);
+    a.resultLine = busy ? '' : resultLine(a.report);
+  }
+  const pipeline = computePipeline({ agents: out, waves, skills, mainMtimeMs, now });
+
   return {
+    pipeline,
     title,
-    skills: skills.map(({ order, ...s }) => s),
+    skills: skills.map(({ order, rawArgs, ...s }) => s),
     agents: out,
     waves,
     idleTypes,
     counts,
     warnings,
+  };
+}
+
+// ---------- pipeline (stepper) ----------
+
+export const STEP_ORDER = ['kickoff', 'spec', 'specGate', 'tdd', 'coding', 'e2e', 'security', 'verify', 'archive'];
+export const STEP_LABEL = {
+  kickoff: 'Kickoff', spec: 'Spec', specGate: 'Spec gate', tdd: 'TDD', coding: 'Coding',
+  e2e: 'E2E', security: 'Security', verify: 'Verify', archive: 'Archive',
+};
+// security and verify share a position: they run together as the gates.
+const STEP_IDX = { kickoff: 0, spec: 1, specGate: 2, tdd: 3, coding: 4, e2e: 5, security: 6, verify: 6, archive: 7 };
+const TYPE_STEP = {
+  'osf-spec-review': 'specGate', 'osf-tdd': 'tdd', 'osf-apply': 'coding', 'osf-e2e': 'e2e',
+  'osf-security': 'security', 'osf-verify': 'verify', 'osf-archive': 'archive',
+  'osf-analyze': 'spec', 'osf-researcher': 'spec',
+};
+const KICKOFF_TYPES = new Set(['osf-pm', 'osf-ba', 'osf-qa']);
+const SKILL_STEP = { proposal: 'spec', tdd: 'tdd', e2e: 'e2e' };
+const skillKey = (name) => String(name || '').replace(/^\//, '').replace(/^osf:/, '');
+const tsNum = (ts) => { const n = Date.parse(ts || ''); return Number.isNaN(n) ? Infinity : n; };
+// Review steps: a fresh wave after a cut or a skill call is a re-run, not fan-out.
+const GATE_STEPS = new Set(['specGate', 'security', 'verify', 'archive']);
+// "Security gate review (rerun)" / "Spec gate re-review" -> same work as the first run.
+export function normDesc(d) {
+  return String(d || '').toLowerCase()
+    .replace(/\([^)]*\b(?:re-?run|retry|again|redo|attempt|round)\b[^)]*\)/g, ' ')
+    .replace(/\b(?:re-?run|retry|again|redo)\b/g, ' ')
+    .replace(/\bre-(?=[a-z])/g, '')
+    .replace(/\b(?:attempt|round|try)\s*#?\d+\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ').trim();
+}
+const workKey = (a) => { const d = normDesc(a.description); return d ? `${shortType(a.type)}|${d}` : null; };
+
+function stateOf(agents) {
+  const st = new Set(agents.map((a) => a.status));
+  if (st.has('running')) return 'running';
+  if (st.has('stalled')) return 'stalled';
+  if (st.has('cut')) return 'cut';
+  return 'done';
+}
+
+/**
+ * Maps agents onto the osf pipeline steps and finds the current step.
+ * Sets agent.step on every agent; returns
+ * {kind, finished, stopped, stoppedAt, round, steps:[{key,label,state,agentIds,attempts,round,startedAt,endedAt}],
+ *  current:[key], loops:[{from,to,round}], otherAgentIds}.
+ * Step state: pending | waiting | running | stalled | cut | done | skipped.
+ */
+export function computePipeline({ agents, waves, skills, mainMtimeMs, now }) {
+  const byId = new Map(agents.map((a) => [a.id, a]));
+  const waveByIdx = new Map(waves.map((w) => [w.index, w]));
+  const skillById = new Map(skills.map((s) => [s.id, s]));
+  const hasSkill = (k) => skills.some((s) => skillKey(s.name) === k);
+  const hasTeam = hasSkill('team');
+
+  const isKickoffWave = (w) => {
+    const sk = skillById.get(w.skillId);
+    if (sk && skillKey(sk.name) === 'team') return true;
+    return w.agentIds.some((id) => byId.has(id) && KICKOFF_TYPES.has(shortType(byId.get(id).type)));
+  };
+  const stepOf = (a, depth = 0) => {
+    if (a.step !== undefined) return a.step;
+    const parent = a.parentAgentId && byId.get(a.parentAgentId);
+    if (parent && parent !== a && depth < 20) return (a.step = stepOf(parent, depth + 1));
+    const w = a.wave != null ? waveByIdx.get(a.wave) : null;
+    if (w && !w.parentAgentId && isKickoffWave(w)) return (a.step = 'kickoff');
+    return (a.step = TYPE_STEP[shortType(a.type)] || 'other');
+  };
+  for (const a of agents) delete a.step;
+  for (const a of agents) stepOf(a);
+
+  const keys = STEP_ORDER.filter((k) => k !== 'kickoff' || hasTeam || agents.some((a) => a.step === 'kickoff'));
+  // standalone: a single osf skill (e2e, tdd, apply, ...) ran without autopilot/team.
+  const kind = keys.includes('kickoff') ? 'team'
+    : hasSkill('autopilot') ? 'autopilot'
+    : (hasSkill('proposal') || agents.some((a) => a.step !== 'other')) ? 'standalone' : 'none';
+  const standalone = kind === 'standalone';
+  const flagged = (flag) => skills.some((s) => ['autopilot', 'team'].includes(skillKey(s.name)) &&
+    new RegExp(`(^|\\s)${flag}(\\s|$)`).test(s.rawArgs || s.args || ''));
+  const noTdd = flagged('--no-tdd');
+  const noE2e = flagged('--no-e2e');
+
+  // Root waves in time order; unlinked root agents count as their own wave.
+  const rootWaves = waves.filter((w) => !w.parentAgentId).map((w) => ({ ts: w.ts, agentIds: w.agentIds }));
+  for (const a of agents) if (a.wave == null && !a.parentAgentId) rootWaves.push({ ts: a.startedAt, agentIds: [a.id] });
+  rootWaves.sort((x, y) => tsNum(x.ts) - tsNum(y.ts));
+
+  const info = Object.fromEntries(keys.map((k) => [k, { attempts: 0, round: null, latest: null, latestTs: null, firstTs: null, all: [], ran: new Set() }]));
+  // A wave starts a new attempt only when it re-runs work already done in
+  // this round; consecutive fan-out waves of the same step are one attempt.
+  const isRerun = (k, list, ts) => {
+    const s = info[k];
+    if (s.latest == null) return false;
+    if (list.some((a) => s.ran.has(workKey(a)))) return true;
+    if (!GATE_STEPS.has(k) || s.latest.some((a) => a.status === 'running' || a.status === 'stalled')) return false;
+    if (s.latest.some((a) => a.status === 'cut')) return true;
+    const from = tsNum(s.latestTs);
+    const to = tsNum(ts);
+    return skills.some((sk) => tsNum(sk.ts) > from && tsNum(sk.ts) < to);
+  };
+  const loops = [];
+  let round = 1;
+  let maxIdx = -1;
+  let prevKeys = null;
+  const stepped = []; // [{ts, groups: Map(step -> agents)}]
+  for (const w of rootWaves) {
+    const groups = new Map();
+    for (const id of w.agentIds) {
+      const a = byId.get(id);
+      if (!a || !info[a.step]) continue;
+      if (!groups.has(a.step)) groups.set(a.step, []);
+      groups.get(a.step).push(a);
+    }
+    if (!groups.size) continue;
+    stepped.push({ ts: w.ts, groups });
+    if (groups.has('coding') && maxIdx > STEP_IDX.coding) {
+      round++;
+      const from = prevKeys.some((k) => k === 'security' || k === 'verify') ? 'gates'
+        : prevKeys.reduce((m, k) => (STEP_IDX[k] > STEP_IDX[m] ? k : m), prevKeys[0]);
+      loops.push({ from, to: 'coding', round });
+      for (const k of keys) {
+        if (STEP_IDX[k] >= STEP_IDX.coding) Object.assign(info[k], { attempts: 0, latest: null, latestTs: null, firstTs: null, round: null, ran: new Set() });
+      }
+      maxIdx = STEP_IDX.coding;
+    }
+    for (const [k, list] of groups) {
+      const s = info[k];
+      if (!s.latest) { s.attempts = 1; s.latest = list; }
+      else if (isRerun(k, list, w.ts)) { s.attempts++; s.latest = list; }
+      else s.latest = s.latest.concat(list);
+      s.latestTs = w.ts;
+      for (const a of list) { const wk = workKey(a); if (wk) s.ran.add(wk); }
+      s.round = round;
+      if (!s.firstTs) s.firstTs = w.ts;
+      s.all.push(...list.map((a) => a.id));
+      for (const a of list) a.round = round;
+      maxIdx = Math.max(maxIdx, STEP_IDX[k]);
+    }
+    prevKeys = [...groups.keys()];
+  }
+  // Nested agents work for their parent's step (and round).
+  const rootOf = (a, depth = 0) => (a.parentAgentId && byId.get(a.parentAgentId) && depth < 20 ? rootOf(byId.get(a.parentAgentId), depth + 1) : a);
+  for (const a of agents) {
+    if (a.round === undefined) a.round = a.parentAgentId ? (rootOf(a).round ?? null) : null;
+    if (a.parentAgentId && info[a.step] && !info[a.step].all.includes(a.id)) info[a.step].all.push(a.id);
+  }
+
+  const anyRunning = agents.some((a) => a.status === 'running');
+  const idle = !anyRunning && (typeof mainMtimeMs !== 'number' || now - mainMtimeMs > STALLED_MS);
+  const proposalSkill = skills.find((s) => skillKey(s.name) === 'proposal');
+  const laterStarted = (k) => keys.some((o) => STEP_IDX[o] > STEP_IDX[k] && info[o].latest);
+
+  const state = {};
+  for (const k of keys) {
+    const s = info[k];
+    if (s.latest) state[k] = stateOf(s.latest);
+    // An inline proposal skill in an idle session has returned.
+    else if (k === 'spec' && proposalSkill) state[k] = laterStarted(k) || idle ? 'done' : 'running';
+    else if ((k === 'tdd' && noTdd) || (k === 'e2e' && noE2e)) state[k] = 'skipped';
+    else if (laterStarted(k)) state[k] = 'skipped';
+    else state[k] = 'pending';
+  }
+
+  // Current step.
+  let current = [];
+  let finished = false;
+  let stopped = false;
+  let stoppedAt = null;
+  for (let i = stepped.length - 1; i >= 0 && !current.length; i--) {
+    const { groups } = stepped[i];
+    const busy = [...groups.values()].flat().some((a) => a.status === 'running' || a.status === 'stalled');
+    if (busy) current = [...groups.keys()];
+  }
+  if (!current.length && !idle) {
+    const lastTs = stepped.length ? tsNum(stepped[stepped.length - 1].ts) : -Infinity;
+    const sk = [...skills].reverse().find((s) => SKILL_STEP[skillKey(s.name)] && tsNum(s.ts) > lastTs &&
+      keys.includes(SKILL_STEP[skillKey(s.name)]));
+    if (sk) {
+      const k = SKILL_STEP[skillKey(sk.name)];
+      current = [k];
+      state[k] = 'running';
+    }
+  }
+  // Standalone sessions show only the steps that actually ran.
+  const ran = (k) => !!info[k].latest || (k === 'spec' && !!proposalSkill) || current.includes(k);
+  const last = stepped[stepped.length - 1];
+  if (standalone && !current.length) {
+    const shownKeys = keys.filter(ran);
+    if (idle) {
+      if (shownKeys.every((k) => state[k] === 'done')) finished = true;
+      else {
+        stopped = true;
+        const reached = last ? [...last.groups.keys()] : shownKeys;
+        stoppedAt = reached.reduce((m, k) => (m == null || STEP_IDX[k] > STEP_IDX[m] || (STEP_IDX[k] === STEP_IDX[m] && k === 'security') ? k : m), null) || shownKeys[0] || null;
+      }
+    } else {
+      // Active between agents: the next step is unknown, stay on the last one that ran.
+      current = last ? [...last.groups.keys()] : shownKeys.slice(-1);
+    }
+  } else if (!current.length) {
+    if (state.archive === 'done' || (idle && kind === 'none')) finished = true;
+    else if (idle) {
+      // Idle: finished only when nothing is left to do — or a Verified run whose
+      // last wave was the gates, all done (archive never reached).
+      const lastAgents = last ? [...last.groups.values()].flat() : [];
+      const gatesDone = !!last && (last.groups.has('security') || last.groups.has('verify')) &&
+        !last.groups.has('coding') && lastAgents.every((a) => a.status === 'done');
+      const open = keys.some((k) => state[k] !== 'done' && state[k] !== 'skipped');
+      if (gatesDone || !open) {
+        finished = true;
+        for (const k of keys) if (state[k] === 'pending') state[k] = 'skipped';
+      } else {
+        stopped = true;
+        const reached = last ? [...last.groups.keys()] : keys.filter((k) => state[k] !== 'pending' && state[k] !== 'skipped');
+        stoppedAt = reached.reduce((m, k) => (m == null || STEP_IDX[k] > STEP_IDX[m] || (STEP_IDX[k] === STEP_IDX[m] && k === 'security') ? k : m), null) || keys[0];
+      }
+    } else {
+      const next = keys.find((k) => state[k] !== 'done' && state[k] !== 'skipped');
+      if (!next) finished = true;
+      else {
+        current = next === 'security' || next === 'verify'
+          ? ['security', 'verify'].filter((k) => state[k] !== 'done' && state[k] !== 'skipped')
+          : [next];
+        for (const k of current) if (state[k] === 'pending') state[k] = 'waiting';
+      }
+    }
+  }
+
+  const steps = (standalone ? keys.filter(ran) : keys).map((k) => {
+    const s = info[k];
+    const st = state[k];
+    let endedAt = null;
+    if (s.latest && (st === 'done' || st === 'cut')) {
+      endedAt = s.latest.map((a) => a.endedAt || a.lastActivityAt).filter(Boolean).sort().pop() || null;
+    }
+    return {
+      key: k, label: STEP_LABEL[k], state: st, agentIds: s.all, attempts: s.attempts,
+      round: s.round, startedAt: s.firstTs || (k === 'spec' && proposalSkill ? proposalSkill.ts : null), endedAt,
+    };
+  });
+  return {
+    kind,
+    finished,
+    stopped,
+    stoppedAt,
+    round,
+    steps,
+    current,
+    loops,
+    otherAgentIds: agents.filter((a) => !info[a.step]).map((a) => a.id),
   };
 }
 

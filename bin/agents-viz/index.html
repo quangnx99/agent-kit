@@ -6,132 +6,425 @@
 <title>osf agents</title>
 <link rel="icon" href="data:,">
 <style>
+/* Dark-first tokens (default); light overrides under prefers-color-scheme: light. */
 :root {
-  color-scheme: light dark;
-  --bg: #f6f7f9; --panel: #ffffff; --line: #d9dde3; --text: #1f2328; --muted: #57606a;
-  --accent: #1d4ed8; --osf: #6d28d9; --osf-bg: #f3efff;
-  --running: #1d4ed8; --done: #15803d; --cut: #c2410c; --stalled: #a16207; --idle: #4b5563; --none: #6b7280;
-  --sel: #e8f0fe; --err-bg: #fff1ec; --warn-bg: #fff8e1;
+  color-scheme: dark;
+  --bg: #0B1020;
+  --bg-image: radial-gradient(1200px 600px at 20% -10%, rgba(99,102,241,.12), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(34,197,94,.06), transparent 60%);
+  --surface: #121A2B; --surface-2: #18223A; --surface-3: #1F2A44;
+  --border: rgba(148,163,184,.14); --border-strong: rgba(148,163,184,.28);
+  --text: #F1F5F9; --muted: #94A3B8; --faint: #64748B;
+  --accent: #818CF8; --accent-tint: rgba(129,140,248,.14);
+  --running: #22C55E; --running-tint: rgba(34,197,94,.14);
+  --done: #4ADE80; --cut: #FB923C; --stalled: #FACC15; --loop: #C084FC; --pending-ring: #475569;
+  --on-done: #0B1020;
+  --tint-done: rgba(74,222,128,.14); --tint-cut: rgba(251,146,60,.14); --tint-stalled: rgba(250,204,21,.14);
+  --glow-run: 0 0 0 1px rgba(34,197,94,.35), 0 0 18px rgba(34,197,94,.28);
+  --glow-accent: 0 0 0 1px rgba(129,140,248,.4), 0 0 22px rgba(129,140,248,.30);
+  --shadow-card: 0 1px 0 rgba(255,255,255,.04) inset, 0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg: 0 1px 0 rgba(255,255,255,.04) inset, 0 24px 64px rgba(0,0,0,.55);
+  --header-bg: rgba(11,16,32,.72);
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px;
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-back: cubic-bezier(.34, 1.56, .64, 1);
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", "SF Mono", Consolas, monospace;
+  --gutter: 24px;
 }
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --bg: #0f1115; --panel: #171a21; --line: #2c313c; --text: #e6e8eb; --muted: #a0a7b4;
-    --accent: #7aa7ff; --osf: #c4a7ff; --osf-bg: #231a3a;
-    --running: #7aa7ff; --done: #4ade80; --cut: #fb923c; --stalled: #facc15; --idle: #a0a7b4; --none: #8b93a1;
-    --sel: #1e2a44; --err-bg: #3a1d12; --warn-bg: #352a0c;
+    color-scheme: light;
+    --bg: #F6F7FB;
+    --bg-image: radial-gradient(1200px 600px at 20% -10%, rgba(99,102,241,.05), transparent 60%);
+    --surface: #FFFFFF; --surface-2: #F1F4F9; --surface-3: #E8EDF5;
+    --border: #E2E8F0; --border-strong: #CBD5E1;
+    --text: #0F172A; --muted: #475569; --faint: #94A3B8;
+    --accent: #4F46E5; --accent-tint: #EEF0FF;
+    --running: #15803D; --running-tint: #EEF8F1;
+    --done: #15803D; --cut: #C2410C; --stalled: #A16207; --loop: #9333EA; --pending-ring: #94A3B8;
+    --on-done: #FFFFFF;
+    --tint-done: #EEF8F1; --tint-cut: #FFF1E8; --tint-stalled: #FDF6E0;
+    --glow-run: 0 0 0 1px rgba(21,128,61,.30), 0 2px 8px rgba(21,128,61,.16);
+    --glow-accent: 0 0 0 1px rgba(79,70,229,.30), 0 2px 10px rgba(79,70,229,.18);
+    --shadow-card: 0 1px 2px rgba(15,23,42,.06), 0 4px 12px rgba(15,23,42,.06);
+    --shadow-lg: 0 12px 32px rgba(15,23,42,.16);
+    --header-bg: rgba(246,247,251,.78);
   }
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; }
-body { background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
-header h1 { font-size: 15px; margin: 0; }
-header .sub { color: var(--muted); font-size: 12px; }
-.counts { display: flex; gap: 10px; margin-left: auto; flex-wrap: wrap; }
-.layout { display: grid; grid-template-columns: 280px minmax(0, 1fr) 380px; height: calc(100% - 49px); }
-.col { overflow: auto; border-right: 1px solid var(--line); min-height: 0; }
-.col:last-child { border-right: 0; }
-.left { background: var(--panel); padding: 12px; }
-.center { padding: 16px; }
-.right { background: var(--panel); padding: 16px; }
-label.lbl { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-select { width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; }
-.sessions { list-style: none; padding: 0; margin: 12px 0 0; }
-.sessions li { margin: 0 0 6px; }
-.sessions button { width: 100%; text-align: left; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 8px; padding: 8px; font: inherit; cursor: pointer; }
-.sessions button[aria-current="true"] { border-color: var(--accent); background: var(--sel); }
-.sessions .t { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sessions .m { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 12px; margin-top: 2px; }
-button:focus-visible, [tabindex]:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.ico { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.st { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; }
-.st-running { color: var(--running); } .st-done { color: var(--done); } .st-cut { color: var(--cut); }
-.st-stalled { color: var(--stalled); } .st-idle { color: var(--idle); } .st-not-spawned { color: var(--none); }
-.st-running .ico { animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.root { font-weight: 700; margin: 0 0 12px; }
-.skill { border-left: 2px solid var(--line); margin: 0 0 14px 6px; padding-left: 12px; }
-.skill h3 { font-size: 13px; margin: 0 0 6px; display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
-.skill h3 .args { color: var(--muted); font-weight: 400; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60ch; }
-.wave { margin: 0 0 10px; }
-.wave .wl { font-size: 12px; color: var(--muted); margin: 0 0 4px; }
-.wave.nested { margin-left: 24px; }
-.row { display: flex; gap: 8px; flex-wrap: wrap; }
-.card { width: 230px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--panel); cursor: pointer; }
-.card.osf { border-left: 4px solid var(--osf); }
-.card.osf .type { color: var(--osf); }
-.card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-.card.is-running { animation: pulse 1.8s ease-in-out infinite; }
-@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--running) 35%, transparent); } }
-@media (prefers-reduced-motion: reduce) { .card.is-running, .st-running .ico { animation: none; } }
-.card .type { font-size: 12px; font-weight: 700; }
-.card .desc { margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.card .now { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.chip { display: inline-block; font-size: 11px; padding: 0 6px; border-radius: 10px; border: 1px solid var(--line); color: var(--muted); }
-.chip.osf { color: var(--osf); border-color: var(--osf); background: var(--osf-bg); }
-.idle h2, .right h2 { font-size: 13px; margin: 16px 0 6px; }
-.idle ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
-.right h2:first-child { margin-top: 0; }
-pre { white-space: pre-wrap; word-break: break-word; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; margin: 0; max-height: 320px; overflow: auto; font: 12px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; }
-ol.tl { padding-left: 22px; margin: 0; max-height: 260px; overflow: auto; font-size: 12px; }
-ol.tl li { margin-bottom: 2px; }
-ol.tl .tool { font-weight: 600; }
-ol.tl .tgt { color: var(--muted); word-break: break-all; }
-.kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 12px; color: var(--muted); }
-.kv b { color: var(--text); font-weight: 600; }
-.msg { padding: 24px; color: var(--muted); text-align: center; }
-.banner { border-radius: 8px; padding: 8px 12px; margin: 0 0 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.banner.err { background: var(--err-bg); color: var(--cut); }
-.banner.warn { background: var(--warn-bg); color: var(--stalled); }
-.banner button { font: inherit; border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 6px; padding: 2px 10px; cursor: pointer; }
-.note { font-size: 12px; margin: 4px 0 0; }
-.note.cut { color: var(--cut); } .note.warn { color: var(--stalled); }
+html, body { margin: 0; }
+body { background: var(--bg-image), var(--bg); background-attachment: fixed; color: var(--text); font: 14px/1.5 var(--font); min-height: 100vh; overflow-x: hidden; }
 [hidden] { display: none !important; }
-@media (max-width: 1000px) {
-  .layout { grid-template-columns: 1fr; height: auto; }
-  .col { border-right: 0; border-bottom: 1px solid var(--line); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.mono, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.ico { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+button { font: inherit; color: inherit; }
+
+/* ---------- header ---------- */
+.top { position: sticky; top: 0; z-index: 20; height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 var(--gutter); background: var(--header-bg); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
+.brand { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+.brand .gem { color: var(--accent); font-size: 16px; }
+.top select { height: 32px; min-width: 0; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; transition: border-color .15s, background-color .15s; }
+.top select:hover { border-color: var(--border-strong); background: var(--surface-2); }
+#project { flex: 0 1 200px; }
+#session { flex: 0 1 420px; }
+/* fixed-width slot: "Live" and "Mất kết nối" swap without moving the header */
+.live { margin-left: auto; width: 112px; flex: none; display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.live::before { content: ""; width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--running); box-shadow: 0 0 0 3px var(--running-tint); }
+.live[data-ok="false"] { color: var(--cut); }
+.live[data-ok="false"]::before { background: var(--cut); box-shadow: 0 0 0 3px var(--tint-cut); }
+
+main { max-width: 1240px; margin: 0 auto; padding: 28px var(--gutter) 56px; }
+.alert { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 14px; margin: 0 0 16px; border-radius: var(--r-md); border: 1px solid var(--tint-cut); background: var(--tint-cut); color: var(--cut); font-weight: 500; }
+.alert button { margin-left: auto; height: 28px; padding: 0 12px; border: 1px solid currentColor; border-radius: 999px; background: transparent; cursor: pointer; transition: background-color .15s; }
+.alert button:hover { background: var(--tint-cut); }
+#content.stale { opacity: .6; }
+
+/* ---------- hero ---------- */
+.eyebrow { margin: 0 0 6px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.hero h1 { margin: 0; min-height: 34px; font-size: 28px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
+.hero h1.swap { animation: heroswap .22s var(--ease-out); }
+.hero[data-mode="finished"] h1 { color: var(--done); }
+.hero[data-mode="stopped"] h1 { color: var(--stalled); }
+.hero .meta { margin: 6px 0 0; min-height: 21px; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ---------- stepper ---------- */
+.stepcard { margin-top: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-card); padding: 16px 20px 14px; }
+.stepscroll { position: relative; }
+.stepwrap { position: relative; }
+.stepwrap.has-loop { padding-bottom: 44px; }
+.stepper { list-style: none; margin: 0; padding: 0; display: flex; align-items: flex-start; }
+.step { display: flex; align-items: flex-start; flex: 1 1 0; min-width: 0; }
+.step:first-child { flex: 0 0 auto; }
+.step:first-child > .conn { display: none; }
+/* node = 24px pill row + 80px dot area; connector sits on the dot centre line (24 + 40) */
+.conn { --c: var(--border-strong); flex: 1 1 auto; min-width: 12px; height: 2px; margin-top: 63px; border-radius: 2px; background: var(--c); position: relative; overflow: hidden; }
+.conn[data-conn="done"] { --c: var(--done); }
+.conn[data-skip="true"] { background: repeating-linear-gradient(90deg, var(--c) 0 4px, transparent 4px 8px); opacity: .6; }
+.conn[data-conn="flow"], .conn[data-conn="wait"] { height: 3px; margin-top: 62.5px; opacity: 1; background: color-mix(in srgb, var(--accent) 30%, var(--border-strong)); }
+.conn[data-conn="flow"]::after, .conn[data-conn="wait"]::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--accent), transparent) no-repeat; background-size: 40px 100%; background-position: -40px 0; animation: lightx 1.6s linear infinite; }
+.conn[data-conn="wait"]::after { opacity: .55; animation-duration: 3.2s; }
+.conn.just-done { background: var(--border-strong); }
+.conn.just-done::before { content: ""; position: absolute; inset: 0; background: var(--done); transform-origin: left center; animation: grow .48s var(--ease-out) .12s both; }
+.node { appearance: none; position: relative; border: 0; background: none; cursor: pointer; flex: none; width: 104px; min-height: 44px; padding: 24px 0 4px; display: flex; flex-direction: column; align-items: center; gap: 6px; border-radius: var(--r-md); scroll-snap-align: center; transition: background-color .18s; }
+.node:hover { background: color-mix(in srgb, var(--surface-3) 55%, transparent); }
+.dots { height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.dot { width: 32px; height: 32px; flex: none; border-radius: 50%; display: grid; place-items: center; position: relative; background: var(--surface); border: 2px solid var(--pending-ring); color: var(--muted); transition: width .25s var(--ease-out), height .25s var(--ease-out), background-color .25s, border-color .25s, box-shadow .25s; }
+.dot .ico { width: 16px; height: 16px; }
+.dot[data-state="done"] { background: var(--done); border-color: var(--done); color: var(--on-done); }
+.dot[data-state="done"] .ico { stroke-width: 3; }
+.dot[data-state="active"] { width: 44px; height: 44px; border: 2px solid var(--accent); background: var(--accent-tint); color: var(--accent); box-shadow: var(--glow-accent); }
+.dot[data-state="active"] .ico { width: 20px; height: 20px; animation: spin 1s linear infinite; }
+/* running node: slow breathing green glow (opacity only) */
+.dot[data-state="active"]::after { content: ""; position: absolute; inset: -2px; border-radius: 50%; box-shadow: var(--glow-run); opacity: 0; animation: breathe 2.4s ease-in-out infinite; pointer-events: none; }
+.dot[data-state="waiting"] { width: 44px; height: 44px; border: 2px dashed var(--accent); background: var(--accent-tint); color: var(--accent); }
+.dot[data-state="skipped"] { width: 18px; height: 18px; border: 1.5px dashed var(--pending-ring); background: transparent; opacity: .7; }
+.dot[data-state="skipped"] .ico { width: 10px; height: 10px; }
+.dot[data-state="cut"] { border-color: var(--cut); background: var(--tint-cut); color: var(--cut); }
+.dot[data-state="stalled"] { border-color: var(--stalled); background: var(--tint-stalled); color: var(--stalled); }
+.dot.just-done .ico path { stroke-dasharray: 24; animation: check .4s var(--ease-out) both; }
+.node.bounce .dots { animation: bounce .3s var(--ease-out); }
+.ntxt { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.pill { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); height: 20px; padding: 0 8px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .04em; white-space: nowrap; color: var(--running); background: var(--running-tint); }
+.pill:empty { display: none; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 1.6s ease-in-out infinite; }
+.node[data-state="waiting"] .pill { color: var(--accent); background: var(--accent-tint); }
+.node[data-state="waiting"] .pill::before { animation: none; background: transparent; border: 1.5px solid currentColor; }
+.lbl { max-width: 104px; font-size: 13px; font-weight: 600; line-height: 1.3; text-align: center; color: var(--muted); }
+.node[data-state="done"] .lbl { color: var(--text); }
+.node[data-state="active"] .lbl, .node[data-state="waiting"] .lbl { color: var(--accent); }
+.node[data-state="cut"] .lbl { color: var(--cut); }
+.node[data-state="stalled"] .lbl { color: var(--stalled); }
+.node[data-state="skipped"] .lbl { font-weight: 500; text-decoration: line-through; opacity: .8; }
+.node[aria-pressed="true"] .lbl { text-decoration: underline 2px var(--accent); text-underline-offset: 4px; }
+.node[aria-pressed="true"][data-state="skipped"] .lbl { text-decoration: line-through underline; }
+.node:hover .dot:not([data-state="done"]):not([data-state="active"]):not([data-state="waiting"]) { border-color: var(--muted); }
+/* caption row reserved even when empty */
+.cap { min-height: 18px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 12px; line-height: 18px; color: var(--muted); }
+.cap .loopcap { color: var(--loop); font-weight: 600; }
+.rmcap { display: none; font-size: 12px; font-weight: 600; color: var(--accent); }
+.step.enter > .node, .step.enter > .conn { animation: nodein .32s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms); }
+.looparc { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.looparc .arc { fill: none; stroke: var(--loop); stroke-width: 1.5; }
+.looparc .head { fill: var(--loop); }
+.looparc text { fill: var(--loop); font: 600 12px var(--mono); }
+.looparc.draw .arc { stroke-dasharray: var(--len); animation: draw .7s var(--ease-out) both; }
+.looparc.draw .head, .looparc.draw text { animation: fadein .2s ease-out .6s both; }
+
+/* ---------- agents ---------- */
+.agents-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 28px; margin: 28px 0 12px; }
+.agents-head h2 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.chip { height: 28px; padding: 0 12px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; cursor: pointer; white-space: nowrap; transition: background-color .15s, border-color .15s; }
+.chip:hover { background: var(--surface-3); border-color: var(--border-strong); }
+#otherChip { margin-left: auto; min-width: 84px; justify-content: center; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.gridempty { margin: 0; padding: 8px 0; color: var(--muted); }
+.agent { appearance: none; position: relative; width: 100%; min-width: 0; height: 102px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; text-align: left; cursor: pointer; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--shadow-card); transition: background-color .18s, border-color .18s; }
+.agent::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent-c, transparent); transition: background-color .25s; }
+.agent[data-status="running"] { --accent-c: var(--running); border-color: color-mix(in srgb, var(--running) 35%, var(--border)); animation: cardpulse 2.4s ease-in-out infinite; }
+.agent[data-status="done"] { --accent-c: var(--done); }
+.agent[data-status="cut"] { --accent-c: var(--cut); }
+.agent[data-status="stalled"] { --accent-c: var(--stalled); }
+.agent:hover { background: var(--surface-3); border-color: var(--border-strong); }
+.agent[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: -1px; }
+.agent[aria-pressed="true"]:focus-visible { outline-offset: 2px; }
+.agent.enter { animation: enter .38s var(--ease-back) both; animation-delay: calc(var(--i, 0) * 60ms); }
+.agent[data-status="running"].enter { animation: enter .38s var(--ease-back) both, cardpulse 2.4s ease-in-out infinite; animation-delay: calc(var(--i, 0) * 60ms), 0s; }
+.l1 { height: 22px; display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 600; }
+.l1 .ico { color: var(--sc, var(--muted)); }
+.agent[data-status="running"] .l1 .ico { --sc: var(--running); animation: spin 1s linear infinite; }
+.agent[data-status="done"] .l1 .ico { --sc: var(--done); }
+.agent[data-status="cut"] .l1 .ico { --sc: var(--cut); }
+.agent[data-status="stalled"] .l1 .ico { --sc: var(--stalled); }
+.desc { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.l2 { height: 21px; display: flex; align-items: baseline; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap; }
+.l2 .verb { flex: 0 0 auto; max-width: 65%; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 500; font-variant-numeric: tabular-nums; }
+.l2 .obj { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 12px; color: var(--muted); }
+.tick { animation: tick .16s ease-out; }
+.l3 { height: 18px; margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; line-height: 18px; color: var(--muted); white-space: nowrap; }
+.l3 [data-ago] { font-family: var(--mono); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
+.l3 .open { color: var(--accent); font-weight: 500; }
+
+/* ---------- badge ---------- */
+.badge { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 76px; height: 24px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.badge[data-status="running"] { background: var(--running-tint); color: var(--running); }
+.badge[data-status="running"] .ico { animation: spin 1s linear infinite; }
+.badge[data-status="done"] { background: var(--tint-done); color: var(--done); }
+.badge[data-status="cut"] { background: var(--tint-cut); color: var(--cut); }
+.badge[data-status="stalled"] { background: var(--tint-stalled); color: var(--stalled); }
+.badge .ico { width: 14px; height: 14px; }
+
+/* ---------- drawer ---------- */
+.drawer { position: fixed; z-index: 30; top: 56px; right: 0; bottom: 0; width: 400px; max-width: 100vw; padding: 20px; overflow-y: auto; background: var(--surface); border-left: 1px solid var(--border-strong); box-shadow: var(--shadow-lg); transform: translateX(100%); opacity: .6; visibility: hidden; transition: transform .18s cubic-bezier(.4, 0, 1, 1), opacity .18s cubic-bezier(.4, 0, 1, 1), visibility 0s linear .18s; }
+.drawer[data-open="true"] { transform: none; opacity: 1; visibility: visible; transition: transform .28s var(--ease-out), opacity .28s var(--ease-out), visibility 0s; }
+.grab { display: none; }
+.dhead { display: flex; align-items: flex-start; gap: 12px; }
+.dhead h2 { flex: 1; min-width: 0; margin: 4px 0 0; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.3; overflow-wrap: anywhere; }
+.iconbtn { width: 44px; height: 44px; margin: -6px -10px 0 0; flex: none; display: grid; place-items: center; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--muted); cursor: pointer; transition: background-color .15s, color .15s; }
+.iconbtn:hover { background: var(--surface-3); color: var(--text); }
+.iconbtn .ico { width: 20px; height: 20px; }
+.dsub { margin: 8px 0 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--muted); }
+.dtype { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+.box { margin-top: 16px; padding: 14px 14px 14px 16px; border-radius: var(--r-md); background: var(--surface-2); border: 1px solid var(--border); }
+.box[data-kind="running"] { box-shadow: inset 3px 0 0 var(--running); }
+.bverb { margin: 0; min-height: 24px; font-size: 16px; font-weight: 600; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.box[data-kind="done"] .bverb { color: var(--done); }
+.box[data-kind="cut"] .bverb { color: var(--cut); }
+.box[data-kind="stalled"] .bverb { color: var(--stalled); }
+.bobj { margin: 4px 0 0; font-size: 13px; overflow-wrap: anywhere; }
+.bobj.prose { font-family: var(--font); font-size: 14px; }
+.bago { margin: 6px 0 0; min-height: 18px; font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 12px; color: var(--muted); }
+.recentwrap { margin-top: 20px; }
+.recent { list-style: none; margin: 0; padding: 0; }
+.recent li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.recent li:last-child { border-bottom: 0; }
+.recent .o { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--muted); }
+.recent .t { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.olist { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.oitem { appearance: none; width: 100%; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; text-align: left; cursor: pointer; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); transition: background-color .18s, border-color .18s; }
+.oitem:hover { background: var(--surface-3); border-color: var(--border-strong); }
+.oitem .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.oitem .ot { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oitem .od { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- states ---------- */
+.skel { background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+/* skeleton mirrors the final layout: hero 34 + meta 21, stepper row, agents head + cards */
+.skelline { width: 240px; height: 34px; border-radius: var(--r-sm); }
+.skelmeta { width: 160px; height: 14px; margin-top: 13px; border-radius: 4px; }
+.skelrow { display: flex; align-items: flex-start; gap: 12px; height: 151px; padding-top: 48px; }
+.skelrow .sd { width: 32px; height: 32px; border-radius: 50%; flex: none; }
+.skelrow .sl { height: 2px; flex: 1; margin-top: 15px; }
+.skelhead { margin: 28px 0 12px; min-height: 28px; display: flex; align-items: center; }
+.skeltext { margin: 0; color: var(--muted); }
+.skelcard { height: 102px; border-radius: var(--r-md); border: 1px solid var(--border); }
+.empty { padding: 72px 16px; text-align: center; color: var(--muted); }
+.empty .ico { width: 32px; height: 32px; color: var(--accent); }
+.empty h2 { margin: 12px 0 4px; font-size: 16px; font-weight: 700; color: var(--text); }
+.empty p { margin: 0; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes lightx { from { background-position: -40px 0; } to { background-position: calc(100% + 40px) 0; } }
+@keyframes lighty { from { background-position: 0 -40px; } to { background-position: 0 calc(100% + 40px); } }
+@keyframes breathe { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.8); } }
+@keyframes check { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes growy { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes draw { from { stroke-dashoffset: var(--len); } to { stroke-dashoffset: 0; } }
+@keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes enter { from { opacity: 0; transform: translateY(12px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes nodein { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+@keyframes heroswap { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes cardpulse { 0%, 100% { box-shadow: var(--shadow-card); } 50% { box-shadow: var(--shadow-card), var(--glow-run); } }
+@keyframes tick { from { opacity: .4; } to { opacity: 1; } }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* tablet: horizontal stepper scrolls inside its card */
+@media (max-width: 1023px) {
+  .stepscroll { overflow-x: auto; scroll-snap-type: x proximity; }
+  .stepper { min-width: max-content; }
+  .step, .step:first-child { flex: 0 0 auto; }
+  .conn { flex: 0 0 32px; }
+  .looparc { display: none; }
+  .stepwrap.has-loop { padding-bottom: 0; }
+  .drawer { width: 360px; }
+}
+/* phone: vertical stepper, current step's agents inline, drawer as bottom sheet */
+@media (max-width: 719px) {
+  :root { --gutter: 16px; }
+  .brand .name { display: none; }
+  .top { gap: 8px; }
+  .live { font-size: 0; gap: 0; width: 16px; }
+  .hero h1 { font-size: 24px; min-height: 29px; }
+  .stepscroll { overflow: visible; }
+  .stepper { flex-direction: column; min-width: 0; }
+  .step, .step:first-child { flex-direction: column; align-items: stretch; }
+  .conn { flex: none; width: 2px; height: 16px; min-width: 0; margin: 0 0 0 35px; }
+  .conn[data-skip="true"] { background: repeating-linear-gradient(180deg, var(--c) 0 4px, transparent 4px 8px); }
+  .conn[data-conn="flow"], .conn[data-conn="wait"] { width: 3px; height: 16px; margin: 0 0 0 34.5px; }
+  .conn[data-conn="flow"]::after, .conn[data-conn="wait"]::after { background-image: linear-gradient(180deg, transparent, var(--accent), transparent); background-size: 100% 40px; background-position: 0 -40px; animation-name: lighty; }
+  .conn.just-done::before { transform-origin: center top; animation-name: growy; }
+  .node { width: 100%; flex-direction: row; align-items: center; gap: 12px; padding: 0; }
+  .node:hover { background: none; }
+  .dots { height: auto; min-height: 48px; width: 72px; flex: none; flex-direction: row; }
+  .ntxt { align-items: flex-start; }
+  .pill { position: static; transform: none; align-self: flex-start; margin-bottom: 2px; }
+  .lbl { max-width: none; text-align: left; }
+  .cap { justify-content: flex-start; min-height: 0; }
+  .slot:not(:empty) { padding: 8px 0 12px; }
+  .slot .agents-head { margin-top: 4px; }
+  .skelrow { flex-direction: column; height: auto; padding: 8px 0 8px 20px; gap: 0; }
+  .skelrow .sl { flex: none; width: 2px; height: 16px; margin: 0 0 0 15px; }
+  .skelrow .sd { margin: 8px 0; }
+  .drawer { top: auto; left: 0; right: 0; width: auto; max-height: 85vh; border-left: 0; border-top: 1px solid var(--border-strong); border-radius: var(--r-lg) var(--r-lg) 0 0; transform: translateY(100%); }
+  .drawer[data-open="true"] { transform: none; }
+  .grab { display: block; width: 36px; height: 4px; margin: -8px auto 12px; border-radius: 2px; background: var(--border-strong); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  /* static cues stay: accent glow ring on the active node, green ring on running cards, solid flow track */
+  .dot[data-state="active"]::after { display: none; }
+  .conn[data-conn="flow"]::after, .conn[data-conn="wait"]::after { display: none; }
+  .conn[data-conn="flow"] { background: var(--accent); }
+  .conn[data-conn="wait"] { background: color-mix(in srgb, var(--accent) 55%, transparent); }
+  .agent[data-status="running"] { box-shadow: var(--shadow-card), var(--glow-run); }
 }
 </style>
 </head>
 <body>
-<header>
-  <h1>osf agents</h1>
-  <span class="sub">Chỉ đọc · chỉ máy này · Claude Code</span>
-  <div class="counts" id="counts" aria-live="polite"></div>
+<header class="top">
+  <div class="brand"><span class="gem" aria-hidden="true">◆</span><span class="name">osf agents</span></div>
+  <label class="sr-only" for="project">Project</label>
+  <select id="project"></select>
+  <label class="sr-only" for="session">Session</label>
+  <select id="session"></select>
+  <span class="live" id="live" role="status" data-ok="true">Live</span>
 </header>
-<div class="layout">
-  <nav class="col left" aria-label="Sessions">
-    <label class="lbl" for="project">Project</label>
-    <select id="project"></select>
-    <div id="sessState" class="msg" hidden></div>
-    <ul class="sessions" id="sessions"></ul>
-  </nav>
-  <main class="col center" id="center" aria-label="Cây agent">
-    <div id="banner"></div>
-    <div id="tree"><div class="msg">Đang tải…</div></div>
-    <section class="idle" id="idle" aria-label="Loại agent đang rảnh"></section>
-  </main>
-  <aside class="col right" id="detail" aria-label="Chi tiết agent">
-    <div class="msg">Chọn một agent để xem brief, timeline và báo cáo.</div>
-  </aside>
-</div>
+<main id="main">
+  <div id="alert"></div>
+  <section id="loading" aria-busy="true">
+    <p class="eyebrow">ĐANG Ở BƯỚC</p>
+    <div class="skel skelline"></div>
+    <div class="skel skelmeta"></div>
+    <div class="stepcard">
+      <div class="skelrow" aria-hidden="true">
+        <span class="sd skel"></span><span class="sl skel"></span><span class="sd skel"></span><span class="sl skel"></span>
+        <span class="sd skel"></span><span class="sl skel"></span><span class="sd skel"></span><span class="sl skel"></span>
+        <span class="sd skel"></span><span class="sl skel"></span><span class="sd skel"></span><span class="sl skel"></span><span class="sd skel"></span>
+      </div>
+    </div>
+    <div class="skelhead"><p class="skeltext">Đang tải session…</p></div>
+    <div class="grid" aria-hidden="true"><div class="skel skelcard"></div><div class="skel skelcard"></div><div class="skel skelcard"></div></div>
+  </section>
+  <section id="empty" class="empty" hidden>
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.1 2.182a10 10 0 0 1 3.8 0"/><path d="M13.9 21.818a10 10 0 0 1-3.8 0"/><path d="M17.609 3.721a10 10 0 0 1 2.69 2.7"/><path d="M2.182 13.9a10 10 0 0 1 0-3.8"/><path d="M20.279 17.609a10 10 0 0 1-2.7 2.69"/><path d="M21.818 10.1a10 10 0 0 1 0 3.8"/><path d="M3.721 6.391a10 10 0 0 1 2.7-2.69"/><path d="M6.391 20.279a10 10 0 0 1-2.69-2.7"/></svg>
+    <h2>Chưa có session nào gọi agent trong project này</h2>
+    <p>Chạy /osf:autopilot hoặc /osf:team rồi quay lại — trang tự cập nhật.</p>
+  </section>
+  <div id="content" hidden>
+    <section class="hero" id="hero">
+      <p class="eyebrow" id="heroEyebrow"></p>
+      <h1 id="heroTitle"></h1>
+      <p class="meta" id="heroMeta"></p>
+    </section>
+    <section class="stepcard" id="stepCard" aria-label="Pipeline">
+      <div class="stepscroll" id="stepScroll">
+        <div class="stepwrap" id="stepWrap">
+          <ol class="stepper" id="stepper" aria-label="Tiến trình pipeline"></ol>
+          <svg class="looparc" id="loopArc" aria-hidden="true"><path class="arc"/><path class="head"/><text text-anchor="middle"></text></svg>
+        </div>
+      </div>
+    </section>
+    <div id="agentsHome">
+      <section id="agentsBlock" aria-labelledby="gridTitle">
+        <div class="agents-head">
+          <h2 id="gridTitle"></h2>
+          <button type="button" class="chip" id="backBtn" hidden>← Về bước hiện tại</button>
+          <button type="button" class="chip" id="otherChip" hidden></button>
+        </div>
+        <div class="grid" id="grid"></div>
+        <p class="gridempty" id="gridEmpty" hidden>Bước này chưa có agent.</p>
+      </section>
+    </div>
+  </div>
+</main>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="false" aria-labelledby="drawerTitle" data-open="false" inert>
+  <div class="grab" aria-hidden="true"></div>
+  <div class="dhead">
+    <h2 id="drawerTitle"></h2>
+    <button type="button" class="iconbtn" id="drawerClose" aria-label="Đóng"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+  </div>
+  <div id="dAgent">
+    <button type="button" class="chip" id="dBack" hidden>← Danh sách</button>
+    <p class="dsub"><span id="dBadge"></span><span id="dStep"></span></p>
+    <p class="dtype mono" id="dType"></p>
+    <section class="box" id="dBox" aria-live="polite">
+      <p class="eyebrow" id="dBoxHead"></p>
+      <p class="bverb" id="dVerb"></p>
+      <p class="bobj mono" id="dObj"></p>
+      <p class="bago" id="dAgo" aria-live="off"></p>
+    </section>
+    <section class="recentwrap" id="dRecentWrap">
+      <p class="eyebrow">VỪA LÀM</p>
+      <ol class="recent" id="dRecent"></ol>
+    </section>
+  </div>
+  <div id="dOthers" hidden><ul class="olist" id="dOtherList"></ul></div>
+</aside>
+<div class="sr-only" id="announcer" role="status" aria-atomic="true"></div>
 <script>
 'use strict';
-// Status icons: SVG paths from Lucide (https://lucide.dev), ISC License,
+// Icons: SVG paths from Lucide (https://lucide.dev), ISC License,
 // Copyright (c) Lucide Contributors. Static constants only — never user text.
 const ICONS = {
   running: '<path d="M21 12a9 9 0 1 1-6.219-8.56"/>',
   done: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
   cut: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
   stalled: '<circle cx="12" cy="12" r="10"/><line x1="10" x2="10" y1="15" y2="9"/><line x1="14" x2="14" y1="15" y2="9"/>',
-  idle: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
-  'not-spawned': '<path d="M10.1 2.182a10 10 0 0 1 3.8 0"/><path d="M13.9 21.818a10 10 0 0 1-3.8 0"/><path d="M17.609 3.721a10 10 0 0 1 2.69 2.7"/><path d="M2.182 13.9a10 10 0 0 1 0-3.8"/><path d="M20.279 17.609a10 10 0 0 1-2.7 2.69"/><path d="M21.818 10.1a10 10 0 0 1 0 3.8"/><path d="M3.721 6.391a10 10 0 0 1 2.7-2.69"/><path d="M6.391 20.279a10 10 0 0 1-2.69-2.7"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  minus: '<path d="M5 12h14"/>',
 };
-const LABELS = { running: 'Đang chạy', done: 'Xong', cut: 'Bị cắt', stalled: 'Treo', idle: 'Rảnh', 'not-spawned': 'Chưa gọi' };
-
+const DOT_ICON = { done: 'check', active: 'running', cut: 'cut', stalled: 'stalled', skipped: 'minus' };
+const STATUS_LABEL = { running: 'Đang chạy', done: 'Xong', cut: 'Bị cắt', stalled: 'Treo' };
+const NODE_TEXT = { done: 'xong', active: 'đang chạy', waiting: 'đang chờ', pending: 'chưa tới', skipped: 'bỏ qua', cut: 'bị cắt', stalled: 'treo' };
+const STATUS_RANK = { running: 0, stalled: 1, cut: 2, done: 3 };
+const SVG_NS = 'http://www.w3.org/2000/svg';
 const $ = (id) => document.getElementById(id);
-const S = { project: null, sessions: [], sessionId: null, data: null, selected: null, es: null, sessTimer: null };
+const phone = matchMedia('(max-width: 719px)');
+const wide = matchMedia('(min-width: 1024px)');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
+const S = {
+  project: null, sessions: [], sessionsLoaded: false, sessionsSig: '', sessionId: null, data: null, es: null, sessTimer: null,
+  connOk: true, viewPos: null, drawer: null, opener: null,
+  cards: new Map(), byKey: new Map(), byId: new Map(), stepBy: {}, positions: [], stepSig: '', nodes: new Map(),
+  loopCount: -1, curSig: '', warnSig: '', recentSig: '', othersSig: '', ann: null,
+};
+
+// ---------- small helpers ----------
 function el(tag, attrs, ...kids) {
   const n = document.createElement(tag);
   if (attrs) for (const [k, v] of Object.entries(attrs)) {
@@ -143,227 +436,766 @@ function el(tag, attrs, ...kids) {
   for (const k of kids.flat(Infinity)) if (k != null && k !== false) n.append(k instanceof Node ? k : document.createTextNode(String(k)));
   return n;
 }
-function icon(status) {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+function icon(name, cls = 'ico') {
+  const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('class', 'ico');
+  svg.setAttribute('class', cls);
   svg.setAttribute('aria-hidden', 'true');
-  svg.innerHTML = ICONS[status] || ICONS.done; // static constant markup
+  setIcon(svg, name);
   return svg;
 }
-function badge(status) {
-  return el('span', { class: `st st-${status}`, role: 'img', 'aria-label': LABELS[status] || status }, icon(status), el('span', { 'aria-hidden': 'true' }, LABELS[status] || status));
+function setIcon(svg, name) {
+  if (svg.dataset.icon === (name || '')) return;
+  svg.dataset.icon = name || '';
+  svg.innerHTML = ICONS[name] || ''; // static constant markup only
 }
-const fmtTime = (iso) => { if (!iso) return '—'; const d = new Date(iso); return isNaN(d) ? '—' : d.toLocaleString(); };
-const ago = (iso) => {
-  if (!iso) return '';
-  const s = Math.max(0, (Date.now() - Date.parse(iso)) / 1000);
-  if (s < 60) return `${Math.round(s)}s trước`;
-  if (s < 3600) return `${Math.round(s / 60)} phút trước`;
-  if (s < 86400) return `${Math.round(s / 3600)} giờ trước`;
-  return new Date(iso).toLocaleDateString();
-};
+function setText(node, text) {
+  const t = text == null ? '' : String(text);
+  if (node.textContent !== t) node.textContent = t;
+}
+function setAttr(node, k, v) {
+  if (v == null) { if (node.hasAttribute(k)) node.removeAttribute(k); }
+  else if (node.getAttribute(k) !== String(v)) node.setAttribute(k, String(v));
+}
+function replay(node, cls) {
+  node.classList.remove(cls);
+  void node.offsetWidth; // restart the CSS animation
+  node.classList.add(cls);
+}
+const msOf = (iso) => { const n = Date.parse(iso || ''); return Number.isNaN(n) ? null : n; };
+function dur(ms) {
+  const s = Math.max(0, Math.round((ms || 0) / 1000));
+  if (s < 60) return `${s} giây`;
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m} phút`;
+  const h = Math.floor(m / 60);
+  if (h >= 24) return `${Math.floor(h / 24)} ngày`;
+  return m % 60 ? `${h} giờ ${m % 60} phút` : `${h} giờ`;
+}
+function ago(iso) {
+  const t = msOf(iso);
+  if (t == null) return '';
+  const s = Math.max(0, (Date.now() - t) / 1000);
+  if (s < 5) return 'vừa xong';
+  if (s < 60) return `${Math.floor(s)} giây trước`;
+  if (s < 3600) return `${Math.floor(s / 60)} phút trước`;
+  if (s < 86400) return `${Math.floor(s / 3600)} giờ trước`;
+  return new Date(t).toLocaleDateString();
+}
+const hhmm = (iso) => { const t = msOf(iso); return t == null ? '' : new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
+const keyOf = (a) => a.parentToolUseId || a.id;
+const shortType = (t) => String(t || '').replace(/^osf:/, '');
+const isBusy = (a) => a.status === 'running' || a.status === 'stalled';
+const newest = (x, y) => String(y.startedAt || '').localeCompare(String(x.startedAt || ''));
+const byStatus = (x, y) => (STATUS_RANK[x.status] ?? 9) - (STATUS_RANK[y.status] ?? 9) || newest(x, y);
+const posOf = (k) => (k === 'security' || k === 'verify' ? 'gates' : k);
 async function getJson(url) {
   const r = await fetch(url, { cache: 'no-store' });
-  if (!r.ok) throw new Error(`${r.status} ${url}`);
+  if (!r.ok) throw new Error(`${r.status}`);
   return r.json();
 }
-function banner(kind, text, retry) {
-  const b = $('banner');
-  b.replaceChildren();
-  if (!kind) return;
-  b.append(el('div', { class: `banner ${kind}`, role: kind === 'err' ? 'alert' : 'status' },
-    badge(kind === 'err' ? 'cut' : 'stalled'), el('span', null, text),
-    retry ? el('button', { type: 'button', onclick: retry }, 'Thử lại') : null));
+function badge(status) {
+  const b = el('span', { class: 'badge' }, icon(status), el('span', null));
+  setBadge(b, status);
+  return b;
+}
+function setBadge(b, status) {
+  setAttr(b, 'data-status', status);
+  setIcon(b.firstChild, status);
+  setText(b.lastChild, STATUS_LABEL[status] || status);
+}
+
+// ---------- connection state ----------
+function setConn(ok, retry) {
+  S.connOk = ok;
+  const live = $('live');
+  setAttr(live, 'data-ok', ok ? 'true' : 'false');
+  setText(live, ok ? 'Live' : 'Mất kết nối');
+  $('content').classList.toggle('stale', !ok);
+  const box = $('alert');
+  if (ok) { box.replaceChildren(); return; }
+  if (box.firstChild) return;
+  box.append(el('div', { class: 'alert', role: 'alert' }, icon('cut'),
+    el('span', null, 'Mất kết nối tới server agents. Đang thử lại…'),
+    el('button', { type: 'button', onclick: retry || reconnect }, 'Thử lại')));
+}
+function reconnect() {
+  if (!S.project) { loadProjects(); return; }
+  loadSessions();
+  if (S.sessionId) openStream(S.sessionId);
 }
 
 // ---------- projects & sessions ----------
+// Last two dash parts of each project dir; duplicates take more parts until unique.
+function projectLabels(names) {
+  const parts = names.map((n) => n.split('-').filter(Boolean));
+  const take = names.map(() => 2);
+  const lab = (i) => parts[i].slice(-take[i]).join('-') || names[i];
+  for (;;) {
+    const labels = names.map((_, i) => lab(i));
+    const dup = new Set(labels.filter((l, i) => labels.indexOf(l) !== i));
+    let grew = false;
+    labels.forEach((l, i) => { if (dup.has(l) && take[i] < parts[i].length) { take[i]++; grew = true; } });
+    if (!grew) return labels;
+  }
+}
+
 async function loadProjects() {
   try {
     const { projects, defaultProject } = await getJson('/api/projects');
     const sel = $('project');
-    sel.replaceChildren(...projects.map((p) => el('option', { value: p.name }, p.name)));
-    const fromHash = new URLSearchParams(location.hash.slice(1));
-    const want = fromHash.get('project') || defaultProject;
+    const labels = projectLabels(projects.map((p) => p.name));
+    sel.replaceChildren(...projects.map((p, i) => el('option', { value: p.name, title: p.name }, labels[i])));
+    const hash = new URLSearchParams(location.hash.slice(1));
+    const want = hash.get('project') || defaultProject;
     S.project = projects.some((p) => p.name === want) ? want : (projects[0] && projects[0].name) || null;
-    if (S.project) sel.value = S.project;
-    await loadSessions(fromHash.get('id'));
-  } catch (e) {
-    $('tree').replaceChildren();
-    banner('err', `Không tải được danh sách project (${e.message}).`, () => { banner(); loadProjects(); });
+    if (S.project) { sel.value = S.project; sel.title = S.project; }
+    setConn(true);
+    await loadSessions(hash.get('id'));
+  } catch {
+    setConn(false, () => { $('alert').replaceChildren(); loadProjects(); });
   }
 }
-$('project').addEventListener('change', (e) => { S.project = e.target.value; S.sessionId = null; loadSessions(); });
+function switchProject(name, wantId) {
+  const sel = $('project');
+  S.project = name;
+  sel.value = name;
+  sel.title = name;
+  closeDrawer(false);
+  S.sessionId = null; S.sessions = []; S.sessionsLoaded = false; S.sessionsSig = '';
+  closeStream(); resetView(); S.data = null; renderAll();
+  loadSessions(wantId);
+}
+$('project').addEventListener('change', (e) => switchProject(e.target.value));
+$('session').addEventListener('change', (e) => selectSession(e.target.value));
+// Editing the URL hash switches project / session without a reload.
+window.addEventListener('hashchange', () => {
+  const hash = new URLSearchParams(location.hash.slice(1));
+  const project = hash.get('project');
+  const id = hash.get('id');
+  if (project && project !== S.project) {
+    if ([...$('project').options].some((o) => o.value === project)) switchProject(project, id);
+  } else if (id && id !== S.sessionId && S.sessions.some((s) => s.id === id)) {
+    selectSession(id);
+  }
+});
 
 async function loadSessions(wantId) {
   clearTimeout(S.sessTimer);
-  const st = $('sessState');
-  if (!S.project) { st.hidden = false; st.textContent = 'Chưa có session nào có agent'; return; }
-  if (!S.sessions.length) { st.hidden = false; st.textContent = 'Đang tải…'; }
+  if (!S.project) { S.sessionsLoaded = true; renderAll(); return; }
+  const project = S.project;
   try {
-    const { sessions } = await getJson(`/api/sessions?project=${encodeURIComponent(S.project)}`);
+    const { sessions } = await getJson(`/api/sessions?project=${encodeURIComponent(project)}`);
+    if (project !== S.project) return;
     S.sessions = sessions.filter((s) => s.agentCount > 0);
-    st.hidden = S.sessions.length > 0;
-    st.textContent = 'Chưa có session nào có agent';
-    renderSessions();
+    S.sessionsLoaded = true;
+    renderSessionSelect();
     if (!S.sessions.length) {
-      closeStream(); S.sessionId = null; S.data = null;
-      $('tree').replaceChildren(el('div', { class: 'msg' }, 'Chưa có session nào có agent'));
-      $('idle').replaceChildren(); $('counts').replaceChildren();
+      closeStream(); resetView(); S.sessionId = null; S.data = null; renderAll();
     } else if (!S.sessionId || !S.sessions.some((s) => s.id === S.sessionId)) {
-      const id = wantId && S.sessions.some((s) => s.id === wantId) ? wantId : S.sessions[0].id;
-      selectSession(id);
+      selectSession(wantId && S.sessions.some((s) => s.id === wantId) ? wantId : S.sessions[0].id);
     }
-  } catch (e) {
-    st.hidden = false;
-    st.replaceChildren(el('span', null, `Lỗi tải sessions (${e.message}). `), el('button', { type: 'button', onclick: () => loadSessions() }, 'Thử lại'));
+  } catch {
+    setConn(false);
   }
   S.sessTimer = setTimeout(() => loadSessions(), 10000);
 }
-function renderSessions() {
-  $('sessions').replaceChildren(...S.sessions.map((s) => el('li', null,
-    el('button', { type: 'button', 'aria-current': s.id === S.sessionId ? 'true' : 'false', onclick: () => selectSession(s.id) },
-      el('span', { class: 't', title: s.title || s.id }, s.title || s.id),
-      el('span', { class: 'm' }, s.anyRunning ? badge('running') : null, `${s.agentCount} agent`, ' · ', ago(s.updatedAt))))));
+function sessionLabel(s) {
+  let t = (s.title || s.id).replace(/\s+/g, ' ').trim();
+  if (t.length > 48) t = t.slice(0, 47) + '…';
+  return s.anyRunning ? `${t} · đang chạy` : t;
+}
+function renderSessionSelect() {
+  const sel = $('session');
+  const sig = S.sessions.map((s) => `${s.id}|${s.title}|${s.anyRunning}`).join('\n');
+  if (sig !== S.sessionsSig) {
+    S.sessionsSig = sig;
+    sel.replaceChildren(...S.sessions.map((s) => el('option', { value: s.id, title: s.title || s.id }, sessionLabel(s))));
+  }
+  if (S.sessionId) sel.value = S.sessionId;
+  const cur = S.sessions.find((s) => s.id === S.sessionId);
+  sel.title = cur ? (cur.title || cur.id) : '';
 }
 
-// ---------- session stream ----------
+// ---------- stream ----------
 function closeStream() { if (S.es) { S.es.close(); S.es = null; } }
 function selectSession(id) {
-  if (S.sessionId !== id) S.selected = null;
+  if (S.sessionId !== id) { closeDrawer(false); resetView(); S.data = null; }
   S.sessionId = id;
   history.replaceState(null, '', `#project=${encodeURIComponent(S.project)}&id=${encodeURIComponent(id)}`);
-  renderSessions();
+  renderSessionSelect();
+  renderAll();
+  openStream(id);
+}
+function openStream(id) {
   closeStream();
-  banner();
-  if (!S.data || S.data.id !== id) $('tree').replaceChildren(el('div', { class: 'msg' }, 'Đang tải…'));
   const es = new EventSource(`/api/events?project=${encodeURIComponent(S.project)}&id=${encodeURIComponent(id)}`);
   S.es = es;
+  es.onopen = () => setConn(true);
   es.addEventListener('session', (ev) => {
+    if (S.es !== es) return;
     let d;
     try { d = JSON.parse(ev.data); } catch { return; }
-    if (d.error) { banner('err', 'Session không còn tồn tại.', () => loadSessions()); return; }
-    banner();
+    setConn(true);
+    if (d.error) { loadSessions(); return; }
     S.data = d;
-    render();
+    logWarnings(d);
+    renderAll();
   });
-  es.onerror = () => {
-    if (es.readyState === EventSource.CLOSED) {
-      banner('err', 'Mất kết nối tới server agents.', () => selectSession(id));
-    } else {
-      banner('err', 'Mất kết nối, đang thử lại…', () => selectSession(id));
-    }
-  };
+  es.onerror = () => { if (S.es === es) setConn(false); };
 }
-
-// ---------- render ----------
-function render() {
-  const d = S.data;
-  const c = d.counts || {};
-  $('counts').replaceChildren(...['running', 'stalled', 'cut', 'done'].filter((k) => c[k]).map((k) => el('span', null, badge(k), ' ', c[k])));
+function logWarnings(d) {
   const w = d.warnings || {};
-  const skipped = (w.malformedLines || 0) + (w.badMeta || 0);
-  const center = $('center');
-  const scroll = center.scrollTop;
-  const tree = el('div', null, el('p', { class: 'root' }, 'Session: ', d.title || d.id));
-  if (skipped || w.unlinkedAgents || w.truncated) {
-    const parts = [];
-    if (skipped) parts.push(`Bỏ qua ${skipped} dòng/tệp hỏng`);
-    if (w.truncated) parts.push(`${w.truncated} transcript quá lớn, chỉ đọc phần đầu và phần cuối`);
-    if (w.unlinkedAgents) parts.push(`${w.unlinkedAgents} agent không nối được với lệnh gọi`);
-    tree.append(el('div', { class: 'banner warn', role: 'status' }, badge('stalled'), el('span', null, parts.join(' · '))));
+  const sig = `${d.id}|${w.malformedLines}|${w.badMeta}|${w.truncated}|${w.unlinkedAgents}`;
+  if (sig === S.warnSig) return;
+  S.warnSig = sig;
+  if (w.malformedLines || w.badMeta || w.truncated || w.unlinkedAgents) console.info('osf agents: parse warnings', w);
+}
+
+// ---------- view ----------
+function resetView() {
+  for (const c of S.cards.values()) c.remove();
+  S.cards.clear();
+  $('stepper').replaceChildren();
+  S.nodes.clear(); S.positions = []; S.stepSig = ''; S.loopCount = -1; S.curSig = ''; S.viewPos = null;
+  $('heroTitle').textContent = '';
+  $('agentsHome').append($('agentsBlock'));
+}
+
+function renderAll() {
+  const showEmpty = S.sessionsLoaded && !S.sessions.length;
+  $('empty').hidden = !showEmpty;
+  $('loading').hidden = showEmpty || !!S.data;
+  $('content').hidden = showEmpty || !S.data;
+  if (!showEmpty && S.data) renderContent(S.data);
+}
+
+function renderContent(d) {
+  const p = d.pipeline || { kind: 'none', steps: [], current: [], loops: [], otherAgentIds: [], round: 1 };
+  S.byId = new Map(d.agents.map((a) => [a.id, a]));
+  S.byKey = new Map(d.agents.map((a) => [keyOf(a), a]));
+  S.stepBy = Object.fromEntries(p.steps.map((s) => [s.key, s]));
+  const pipe = p.kind !== 'none';
+  $('stepCard').hidden = !pipe;
+
+  let list;
+  if (pipe) {
+    renderStepper(p);
+    const pos = currentViewPos(p);
+    const g = S.positions.find((x) => x.id === pos);
+    const keys = g ? g.keys : [];
+    list = keys.flatMap((k) => S.stepBy[k].agentIds).map((id) => S.byId.get(id)).filter(Boolean).sort(byStatus);
+    setText($('gridTitle'), `Agent ở bước ${g ? g.label : ''}`);
+    for (const [id, n] of S.nodes) setAttr(n.btn, 'aria-pressed', id === pos ? 'true' : 'false');
+    $('backBtn').hidden = !S.viewPos;
+    const others = p.otherAgentIds.length;
+    $('otherChip').hidden = !others;
+    setText($('otherChip'), `Khác (${others}) ›`);
+    setAttr($('otherChip'), 'aria-label', `Agent khác, ${others} agent`);
+  } else {
+    list = d.agents.slice().sort(newest);
+    setText($('gridTitle'), `Tất cả agent (${list.length})`);
+    $('backBtn').hidden = true;
+    $('otherChip').hidden = true;
   }
-  const agents = new Map(d.agents.map((a) => [a.id, a]));
-  const childWaves = new Map();
-  for (const wv of d.waves) if (wv.parentAgentId) {
-    if (!childWaves.has(wv.parentAgentId)) childWaves.set(wv.parentAgentId, []);
-    childWaves.get(wv.parentAgentId).push(wv);
+  announceChanges(d, renderHero(d, p));
+  renderGrid(list);
+  placeAgentsBlock(pipe);
+  if (pipe) requestAnimationFrame(() => { drawLoop(p); scrollCurrent(p); });
+  renderDrawer();
+}
+
+function currentViewPos(p) {
+  if (S.viewPos && S.positions.some((x) => x.id === S.viewPos)) return S.viewPos;
+  S.viewPos = null;
+  return defaultPos(p);
+}
+function defaultPos(p) {
+  const has = (k) => S.stepBy[k] && S.stepBy[k].agentIds.length;
+  if (p.current.some(has)) return posOf(p.current.find(has));
+  for (let i = S.positions.length - 1; i >= 0; i--) if (S.positions[i].keys.some(has)) return S.positions[i].id;
+  return p.current.length ? posOf(p.current[0]) : (S.positions[0] && S.positions[0].id);
+}
+
+// ---------- hero ----------
+function renderHero(d, p) {
+  let mode, eyebrow, title, meta, stepLabel = '';
+  const agents = d.agents;
+  if (p.kind === 'none') {
+    const r = agents.filter((a) => a.status === 'running').length;
+    mode = 'none'; eyebrow = 'SESSION'; title = 'Agent trong session';
+    meta = `${agents.length} agent${r ? ` · ${r} đang chạy` : ''}`;
+  } else if (p.finished) {
+    const done = p.steps.filter((s) => s.state === 'done').length;
+    const starts = agents.map((a) => msOf(a.startedAt)).filter((x) => x != null);
+    const ends = agents.map((a) => msOf(a.endedAt || a.lastActivityAt)).filter((x) => x != null);
+    mode = 'finished'; eyebrow = 'PIPELINE'; title = '✓ Hoàn tất';
+    meta = `${done} bước${starts.length && ends.length ? ` · ${dur(Math.max(...ends) - Math.min(...starts))}` : ''}`;
+  } else if (p.stopped) {
+    const pos = buildPositions(p).find((x) => x.id === posOf(p.stoppedAt));
+    const last = Math.max(msOf(d.updatedAt) ?? -Infinity, ...agents.map((a) => msOf(a.lastActivityAt) ?? -Infinity));
+    stepLabel = pos ? pos.label : p.stoppedAt || '—';
+    mode = 'stopped'; eyebrow = 'ĐÃ DỪNG'; title = `Dừng ở bước ${stepLabel}`;
+    meta = Number.isFinite(last) ? `không hoạt động ${dur(Date.now() - last)}` : '';
+  } else {
+    const cur = p.steps.filter((s) => p.current.includes(s.key));
+    const label = cur.map((s) => s.label).join(' ‖ ');
+    stepLabel = cur.map((s) => s.label).join(' và ');
+    eyebrow = 'ĐANG Ở BƯỚC';
+    if (cur.length && cur.every((s) => s.state === 'waiting')) {
+      mode = 'waiting'; title = 'Đang chờ bước tiếp theo'; meta = `Tiếp theo: ${label}`;
+    } else {
+      mode = 'active'; title = label || '—';
+      const ids = cur.flatMap((s) => s.agentIds).map((id) => S.byId.get(id)).filter(Boolean);
+      const running = ids.filter((a) => a.status === 'running').length;
+      const stalled = ids.filter((a) => a.status === 'stalled').length;
+      const parts = [];
+      if (running) parts.push(`${running} agent đang chạy`);
+      else if (stalled) parts.push(`${stalled} agent treo`);
+      else if (!ids.length) parts.push('chưa gọi agent');
+      if (p.round > 1) parts.push(`vòng ${p.round}`);
+      const start = cur.map((s) => msOf(s.startedAt)).filter((x) => x != null);
+      if (start.length) parts.push(dur(Date.now() - Math.min(...start)));
+      meta = parts.join(' · ');
+    }
   }
-  const waveBlock = (wv, nested) => {
-    const block = el('div', { class: `wave${nested ? ' nested' : ''}` },
-      el('div', { class: 'wl' }, `Wave ${wv.index}`, wv.agentIds.length > 1 ? ` · ${wv.agentIds.length} song song` : '',
-        nested && agents.get(wv.parentAgentId) ? ` · từ ${agents.get(wv.parentAgentId).description || agents.get(wv.parentAgentId).type}` : ''),
-      el('div', { class: 'row' }, wv.agentIds.map((id) => card(agents.get(id)))));
-    const out = [block];
-    for (const id of wv.agentIds) for (const cw of childWaves.get(id) || []) out.push(...waveBlock(cw, true));
-    return out;
+  setAttr($('hero'), 'data-mode', mode);
+  setText($('heroEyebrow'), eyebrow);
+  const h = $('heroTitle');
+  if (h.textContent !== title) {
+    const first = !h.textContent;
+    h.textContent = title;
+    if (!first) replay(h, 'swap');
+  }
+  setText($('heroMeta'), meta);
+  return { mode, label: stepLabel };
+}
+
+// ---------- live status region: only meaningful changes, at most one message per 1.5s ----------
+const ANN_GAP = 1500;
+const ann = { last: 0, timer: null, queue: [] };
+function announce(msg) {
+  if (!msg || ann.queue.includes(msg)) return;
+  ann.queue.push(msg);
+  if (ann.timer) return;
+  ann.timer = setTimeout(flushAnnounce, Math.max(0, ann.last + ANN_GAP - Date.now()));
+}
+function flushAnnounce() {
+  ann.timer = null;
+  if (!ann.queue.length) return;
+  const msg = ann.queue.join('. ');
+  ann.queue = [];
+  ann.last = Date.now();
+  const box = $('announcer');
+  box.textContent = '';
+  setTimeout(() => { box.textContent = msg; }, 30); // re-set so a repeated message is spoken again
+}
+function announceChanges(d, hero) {
+  const prev = S.ann;
+  const statuses = new Map(d.agents.map((a) => [keyOf(a), a.status]));
+  S.ann = { sid: S.sessionId, mode: hero.mode, label: hero.label, statuses };
+  if (!prev || prev.sid !== S.sessionId) return; // first frame of a session: nothing "changed"
+  if (hero.mode === 'finished' && prev.mode !== 'finished') announce('Pipeline hoàn tất');
+  else if (hero.mode === 'stopped' && prev.mode !== 'stopped') announce(`Pipeline dừng ở bước ${hero.label}`);
+  else if ((hero.mode === 'active' || hero.mode === 'waiting') && hero.label && hero.label !== prev.label) announce(`Chuyển sang bước ${hero.label}`);
+  for (const a of d.agents) {
+    const was = prev.statuses.get(keyOf(a));
+    if (a.status === 'cut' && was && was !== 'cut') announce(`Agent ${a.description || shortType(a.type)} bị cắt`);
+  }
+}
+
+// ---------- stepper ----------
+function buildPositions(p) {
+  const out = [];
+  for (const s of p.steps) {
+    if (s.key === 'security' || s.key === 'verify') {
+      let g = out.find((x) => x.id === 'gates');
+      if (!g) { g = { id: 'gates', keys: [], label: '' }; out.push(g); }
+      g.keys.push(s.key);
+      g.label = g.keys.map((k) => S.stepBy[k].label).join(' ‖ ');
+    } else out.push({ id: s.key, keys: [s.key], label: s.label });
+  }
+  return out;
+}
+function renderStepper(p) {
+  const positions = buildPositions(p);
+  const sig = positions.map((x) => `${x.id}:${x.keys.join('+')}`).join(',');
+  const ol = $('stepper');
+  if (sig !== S.stepSig) {
+    S.stepSig = sig;
+    S.nodes.clear();
+    ol.replaceChildren(...positions.map((pos, idx) => {
+      const btn = el('button', { type: 'button', class: 'node', 'aria-pressed': 'false', onclick: () => onNode(pos.id) });
+      const dots = el('span', { class: 'dots', 'aria-hidden': 'true' });
+      const dotEls = pos.keys.map((k) => { const dEl = el('span', { class: 'dot', 'data-k': k }, icon(null)); dots.append(dEl); return dEl; });
+      const lbl = el('span', { class: 'lbl' }, pos.label);
+      const cap = el('span', { class: 'cap', 'aria-hidden': 'true' }, el('span', { class: 'c1' }), el('span', { class: 'loopcap' }));
+      const rm = el('span', { class: 'rmcap', 'aria-hidden': 'true' }, 'Đang ở bước này');
+      const pill = el('span', { class: 'pill', 'aria-hidden': 'true' });
+      btn.append(dots, el('span', { class: 'ntxt' }, pill, lbl, cap, rm));
+      const conn = el('span', { class: 'conn', 'aria-hidden': 'true' });
+      const slot = el('div', { class: 'slot' });
+      const li = el('li', { class: reduced.matches ? 'step' : 'step enter', 'data-pos': pos.id }, conn, btn, slot);
+      // first render: nodes fade/scale in left -> right
+      li.style.setProperty('--i', String(Math.min(idx, 12)));
+      btn.addEventListener('animationend', (e) => { if (e.animationName === 'nodein') li.classList.remove('enter'); });
+      S.nodes.set(pos.id, { li, btn, dots: dotEls, cap, conn, slot, pill });
+      return li;
+    }));
+    S.loopCount = -1;
+  }
+  S.positions = positions;
+
+  const nodeState = (k) => { const st = S.stepBy[k].state; return st === 'running' ? 'active' : st; };
+  const groupState = (pos) => {
+    const sts = pos.keys.map(nodeState);
+    for (const s of ['active', 'waiting', 'stalled', 'cut']) if (sts.includes(s)) return s;
+    if (sts.every((s) => s === 'done' || s === 'skipped') && sts.includes('done')) return 'done';
+    if (sts.every((s) => s === 'skipped')) return 'skipped';
+    return 'pending';
   };
-  const rootWaves = d.waves.filter((wv) => !wv.parentAgentId);
-  const groups = [];
-  for (const sk of d.skills) {
-    const ws = rootWaves.filter((wv) => wv.skillId === sk.id);
-    groups.push(el('section', { class: 'skill', 'aria-label': `Skill ${sk.name}` },
-      el('h3', null, el('span', null, sk.source === 'command' ? `/${sk.name}` : `Skill ${sk.name}`), sk.args ? el('span', { class: 'args', title: sk.args }, sk.args) : null),
-      ws.length ? ws.map((wv) => waveBlock(wv, false)) : el('div', { class: 'wl' }, 'không gọi agent')));
+  const states = positions.map(groupState);
+  let curIdx = positions.findIndex((pos) => pos.keys.some((k) => p.current.includes(k)));
+  if (p.finished || curIdx < 0) curIdx = p.finished ? positions.length : -1;
+  // Stopped: connectors up to the stopped step are done, nothing flows.
+  if (p.stopped) curIdx = positions.findIndex((pos) => pos.id === posOf(p.stoppedAt)) + 1;
+
+  positions.forEach((pos, i) => {
+    const n = S.nodes.get(pos.id);
+    const st = states[i];
+    setAttr(n.btn, 'data-state', st);
+    const isCur = pos.keys.some((k) => p.current.includes(k));
+    setAttr(n.btn, 'aria-current', isCur ? 'step' : null);
+    setText(n.pill, st === 'active' ? 'ĐANG CHẠY' : st === 'waiting' ? 'ĐANG CHỜ' : '');
+    pos.keys.forEach((k, j) => {
+      const dEl = n.dots[j];
+      const ds = nodeState(k);
+      const prev = dEl.dataset.state;
+      setAttr(dEl, 'data-state', ds);
+      setIcon(dEl.firstChild, DOT_ICON[ds] || null);
+      if (prev && prev !== 'done' && ds === 'done') {
+        replay(dEl, 'just-done');
+        dEl.addEventListener('animationend', () => dEl.classList.remove('just-done'), { once: true });
+      }
+    });
+    // captions
+    const steps = pos.keys.map((k) => S.stepBy[k]);
+    const attempts = Math.max(...steps.map((s) => s.attempts || 0));
+    const c1 = [];
+    if (attempts > 1) c1.push(`×${attempts}`);
+    if (st === 'skipped') c1.push('bỏ qua');
+    setText(n.cap.firstChild, c1.join(' · '));
+    const round = pos.id === 'coding' ? (S.stepBy.coding.round || 0) : 0;
+    setText(n.cap.lastChild, round > 1 ? `↺ vòng ${round}` : '');
+    const agentsN = steps.reduce((m, s) => m + s.agentIds.length, 0);
+    const stText = pos.keys.length > 1
+      ? pos.keys.map((k) => `${S.stepBy[k].label}: ${NODE_TEXT[nodeState(k)] || nodeState(k)}`).join(', ')
+      : NODE_TEXT[st] || st;
+    setAttr(n.btn, 'aria-label', [`${pos.label} — ${stText}`, agentsN ? `${agentsN} agent` : '', attempts > 1 ? `${attempts} lần chạy` : '', round > 1 ? `vòng ${round}` : ''].filter(Boolean).join(', '));
+    // connector into this position
+    if (i > 0) {
+      let c = 'todo';
+      if (i < curIdx) c = 'done';
+      else if (i === curIdx) c = st === 'active' ? 'flow' : st === 'waiting' ? 'wait' : 'todo';
+      const prevC = n.conn.dataset.conn;
+      setAttr(n.conn, 'data-conn', c);
+      setAttr(n.conn, 'data-skip', st === 'skipped' || states[i - 1] === 'skipped' ? 'true' : 'false');
+      if (prevC && prevC !== 'done' && c === 'done') {
+        replay(n.conn, 'just-done');
+        n.conn.addEventListener('animationend', () => n.conn.classList.remove('just-done'), { once: true });
+      }
+    }
+  });
+}
+function onNode(id) {
+  S.viewPos = id === defaultPos(S.data.pipeline) ? null : id;
+  renderContent(S.data);
+}
+$('backBtn').addEventListener('click', () => {
+  S.viewPos = null;
+  renderContent(S.data);
+  const pos = defaultPos(S.data.pipeline);
+  const n = S.nodes.get(pos);
+  if (n) n.btn.focus({ preventScroll: true });
+});
+
+function drawLoop(p) {
+  const svg = $('loopArc');
+  const wrap = $('stepWrap');
+  const loop = p.loops[p.loops.length - 1];
+  const from = loop && S.nodes.get(loop.from === 'gates' ? 'gates' : posOf(loop.from));
+  const to = S.nodes.get('coding');
+  const show = !!(loop && from && to && wide.matches);
+  wrap.classList.toggle('has-loop', show);
+  svg.style.display = show ? '' : 'none';
+  if (!show) { S.loopCount = p.loops.length; return; }
+  const wr = wrap.getBoundingClientRect();
+  const fr = from.dots[0].parentNode.getBoundingClientRect();
+  const tr = to.dots[0].parentNode.getBoundingClientRect();
+  const ol = $('stepper').getBoundingClientRect();
+  const x1 = fr.left + fr.width / 2 - wr.left;
+  const x2 = tr.left + tr.width / 2 - wr.left;
+  const y = ol.bottom - wr.top + 4;
+  const arc = svg.querySelector('.arc');
+  arc.setAttribute('d', `M${x1} ${y} C${x1} ${y + 30} ${x2} ${y + 30} ${x2} ${y + 2}`);
+  svg.querySelector('.head').setAttribute('d', `M${x2 - 4.5} ${y + 9} L${x2 + 4.5} ${y + 9} L${x2} ${y + 1} Z`);
+  const t = svg.querySelector('text');
+  t.setAttribute('x', String((x1 + x2) / 2));
+  t.setAttribute('y', String(y + 36));
+  t.textContent = `↺ sửa lỗi · vòng ${loop.round}`;
+  if (S.loopCount >= 0 && p.loops.length > S.loopCount) {
+    svg.style.setProperty('--len', String(Math.ceil(arc.getTotalLength())));
+    replay(svg, 'draw');
+    const node = to.btn;
+    setTimeout(() => replay(node, 'bounce'), 700);
   }
-  const loose = rootWaves.filter((wv) => !wv.skillId);
-  if (loose.length) groups.push(el('section', { class: 'skill', 'aria-label': 'Ngoài skill' }, el('h3', null, 'Gọi trực tiếp'), loose.map((wv) => waveBlock(wv, false))));
-  const unlinked = d.agents.filter((a) => a.wave == null);
-  if (unlinked.length) groups.push(el('section', { class: 'skill', 'aria-label': 'Chưa liên kết' }, el('h3', null, 'Chưa liên kết'), el('div', { class: 'row' }, unlinked.map(card))));
-  tree.append(...groups);
-  const focused = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.agent : null;
-  $('tree').replaceChildren(tree);
-  center.scrollTop = scroll;
-  if (focused) { const f = [...tree.querySelectorAll('.card')].find((n) => n.dataset.agent === focused); if (f) f.focus({ preventScroll: true }); }
-
-  const idle = d.idleTypes || [];
-  $('idle').replaceChildren(...(idle.length ? [el('h2', null, 'Loại agent osf không chạy'), el('ul', null, idle.map((t) =>
-    el('li', null, badge(t.state), ' ', t.type, t.count ? ` (${t.count})` : '')))] : []));
-  renderDetail();
+  S.loopCount = p.loops.length;
+}
+function scrollCurrent(p) {
+  const sc = $('stepScroll');
+  const sig = `${S.sessionId}|${p.current.join('+')}`;
+  if (sig === S.curSig || sc.scrollWidth <= sc.clientWidth || phone.matches) { S.curSig = sig; return; }
+  S.curSig = sig;
+  const n = S.nodes.get(p.current.length ? posOf(p.current[0]) : defaultPos(p));
+  if (!n) return;
+  const sr = sc.getBoundingClientRect();
+  const nr = n.btn.getBoundingClientRect();
+  sc.scrollTo({ left: sc.scrollLeft + nr.left - sr.left - (sr.width - nr.width) / 2, behavior: reduced.matches ? 'auto' : 'smooth' });
+}
+function placeAgentsBlock(pipe) {
+  const block = $('agentsBlock');
+  let target = $('agentsHome');
+  if (pipe && phone.matches) {
+    const n = S.nodes.get(currentViewPos(S.data.pipeline));
+    if (n) target = n.slot;
+  }
+  if (block.parentNode === target) return;
+  const focused = document.activeElement;
+  target.append(block);
+  if (focused && focused !== document.activeElement && block.contains(focused)) focused.focus({ preventScroll: true });
 }
 
-function card(a) {
-  if (!a) return null;
-  const now = a.doingNow || (a.status === 'done' || a.status === 'cut' ? null : a.lastTool);
-  const open = () => { S.selected = a.id; render(); const d = $('detail'); d.focus({ preventScroll: true }); d.scrollTop = 0; };
-  return el('div', {
-    class: `card${a.isOsf ? ' osf' : ''}${a.status === 'running' ? ' is-running' : ''}`,
-    role: 'button', tabindex: 0, 'data-agent': a.id, 'aria-pressed': S.selected === a.id ? 'true' : 'false',
-    'aria-label': `${a.type}: ${a.description || ''} — ${LABELS[a.status] || a.status}`,
-    onclick: open,
-    onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } },
-  },
-    el('div', { style: 'display:flex;justify-content:space-between;gap:6px;align-items:center' },
-      el('span', { class: 'type' }, a.type), badge(a.status)),
-    el('div', { class: 'desc', title: a.description }, a.description || '—'),
-    now ? el('div', { class: 'now', title: `${now.tool} ${now.target}` }, `${now.tool} ${now.target}`) : null,
-    a.status === 'cut' && a.statusReason ? el('div', { class: 'now' }, a.statusReason) : null,
-    a.reportWarning ? el('div', { class: 'now' }, a.reportWarning) : null);
+// ---------- agent cards ----------
+function makeCard(key) {
+  const c = el('button', { type: 'button', class: 'agent', 'aria-pressed': 'false', 'data-key': key },
+    el('span', { class: 'l1' }, icon('running'), el('span', { class: 'sr-only' }), el('span', { class: 'desc' })),
+    el('span', { class: 'l2' }, el('span', { class: 'verb' }), el('span', { class: 'obj mono' })),
+    el('span', { class: 'l3' }, el('span', { 'data-ago': '' }), el('span', { class: 'open', 'aria-hidden': 'true' }, 'Mở ›')));
+  c.addEventListener('click', () => {
+    if (S.drawer && S.drawer.mode === 'agent' && S.drawer.key === key) closeDrawer(true);
+    else openDrawer({ mode: 'agent', key }, { key });
+  });
+  c.addEventListener('animationend', (e) => { if (e.animationName === 'enter') c.classList.remove('enter'); });
+  return c;
+}
+function line2(a) {
+  if (a.status === 'running') {
+    const l = a.doingNowLabel || { verb: 'Đang chạy', object: '' };
+    return [l.verb, l.object || ''];
+  }
+  if (a.status === 'stalled') {
+    const t = msOf(a.lastActivityAt);
+    return [`Không hoạt động ${t == null ? '?' : dur(Date.now() - t)}`, ''];
+  }
+  if (a.status === 'cut') return [a.statusReason || 'Bị cắt', ''];
+  const s = msOf(a.startedAt);
+  const e = msOf(a.endedAt || a.lastActivityAt);
+  return [s != null && e != null ? `Xong · ${dur(e - s)}` : 'Xong', ''];
+}
+function updateCard(c, a) {
+  setAttr(c, 'data-status', a.status);
+  const [ico, sr, desc] = c.firstChild.childNodes;
+  setIcon(ico, a.status);
+  setText(sr, `${STATUS_LABEL[a.status] || a.status}: `);
+  setText(desc, a.description || shortType(a.type));
+  setAttr(c, 'title', `${shortType(a.type)} — ${a.description || ''}`);
+  const [verb, obj] = line2(a);
+  const l2 = c.children[1];
+  const sig = `${verb}\u0000${obj}`;
+  if (l2.dataset.sig !== sig) {
+    const had = l2.dataset.sig !== undefined;
+    l2.dataset.sig = sig;
+    setText(l2.firstChild, verb);
+    setText(l2.lastChild, obj);
+    if (had) replay(l2, 'tick');
+  }
+  const agoEl = c.children[2].firstChild;
+  setAttr(agoEl, 'data-ago', a.lastActivityAt || a.startedAt || '');
+  setText(agoEl, ago(a.lastActivityAt || a.startedAt));
+  setAttr(c, 'aria-pressed', S.drawer && S.drawer.mode === 'agent' && S.drawer.key === keyOf(a) ? 'true' : 'false');
+}
+function renderGrid(list) {
+  const grid = $('grid');
+  const want = list.map(keyOf);
+  const wantSet = new Set(want);
+  for (const [k, c] of S.cards) if (!wantSet.has(k)) { c.remove(); S.cards.delete(k); }
+  let fresh = 0;
+  for (const a of list) {
+    const k = keyOf(a);
+    let c = S.cards.get(k);
+    if (!c) {
+      c = makeCard(k);
+      c.style.setProperty('--i', String(Math.min(fresh++, 8)));
+      c.classList.add('enter');
+      S.cards.set(k, c);
+    }
+    updateCard(c, a);
+  }
+  const focused = document.activeElement;
+  want.forEach((k, i) => {
+    const c = S.cards.get(k);
+    if (grid.children[i] !== c) grid.insertBefore(c, grid.children[i] || null);
+  });
+  if (focused && focused !== document.activeElement && grid.contains(focused)) focused.focus({ preventScroll: true });
+  $('gridEmpty').hidden = list.length > 0;
+}
+function syncPressed() {
+  for (const [k, c] of S.cards) setAttr(c, 'aria-pressed', S.drawer && S.drawer.mode === 'agent' && S.drawer.key === k ? 'true' : 'false');
 }
 
-function renderDetail() {
-  const box = $('detail');
-  box.setAttribute('tabindex', '-1');
-  const a = S.data && S.data.agents.find((x) => x.id === S.selected);
-  if (!a) { box.replaceChildren(el('div', { class: 'msg' }, 'Chọn một agent để xem brief, timeline và báo cáo.')); return; }
+// ---------- drawer ----------
+const drawer = $('drawer');
+function openDrawer(target, opener) {
+  S.drawer = target;
+  S.opener = opener;
+  S.recentSig = '';
+  S.othersSig = '';
+  drawer.dataset.open = 'true';
+  drawer.inert = false;
+  drawer.removeAttribute('inert');
+  renderDrawer();
+  syncPressed();
+  drawer.scrollTop = 0;
+  $('drawerClose').focus({ preventScroll: true });
+}
+function closeDrawer(restore) {
+  if (!S.drawer) return;
+  S.drawer = null;
+  drawer.dataset.open = 'false';
+  drawer.inert = true;
+  drawer.setAttribute('inert', '');
+  syncPressed();
+  const o = S.opener;
+  S.opener = null;
+  if (!restore || !o) return;
+  const target = o.chip ? $('otherChip') : S.cards.get(o.key);
+  if (target && !target.hidden && document.contains(target)) target.focus({ preventScroll: true });
+}
+$('drawerClose').addEventListener('click', () => closeDrawer(true));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.drawer) { e.preventDefault(); closeDrawer(true); } });
+$('dBack').addEventListener('click', () => openDrawer({ mode: 'others' }, { chip: true }));
+$('otherChip').addEventListener('click', () => {
+  if (S.drawer && S.drawer.mode === 'others') closeDrawer(true);
+  else openDrawer({ mode: 'others' }, { chip: true });
+});
+
+function stepLabelOf(a) {
+  const p = S.data && S.data.pipeline;
+  if (!p || p.kind === 'none') return '';
+  const s = S.stepBy[a.step];
+  let t = s ? s.label : 'Khác';
+  if (s && p.round > 1 && a.round) t += ` · vòng ${a.round}`;
+  return `· ${t}`;
+}
+function renderDrawer() {
+  if (!S.drawer || !S.data) return;
+  const others = S.drawer.mode === 'others';
+  $('dAgent').hidden = others;
+  $('dOthers').hidden = !others;
+  if (others) {
+    const ids = (S.data.pipeline && S.data.pipeline.otherAgentIds) || [];
+    const list = ids.map((id) => S.byId.get(id)).filter(Boolean).sort(byStatus);
+    setText($('drawerTitle'), `Agent khác (${list.length})`);
+    const sig = list.map((a) => `${keyOf(a)}|${a.status}|${a.description}`).join('\n');
+    if (sig !== S.othersSig) {
+      S.othersSig = sig;
+      $('dOtherList').replaceChildren(...list.map((a) => el('li', null,
+        el('button', { type: 'button', class: 'oitem', onclick: () => openDrawer({ mode: 'agent', key: keyOf(a), fromOthers: true }, { chip: true }) },
+          el('span', { class: 'row' }, el('span', { class: 'ot mono' }, shortType(a.type)), badge(a.status)),
+          el('span', { class: 'od' }, a.description || shortType(a.type))))));
+    }
+    return;
+  }
+  const a = S.byKey.get(S.drawer.key);
+  if (!a) { closeDrawer(false); return; }
+  $('dBack').hidden = !S.drawer.fromOthers;
+  setText($('drawerTitle'), a.description || shortType(a.type));
+  const bh = $('dBadge');
+  if (!bh.firstChild) bh.append(badge(a.status)); else setBadge(bh.firstChild, a.status);
+  setText($('dStep'), stepLabelOf(a));
+  setText($('dType'), shortType(a.type));
+
+  const box = $('dBox');
+  const verbEl = $('dVerb');
+  const objEl = $('dObj');
+  const agoEl = $('dAgo');
+  let head, verb, obj = '', prose = false, agoIso = null, kind = a.status;
+  if (a.status === 'done') {
+    const s = msOf(a.startedAt);
+    const e = msOf(a.endedAt || a.lastActivityAt);
+    head = 'KẾT QUẢ';
+    verb = `✓ Xong${a.endedAt ? ` lúc ${hhmm(a.endedAt)}` : ''}${s != null && e != null ? ` · ${dur(e - s)}` : ''}`;
+    obj = a.resultLine || '';
+    prose = true;
+  } else if (a.status === 'cut') {
+    head = 'KẾT QUẢ';
+    verb = `⚠ Bị cắt — ${a.statusReason || 'không rõ lý do'}`;
+    agoIso = a.lastActivityAt;
+  } else {
+    const l = a.doingNowLabel || { verb: 'Đang chạy', object: '' };
+    const last = a.toolTimeline && a.toolTimeline[a.toolTimeline.length - 1];
+    head = 'ĐANG LÀM';
+    verb = l.verb;
+    obj = l.object || '';
+    agoIso = (last && last.ts) || a.lastActivityAt || a.startedAt;
+    if (a.status === 'stalled') head = 'ĐANG LÀM · KHÔNG HOẠT ĐỘNG';
+  }
+  setAttr(box, 'data-kind', kind);
+  setText($('dBoxHead'), head);
+  const sig = `${S.drawer.key}|${verb}|${obj}`;
+  if (box.dataset.sig !== sig) {
+    const same = box.dataset.sig && box.dataset.sig.startsWith(`${S.drawer.key}|`);
+    box.dataset.sig = sig;
+    setText(verbEl, verb);
+    setText(objEl, obj);
+    if (same) replay(verbEl, 'tick');
+  }
+  objEl.hidden = !obj;
+  objEl.classList.toggle('prose', prose);
+  objEl.classList.toggle('mono', !prose);
+  agoEl.hidden = !agoIso;
+  setAttr(agoEl, 'data-ago', agoIso || '');
+  setText(agoEl, agoIso ? ago(agoIso) : '');
+
   const tl = a.toolTimeline || [];
-  const keep = box.dataset.agent === a.id ? box.scrollTop : 0;
-  box.dataset.agent = a.id;
-  box.replaceChildren(
-    el('h2', null, a.type),
-    el('div', null, badge(a.status), ' ', a.isOsf ? el('span', { class: 'chip osf' }, 'osf') : el('span', { class: 'chip' }, 'khác')),
-    a.statusReason ? el('p', { class: `note ${a.status === 'cut' ? 'cut' : 'warn'}` }, a.statusReason) : null,
-    a.reportWarning ? el('p', { class: 'note warn' }, a.reportWarning) : null,
-    el('p', null, a.description || ''),
-    el('div', { class: 'kv' },
-      el('span', null, 'Bắt đầu'), el('b', null, fmtTime(a.startedAt)),
-      el('span', null, 'Kết thúc'), el('b', null, a.endedAt ? fmtTime(a.endedAt) : '—'),
-      el('span', null, 'Hoạt động cuối'), el('b', null, `${fmtTime(a.lastActivityAt)} (${ago(a.lastActivityAt)})`),
-      el('span', null, 'Wave'), el('b', null, a.wave ?? '—'),
-      el('span', null, 'Model'), el('b', null, a.model || '—'),
-      el('span', null, 'Chạy nền'), el('b', null, a.background ? 'có' : 'không'),
-      el('span', null, 'Agent id'), el('b', null, a.id)),
-    el('h2', null, 'Đang làm'),
-    el('p', null, a.doingNow ? `${a.doingNow.tool} ${a.doingNow.target}` : '—'),
-    el('h2', null, 'Brief'),
-    el('pre', null, a.brief || '—'),
-    el('h2', null, `Timeline tool (${tl.length})`),
-    tl.length ? el('ol', { class: 'tl' }, tl.map((t) => el('li', null, el('span', { class: 'tool' }, t.tool), ' ', el('span', { class: 'tgt' }, t.target)))) : el('p', null, '—'),
-    el('h2', null, 'Báo cáo cuối'),
-    el('pre', null, a.report || '—'),
-  );
-  box.scrollTop = keep;
+  const items = (isBusy(a) ? tl.slice(0, -1) : tl).slice(-5).reverse();
+  const rsig = `${S.drawer.key}|${items.map((t) => `${t.ts}|${t.tool}|${t.target}`).join('\n')}`;
+  if (rsig !== S.recentSig) {
+    S.recentSig = rsig;
+    $('dRecent').replaceChildren(...items.map((t) => {
+      const l = t.label || { verbPast: t.tool, object: t.target || '' };
+      return el('li', null, el('span', { class: 'v' }, l.verbPast), el('span', { class: 'o mono', title: l.object }, l.object),
+        el('span', { class: 't', 'data-ago': t.ts || '' }, ago(t.ts)));
+    }));
+  }
+  $('dRecentWrap').hidden = !items.length;
 }
+
+// ---------- live clock ----------
+setInterval(() => {
+  for (const n of document.querySelectorAll('[data-ago]')) {
+    const iso = n.getAttribute('data-ago');
+    if (iso) setText(n, ago(iso));
+  }
+}, 1000);
+const relayout = () => { if (S.data) renderContent(S.data); };
+phone.addEventListener('change', relayout);
+wide.addEventListener('change', relayout);
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (S.data && S.data.pipeline && S.data.pipeline.kind !== 'none') drawLoop(S.data.pipeline); }, 120);
+});
 
 loadProjects();
 </script>
