@@ -69,12 +69,29 @@ Stages stay in order (spec → tests → code → gates); fan-out happens inside
 
 `/osf:agents` (or `node bin/agents-viz/server.mjs [--no-open] [--port=N] [--project=<dir>]`) opens `http://127.0.0.1:4317` (next free port up to 4330; a second call reuses the running server).
 
-- Pick a project and a session in the header (newest first, `· đang chạy` marks a live one); a running session updates live, a past one replays
-- Pipeline stepper: Kickoff (team runs only) → Spec → Spec gate → TDD → Coding → E2E → Security ‖ Verify → Archive. The current step is highlighted at the top ("Đang ở bước Coding · vòng 2"); re-runs show `×N`, steps that did not run show `bỏ qua` (e.g. `--no-e2e`), and a fix loop from the gates back to Coding is drawn as `↺ vòng N`
-- Agent cards for the selected step (click any step to see its agents): what each agent is doing right now in plain words ("Đang sửa tag.js", "Đang chạy test"), with running agents first; agents outside the pipeline sit behind the `Khác (n)` chip. A session without an osf pipeline shows all its agents as a plain grid
-- Click a card to open the side panel: **Đang làm** (current action, live) and **Vừa làm** (last 5 actions); a finished agent shows its one-line result instead
-- Status (icon + text): Đang chạy, Xong, Bị cắt (API / rate-limit error, or no final report), Treo (no write for >10 min). An unfinished agent with no write for 2–10 min still shows as running
-- Respects light/dark mode and reduced motion; keyboard and screen-reader friendly
+- **Header:** one picker for project and session.
+  - Sessions are newest first, and a spinner marks a live one.
+  - Only projects whose sessions spawned agents are listed.
+  - A running session updates live; a past one replays.
+- **Left pane, top:** where the run is ("Coding · vòng 4", "Dừng ở Coding", "Hoàn tất").
+  - Next to it: the skill, agent count, start time and duration.
+  - Chips count running, stalled and cut agents.
+- **Round tabs** (`Vòng 1 … n`): shown when a fix loop happened.
+  - Pick a round to see its agents.
+  - An earlier round notes why it looped ("Security, Verify báo lỗi → sửa ở vòng 2").
+- **Steps:** listed top to bottom, Kickoff (team runs only) → Spec → Spec gate → TDD → Coding → E2E → Security ‖ Verify (marked `song song`) → Archive.
+  - Each step's agents are nested under it, stalled and cut agents first.
+  - Skipped steps are hidden. Agents outside the pipeline sit under `Khác`.
+  - A session without an osf pipeline groups its agents by wave (`Đợt n`); agents in one wave ran in parallel.
+- **Right pane:** the selected agent. By default it is the one that most needs a look: stalled, then cut, then running. It shows:
+  - what the agent is doing now (live);
+  - the report, rendered as Markdown with lists, tables and code blocks;
+  - the last 5 tool calls;
+  - the brief, collapsed.
+
+  Below 1024px the detail opens as a drawer, and Esc closes it.
+- **Status** (icon + text): Đang chạy, Xong, Bị cắt (API or rate-limit error, or no final report), Đứng im (no write for >10 min). An unfinished agent with no write for 2–10 min still shows as running.
+- **Look:** flat, follows light/dark mode, respects reduced motion, keyboard and screen-reader friendly. Layout and tokens are in `bin/agents-viz/DESIGN.md`.
 
 Read-only: it reads `~/.claude/projects/**` transcripts, binds 127.0.0.1 only, needs no hooks and no dependencies (Node only). Claude Code only — OMP sessions are not supported.
 

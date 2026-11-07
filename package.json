@@ -1,6 +1,6 @@
 {
   "name": "osf",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "private": true,
   "scripts": {
     "test": "node --test \"test/**/*.test.mjs\""

@@ -23,8 +23,10 @@ Claude Code only. On OMP, print `agents: Claude Code only (reads ~/.claude/proje
 3. Read the background output until the line `osf agents → http://127.0.0.1:<port>` appears (a few seconds). If it ends with `(already running)`, a server from an earlier call is still up and the command exits on its own — reuse that URL.
 4. Tell the user, briefly:
    - the URL (the browser opens by itself unless `--no-open`)
-   - left: project and sessions; center: session → skill → agents, one row per wave (agents in a row ran in parallel); right: brief, tool timeline, doing now, final report
-   - statuses: running, done, cut (API/rate-limit error or no final report), stalled (no write for >10 min)
+   - header: one picker for project and session
+   - left pane: where the run is, round tabs when a fix loop happened, and the pipeline steps top to bottom with each step's agents under it (a session without a pipeline groups agents by wave, one wave ran in parallel)
+   - right pane, or a drawer on narrow screens: the selected agent, by default the one that most needs a look. It shows what the agent is doing now, the report, the latest tool calls and the brief
+   - statuses: running, done, cut (API/rate-limit error or no final report), stalled ("Đứng im", no write for >10 min)
    - read-only, binds 127.0.0.1 only, reads `~/.claude/projects`; no hooks, nothing installed
    - stop it by stopping that background task (or Ctrl+C when run in a terminal)
 
