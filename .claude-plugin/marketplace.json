@@ -7,13 +7,13 @@
   },
   "metadata": {
     "description": "OSF kit — OpenSpec-flow skills for Claude Code and OMP",
-    "version": "1.0.21"
+    "version": "1.0.22"
   },
   "plugins": [
     {
       "name": "osf",
       "description": "32 OSF skills + 15 supporting agents (brainstorm/team/apply/verify/…)",
-      "version": "1.0.21",
+      "version": "1.0.22",
       "source": "./",
       "category": "development",
       "keywords": [

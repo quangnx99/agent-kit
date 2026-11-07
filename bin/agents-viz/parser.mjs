@@ -807,15 +807,17 @@ export function listProjects(root) {
     const dir = path.join(root, name);
     let latest = 0;
     let sessions = 0;
+    let agentSessions = 0; // sessions that spawned at least one agent
     try {
       for (const f of fs.readdirSync(dir)) {
         if (!f.endsWith('.jsonl')) continue;
         sessions++;
+        if (isSafeName(f.slice(0, -6)) && agentFiles(path.join(dir, f.slice(0, -6), 'subagents')).length) agentSessions++;
         const st = statSafe(path.join(dir, f));
         if (st && st.mtimeMs > latest) latest = st.mtimeMs;
       }
     } catch { /* unreadable dir */ }
-    return { name, sessions, updatedAt: latest ? new Date(latest).toISOString() : null };
+    return { name, sessions, agentSessions, updatedAt: latest ? new Date(latest).toISOString() : null };
   }).filter((p) => p.sessions > 0).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
 }
 

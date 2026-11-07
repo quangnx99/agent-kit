@@ -420,6 +420,7 @@ async function loadProjects() {
   try {
     const { projects, defaultProject } = await getJson('/api/projects');
     S.projects = projects.map((p) => p.name);
+    S.agentProjects = new Set(projects.filter((p) => p.agentSessions > 0).map((p) => p.name));
     const labels = projectLabels(S.projects);
     S.labels = new Map(S.projects.map((n, i) => [n, labels[i]]));
     const hash = new URLSearchParams(location.hash.slice(1));
@@ -488,9 +489,11 @@ function buildMenu() {
     stIcon(s.anyRunning ? 'run' : 'done'), el('span', { class: 'name' }, sessionName(s)), el('span', { class: 'sub' }, s.anyRunning ? 'đang chạy' : ago(s.updatedAt))));
   const kids = [el('div', { class: 'menu-label' }, `Session trong ${label}`), ...opts];
   if (!opts.length) kids.push(el('div', { class: 'menu-label' }, 'Chưa có session nào gọi agent'));
-  if (S.projects.length > 1) {
+  // Only projects with a session that called agents; the current one always stays listed.
+  const projects = S.projects.filter((n) => n === S.project || !S.agentProjects || S.agentProjects.has(n));
+  if (projects.length > 1) {
     kids.push(el('div', { class: 'menu-label' }, 'Project'));
-    for (const name of S.projects) kids.push(el('button', { type: 'button', class: 'opt', 'aria-current': name === S.project ? 'true' : null, title: name, onclick: () => { closePicker(true); if (name !== S.project) switchProject(name); } },
+    for (const name of projects) kids.push(el('button', { type: 'button', class: 'opt', 'aria-current': name === S.project ? 'true' : null, title: name, onclick: () => { closePicker(true); if (name !== S.project) switchProject(name); } },
       el('span', { class: 'name' }, S.labels.get(name) || name)));
   }
   $('pickerMenu').replaceChildren(...kids);

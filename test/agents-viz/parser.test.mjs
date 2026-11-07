@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  parseJsonl, parseSession, agentStatus, isSafeName, safeJoin, projectDirName, loadSession, listSessions,
+  parseJsonl, parseSession, agentStatus, isSafeName, safeJoin, projectDirName, loadSession, listSessions, listProjects,
   readJsonlBounded, RUNNING_MS, STALLED_MS, toolLabel, toolTarget, resultLine,
 } from '../../bin/agents-viz/parser.mjs';
 
@@ -207,6 +207,24 @@ test('path safety rejects traversal and absolute paths', () => {
   assert.equal(loadSession(ROOT, '..', 'sess-1'), null);
   assert.equal(loadSession(ROOT, 'D--demo-app', '../sess-1'), null);
   assert.equal(listSessions(ROOT, '../projects'), null);
+});
+
+test('listProjects counts sessions that spawned agents', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agents-viz-'));
+  try {
+    fs.mkdirSync(path.join(dir, 'P--agents', 's1', 'subagents'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'P--agents', 's1.jsonl'), '');
+    fs.writeFileSync(path.join(dir, 'P--agents', 's1', 'subagents', 'agent-a1.meta.json'), '{}');
+    fs.writeFileSync(path.join(dir, 'P--agents', 's2.jsonl'), '');
+    fs.mkdirSync(path.join(dir, 'P--plain'));
+    fs.writeFileSync(path.join(dir, 'P--plain', 's3.jsonl'), '');
+    const byName = Object.fromEntries(listProjects(dir).map((p) => [p.name, p]));
+    assert.equal(byName['P--agents'].sessions, 2);
+    assert.equal(byName['P--agents'].agentSessions, 1);
+    assert.equal(byName['P--plain'].agentSessions, 0);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('large transcripts are read head + tail with a truncated warning', () => {
