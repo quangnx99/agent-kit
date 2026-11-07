@@ -1,6 +1,6 @@
 ---
 name: "fix"
-description: "Investigate and fix a bug. Explore root cause, assess scope, then implement with optional spec creation."
+description: "Fix a bug: reproduce it with a red-capable command, find the root cause, lock the plan, then run the chosen flow (direct, auto or Full with tdd, verify, e2e)."
 metadata:
   kit: osf
 ---
@@ -34,7 +34,7 @@ If a red-capable command needs a new test or script, you cannot write it in expl
 
 If no loop is possible at all (needs production data, a device, a third-party account), say so explicitly, list what you tried, and ask the user for access, a redacted artifact (log, HAR, screenshot with timestamps), or permission to add temporary instrumentation. In autopilot, do not ask — proceed with code tracing and mark the root cause `unconfirmed by runtime`.
 
-**Hypotheses:** before testing any, write **3–5 ranked, falsifiable hypotheses** ("if X is the cause, then changing Y makes the bug disappear"). Show the ranked list to the user — they often know which one was just deployed or already ruled out. Then test them against the loop, one variable at a time.
+**Hypotheses:** before testing any, write **3–5 ranked, falsifiable hypotheses** ("if X is the cause, then changing Y makes the bug disappear"). Show the ranked list to the user — they often know which one was just deployed or already ruled out (in autopilot, show it without waiting for an answer). Then test them against the loop, one variable at a time.
 
 ---
 
@@ -111,15 +111,7 @@ How: Collect all stack traces → identify functions that appear in every failin
 - Recommend a path (if asked)
 
 **Visualize**
-```
-┌─────────────────────────────────────────┐
-│     Use ASCII diagrams liberally        │
-├─────────────────────────────────────────┤
-│   Causal chains, state machines,        │
-│   data flows, dependency graphs,        │
-│   before/after comparisons              │
-└─────────────────────────────────────────┘
-```
+Diagram (ASCII) when it helps: Causal chains, state machines, data flows, dependency graphs, before/after comparisons
 
 **Research external knowledge**
 - When discussion involves technology choices, best practices, or security concerns → delegate to osf-researcher
@@ -179,13 +171,5 @@ Resolve these before ending discovery. Self-answer by exploring the codebase. On
 - [ ] Error paths are defined for every operation that can fail
 - [ ] Regression risks identified and mitigation strategy defined
 - [ ] Test strategy decided (unit? integration? regression? which functions need edge case tests?)
-
----
-
-## Extra Subagents
-
-| Subagent | When to Use |
-|----------|-------------|
-| osf-uiux-designer | Fix involves UI changes |
 
 The following is the user's request:

@@ -52,23 +52,14 @@ test('dispatcher catalog matches skills/', () => {
   const available = dispatcher.match(/^Available skills: (.+)$/m)[1].split(',').map((s) => s.trim());
   assert.deepEqual(sorted(available), skillDirs, 'Available skills line');
 
-  const rows = [...dispatcher.matchAll(/^\| (?:planning|spec|investigate|automation|internal) \| ([\w-]+) \|/gm)].map((m) => m[1]);
+  const rows = [...dispatcher.matchAll(/^\| (?:daily|flow|investigate|tools|internal) \| ([\w-]+) \|/gm)].map((m) => m[1]);
   assert.deepEqual(sorted(rows), skillDirs, 'KIT_CATALOG rows');
   assert.equal(rows.length, skillDirs.length, 'KIT_CATALOG has duplicates');
-
-  assert.match(dispatcher, new RegExp(`KIT_CATALOG size \\(${skillDirs.length}\\)`), 'catalog size note');
-  assert.match(dispatcher, new RegExp(`\\*\\*OSF kit — ${skillDirs.length} skills\\*\\*`), 'list header count');
-  for (const name of skillDirs) {
-    assert.match(dispatcher, new RegExp(`^  ${name}\\s`, 'm'), `list output misses ${name}`);
-  }
 });
 
 test('agent lists match agents/', () => {
-  const described = [...dispatcher.matchAll(/^- (osf-[\w-]+) —/gm)].map((m) => m[1]);
-  assert.deepEqual(sorted(described), agentNames, 'dispatcher "Supporting subagents"');
-
-  const listBlock = dispatcher.match(/\*\*Supporting subagents:\*\*\r?\n([\s\S]*?)```/)[1];
-  assert.deepEqual(sorted(listBlock.match(/osf-[\w-]+/g)), agentNames, 'dispatcher list output');
+  const line = dispatcher.match(/^Supporting agents: (.+)$/m)[1];
+  assert.deepEqual(sorted(line.match(/osf-[\w-]+/g)), agentNames, 'dispatcher "Supporting agents"');
 
   const readme = read('README.md').match(/^Agents: (.+)$/m)[1];
   assert.deepEqual(sorted(readme.match(/osf-[\w-]+/g)), agentNames, 'README Agents line');

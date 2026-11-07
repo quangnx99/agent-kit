@@ -53,4 +53,4 @@ This is a comprehension tool — render only the structure that helps you and th
 
 ## You are the implementer
 
-For discovery: prefer codebase-retrieval to assess impact — pass the workspace root as `directory_path`, not a specific repo subdir, so cross-repo and monorepo touch-points are visible. Fall back to Read, Glob, Grep when the path or symbol is already known. For changes: Edit, Write. No subagent delegation.
+For discovery: prefer codebase-retrieval to assess impact — pass `workspace_full_path` = each real project root (call once per root in a multi-root workspace; never the container folder). Fall back to Read, Glob, Grep when the path or symbol is already known. For changes: Edit, Write. No subagent delegation.

@@ -180,8 +180,10 @@ const CLOSING = {
   'osf-security': [/^#{2,3} .*Gate:/m, /^## .*Threat Model/m, /^## .*Security Review/m],
   'osf-spec-review': [/^#{2,3} .*Gate:/m],
   'osf-verify': [/^## .*Verification Report/m],
-  'osf-apply': [/^## ✅/m, /^## ⛔/m],
-  'osf-archive': [/^## .*Archive Complete/m],
+  'osf-apply': [/^## ✅/m, /^## ⛔/m, /^## ⏸/m],
+  'osf-archive': [/^## .*Archive Complete/m, /^## .*Archive Failed/m],
+  'osf-e2e': [/^## .*E2E Report/m],
+  'osf-knowledge': [/^## .*Knowledge Updated/m],
 };
 const CLOSING_LABEL = {
   'osf-security': '### Gate:',
@@ -189,6 +191,8 @@ const CLOSING_LABEL = {
   'osf-verify': '## Verification Report',
   'osf-apply': '## ✅ …',
   'osf-archive': '## Archive Complete',
+  'osf-e2e': '## 🧪 E2E Report',
+  'osf-knowledge': '## ✅ Knowledge Updated',
 };
 
 export function shortType(type) {
@@ -478,24 +482,23 @@ export function parseSession({ mainText, mainMtimeMs, mainTruncated = false, age
 
 // ---------- pipeline (stepper) ----------
 
-export const STEP_ORDER = ['kickoff', 'spec', 'specGate', 'tdd', 'coding', 'e2e', 'security', 'verify', 'archive'];
+export const STEP_ORDER = ['spec', 'specGate', 'tdd', 'coding', 'security', 'verify', 'e2e', 'archive', 'knowledge'];
 export const STEP_LABEL = {
-  kickoff: 'Kickoff', spec: 'Spec', specGate: 'Spec gate', tdd: 'TDD', coding: 'Coding',
-  e2e: 'E2E', security: 'Security', verify: 'Verify', archive: 'Archive',
+  spec: 'Spec', specGate: 'Spec gate', tdd: 'TDD', coding: 'Coding',
+  security: 'Security', verify: 'Verify', e2e: 'E2E', archive: 'Archive', knowledge: 'Knowledge',
 };
 // security and verify share a position: they run together as the gates.
-const STEP_IDX = { kickoff: 0, spec: 1, specGate: 2, tdd: 3, coding: 4, e2e: 5, security: 6, verify: 6, archive: 7 };
+const STEP_IDX = { spec: 0, specGate: 1, tdd: 2, coding: 3, security: 4, verify: 4, e2e: 5, archive: 6, knowledge: 7 };
 const TYPE_STEP = {
   'osf-spec-review': 'specGate', 'osf-tdd': 'tdd', 'osf-apply': 'coding', 'osf-e2e': 'e2e',
-  'osf-security': 'security', 'osf-verify': 'verify', 'osf-archive': 'archive',
+  'osf-security': 'security', 'osf-verify': 'verify', 'osf-archive': 'archive', 'osf-knowledge': 'knowledge',
   'osf-analyze': 'spec', 'osf-researcher': 'spec',
 };
-const KICKOFF_TYPES = new Set(['osf-pm', 'osf-ba', 'osf-qa']);
-const SKILL_STEP = { proposal: 'spec', tdd: 'tdd', e2e: 'e2e' };
+const SKILL_STEP = { proposal: 'spec', tdd: 'tdd', e2e: 'e2e', knowledge: 'knowledge' };
 const skillKey = (name) => String(name || '').replace(/^\//, '').replace(/^osf:/, '');
 const tsNum = (ts) => { const n = Date.parse(ts || ''); return Number.isNaN(n) ? Infinity : n; };
 // Review steps: a fresh wave after a cut or a skill call is a re-run, not fan-out.
-const GATE_STEPS = new Set(['specGate', 'security', 'verify', 'archive']);
+const GATE_STEPS = new Set(['specGate', 'security', 'verify', 'archive', 'knowledge']);
 // "Security gate review (rerun)" / "Spec gate re-review" -> same work as the first run.
 export function normDesc(d) {
   return String(d || '').toLowerCase()
@@ -527,34 +530,23 @@ function stateOf(agents) {
  */
 export function computePipeline({ agents, waves, skills, mainMtimeMs, now }) {
   const byId = new Map(agents.map((a) => [a.id, a]));
-  const waveByIdx = new Map(waves.map((w) => [w.index, w]));
-  const skillById = new Map(skills.map((s) => [s.id, s]));
   const hasSkill = (k) => skills.some((s) => skillKey(s.name) === k);
-  const hasTeam = hasSkill('team');
 
-  const isKickoffWave = (w) => {
-    const sk = skillById.get(w.skillId);
-    if (sk && skillKey(sk.name) === 'team') return true;
-    return w.agentIds.some((id) => byId.has(id) && KICKOFF_TYPES.has(shortType(byId.get(id).type)));
-  };
   const stepOf = (a, depth = 0) => {
     if (a.step !== undefined) return a.step;
     const parent = a.parentAgentId && byId.get(a.parentAgentId);
     if (parent && parent !== a && depth < 20) return (a.step = stepOf(parent, depth + 1));
-    const w = a.wave != null ? waveByIdx.get(a.wave) : null;
-    if (w && !w.parentAgentId && isKickoffWave(w)) return (a.step = 'kickoff');
     return (a.step = TYPE_STEP[shortType(a.type)] || 'other');
   };
   for (const a of agents) delete a.step;
   for (const a of agents) stepOf(a);
 
-  const keys = STEP_ORDER.filter((k) => k !== 'kickoff' || hasTeam || agents.some((a) => a.step === 'kickoff'));
-  // standalone: a single osf skill (e2e, tdd, apply, ...) ran without autopilot/team.
-  const kind = keys.includes('kickoff') ? 'team'
-    : hasSkill('autopilot') ? 'autopilot'
+  const keys = STEP_ORDER;
+  // standalone: a single osf skill (e2e, tdd, apply, ...) ran without autopilot.
+  const kind = hasSkill('autopilot') ? 'autopilot'
     : (hasSkill('proposal') || agents.some((a) => a.step !== 'other')) ? 'standalone' : 'none';
   const standalone = kind === 'standalone';
-  const flagged = (flag) => skills.some((s) => ['autopilot', 'team'].includes(skillKey(s.name)) &&
+  const flagged = (flag) => skills.some((s) => skillKey(s.name) === 'autopilot' &&
     new RegExp(`(^|\\s)${flag}(\\s|$)`).test(s.rawArgs || s.args || ''));
   const noTdd = flagged('--no-tdd');
   const noE2e = flagged('--no-e2e');
@@ -592,6 +584,7 @@ export function computePipeline({ agents, waves, skills, mainMtimeMs, now }) {
     }
     if (!groups.size) continue;
     stepped.push({ ts: w.ts, groups });
+    // Coding after a later step is a fix round: the gates or E2E reported defects.
     if (groups.has('coding') && maxIdx > STEP_IDX.coding) {
       round++;
       const from = prevKeys.some((k) => k === 'security' || k === 'verify') ? 'gates'
@@ -678,7 +671,18 @@ export function computePipeline({ agents, waves, skills, mainMtimeMs, now }) {
       current = last ? [...last.groups.keys()] : shownKeys.slice(-1);
     }
   } else if (!current.length) {
-    if (state.archive === 'done' || (idle && kind === 'none')) finished = true;
+    // An archive that reported "## Archive Failed" stopped the pipeline there.
+    const archiveFailed = (info.archive && info.archive.latest || []).some((a) => /^## .*Archive Failed/m.test(a.report || ''));
+    if (idle && archiveFailed && state.knowledge !== 'done') {
+      stopped = true;
+      stoppedAt = 'archive';
+    }
+    // Knowledge closes the pipeline; an idle session whose archive is done is
+    // finished too (knowledge never started).
+    else if (state.knowledge === 'done' || (idle && (state.archive === 'done' || kind === 'none'))) {
+      finished = true;
+      for (const k of keys) if (state[k] === 'pending') state[k] = 'skipped';
+    }
     else if (idle) {
       // Idle: finished only when nothing is left to do — or a Verified run whose
       // last wave was the gates, all done (archive never reached).
@@ -700,7 +704,7 @@ export function computePipeline({ agents, waves, skills, mainMtimeMs, now }) {
       let next = open[0];
       // E2E runs only when the project has an e2e framework; without any e2e
       // agent or osf:e2e call we cannot claim it is next. Prefer the next step
-      // that ran in an earlier round (the gates after a coding loop), else unknown.
+      // that ran in an earlier round (archive after a coding loop), else unknown.
       const e2eSeen = info.e2e && (info.e2e.all.length > 0 || hasSkill('e2e'));
       if (next === 'e2e' && !e2eSeen) next = open.find((k) => k !== 'e2e' && info[k].all.length > 0);
       if (!open.length) { finished = true; waiting = false; }

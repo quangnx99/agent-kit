@@ -44,7 +44,7 @@ ACTION: COMMIT
 Phase 1 — STAGE
 
 1. Check `git status` for staged files
-   - NO staged files → review untracked and modified files, then stage relevant files by name (`git add <file1> <file2> ...`). Do NOT use `git add -A` or `git add .` — these can accidentally stage secrets (.env, credentials), large binaries, or generated files. Exclude files that look sensitive or irrelevant to the change.
+   - NO staged files → review untracked and modified files and pick the relevant ones by name. Do NOT use `git add -A` or `git add .` — these can accidentally stage secrets (.env, credentials), large binaries, or generated files. Exclude files that look sensitive or irrelevant to the change. Other sessions may share this branch, so show the picked list (and the excluded files) and ask once: "Commit những file này?" — stage with `git add <file1> <file2> ...` only after the user confirms or edits the list.
    - Staged files exist → keep as-is, do NOT stage additional files
 2. Nothing to commit (clean tree) → report and stop
 
@@ -70,9 +70,7 @@ Generate message following conventional commits: `type(scope): concise descripti
 - Body: brief what/why if not obvious from subject
 - Subject under 72 characters
 
-Commit immediately — do NOT ask for confirmation. Run `git commit` and report the result.
-
-If staged changes cover multiple distinct concerns, suggest splitting:
+If the staged changes cover multiple distinct concerns, offer the split BEFORE committing:
 
 ```
 SPLIT SUGGESTION
@@ -85,7 +83,9 @@ Split into 2 commits? [yes/no]
 ═══════════════════════════════════════
 ```
 
-If user agrees: unstage second group, commit first, stage and commit second.
+If the user agrees: unstage the second group, commit the first, then stage and commit the second. If not, commit everything as one.
+
+Otherwise commit right away — the user already confirmed the file list (or staged it themselves). Run `git commit` and report the result.
 
 ---
 
@@ -182,7 +182,7 @@ Merge a source branch into current branch.
 Phase 1 — PRE-FLIGHT
 
 1. Confirm source branch from user input (or ask)
-2. Check uncommitted changes — stash if needed
+2. Check uncommitted changes — dirty tree → ask the user to commit or stash first (they may be another session's work); run `git stash` only if the user agrees
 3. `git fetch` to ensure branches are current
 4. Preview:
 
@@ -218,7 +218,7 @@ ACTION: REBASE
 Phase 1 — PRE-FLIGHT
 
 1. Confirm target branch from user input (or ask)
-2. Check uncommitted changes — stash if needed
+2. Check uncommitted changes — dirty tree → ask the user to commit or stash first (they may be another session's work); run `git stash` only if the user agrees
 3. WARN if rebasing published commits:
 
 ```
@@ -434,12 +434,17 @@ Confirm? [yes/no]
    - Each conflicted file with LOCAL vs REMOTE analysis
    - Branch context — self-contained so proposal has full picture
 
-3. Suggest next steps:
+3. State plainly that the {action} is **still in progress**: conflicted files hold conflict markers, `git status` shows the in-progress state, and no other git command (commit, checkout, pull, another rebase) should run until it is finished or aborted. For a rebase, later commits can conflict again after `--continue`.
+
+4. Suggest next steps:
 
 ```
 1. Create the plan → /osf brainstorm resolve-{action}-conflicts-{YYYYMMDD}
 2. Already have a plan? → osf-apply subagent
-3. After resolution → /git {action} again to finalize
+3. After the files are resolved → git add <files>, then
+     merge / pull: git commit (merge) or git merge --continue
+     rebase:       git rebase --continue — repeat per commit; new conflicts → /osf git rebase again
+4. Give up → say "abort" (see ABORT HANDLING)
 ```
 
 ---

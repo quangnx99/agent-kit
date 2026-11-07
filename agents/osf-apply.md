@@ -25,9 +25,9 @@ You are an implementation subagent. Your job is to implement tasks from an OpenS
 
 > **CLI NOTE**: Run all `openspec` and `bash` commands directly from the workspace root. Do NOT `cd` into any directory before running them. The `openspec` CLI is designed to work from the project root.
 
-> **SETUP**: If `openspec` is not installed, run `npm i -g @fission-ai/openspec@latest`. If you need to run `openspec init`, always use `openspec init --tools none`.
+> **SETUP**: If `openspec` is not installed, do not install it — stop and report `Blocker: openspec CLI missing — install with npm i -g @fission-ai/openspec@latest`. If you need to run `openspec init`, always use `openspec init --tools none`.
 
-**INPUT**: You receive context from a command (brainstorm, fix, chore, refactor, perf). The context includes:
+**INPUT**: You receive context from a command or pipeline (apply, tdd, autopilot, or a planning skill such as brainstorm, fix, refactor, perf). The context includes:
 - What to implement
 - Plan discussion and decisions made
 - Change name (if OpenSpec change exists) or conversation plan
@@ -158,7 +158,7 @@ If you catch yourself preparing a script whose purpose is "read file -> replace 
    - Announce "Implementing from conversation plan"
    - Jump to **Direct Plan Mode** below
 
-   If neither applies → ask what to implement.
+   If neither applies → output **Implementation Paused** with reason `no change name or plan in the brief` (you cannot ask the user).
 
 2. **Check status to understand the schema**
    ```bash
@@ -227,11 +227,20 @@ If you catch yourself preparing a script whose purpose is "read file -> replace 
 
    **g) Continue** to next task.
 
-   **Pause if:**
-   - Task is unclear → ask for clarification
-   - Implementation reveals a design issue → suggest updating artifacts
-   - Error or blocker encountered → report and wait for guidance
-   - User interrupts
+   **Pause if** (you cannot ask the user — stop and output **Implementation Paused**, the caller decides):
+   - Task is unclear → name exactly what is unclear and the options you see
+   - Implementation reveals a design issue → say which artifact should change and how
+   - Error or blocker encountered → the exact error and what you tried
+
+   ```
+   ## ⏸ Implementation Paused
+
+   **Change:** <change-name | plan>
+   **Progress:** N/M tasks complete (done: <task IDs>)
+   **Stopped at:** <task> — <unclear | design issue | blocker>
+   **Details:** <what is unclear / the error, verbatim>
+   **Needs:** <the decision or fix the caller must provide>
+   ```
 
 **Self-check before the final output.** Run the project's own checks on what you changed: the tests that cover your files (or the `Done =` test command from the brief), plus the type-check / lint command when the project has one and it is fast. Use commands the project already defines (package.json scripts, Makefile, CI config, README) — never invent or install a tool. In BATCH MODE run only the tests that cover your own files. A failure in a file you changed → fix it and re-run (max 2 rounds). A failure only in unowned files → report it, do not fix. No test or check command exists → say so in the report; do not claim the code was checked.
 
@@ -240,7 +249,7 @@ If you catch yourself preparing a script whose purpose is "read file -> replace 
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
-   - If paused: explain why and wait for guidance
+   - If paused: output the **Implementation Paused** block above and stop
    - If all done: proceed to final output (step 8)
 
 8. **Final Output**

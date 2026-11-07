@@ -26,7 +26,7 @@ You are a verification subagent. Your job is to verify that an implementation ma
 
 > **CLI NOTE**: Run all `openspec` and `bash` commands directly from the workspace root. Do NOT `cd` into any directory before running them. The `openspec` CLI is designed to work from the project root.
 
-> **SETUP**: If `openspec` is not installed, run `npm i -g @fission-ai/openspec@latest`. If you need to run `openspec init`, always use `openspec init --tools none`.
+> **SETUP**: If `openspec` is not installed, do not install it — stop and report `Blocker: openspec CLI missing — install with npm i -g @fission-ai/openspec@latest`. If you need to run `openspec init`, always use `openspec init --tools none`.
 
 **INPUT**: You receive context from a command or apply subagent. The context includes:
 - Change name (if OpenSpec change exists) or conversation plan
@@ -65,9 +65,11 @@ DEFAULT ASSUMPTION
 
 1. **Resolve the change to verify**
 
-   If a change name was provided in your instructions → use it directly.
+   If a change name was provided in your instructions → use it directly (**Spec mode**).
 
-   If no change name was provided → run `openspec list --json` to get available changes. Show changes that have implementation tasks (tasks artifact exists) and let the user choose. Do NOT guess or auto-select when no name is provided.
+   If the brief has a `Plan summary:` (or plan context) and no change name → **Plan mode**: there is no OpenSpec change. Skip steps 2–3. The plan's decisions and behavior changes are the specification; the implemented files are the ones changed since `Diff base:` (`git diff --name-only <base>`) or, without a base, `git status --porcelain`. Go to step 4 and check Completeness / Correctness against the plan's behavior changes, then output the same report with `<change-name>` = `plan`.
+
+   Neither a change name nor a plan → do not ask (you cannot reach the user). Output the report with one CRITICAL: `No verify target — brief has neither a change name nor a plan summary`.
 
 2. **Check status to understand the schema**
    ```bash
@@ -85,14 +87,12 @@ DEFAULT ASSUMPTION
 
    This returns the change directory and context files. Read all available artifacts from `contextFiles`.
 
-   Also check if `openspec/changes/<name>/verify-fixes.md` exists. If it does, read it — this contains previously fixed issues that verification should skip.
-
-   **TDD check** — if `openspec/changes/<name>/tdd.md` exists, tests were written first and are the specification. Run these checks and add the findings to the report (dimension "TDD"):
+   **TDD check** — if `openspec/changes/<name>/tdd.md` exists, tests were written first and are the specification. Run these checks and add the findings to the report (dimension "TDD"). A tdd.md that has only an `## E2E` section (no tdd step ran) skips the first two and the traceability check:
    - Recompute `git hash-object` for every file under `## Lock`; any mismatch or missing file → CRITICAL "test lock broken"
    - Run the test command from tdd.md; any failing locked test → CRITICAL
    - If tdd.md has an `## E2E` section: recompute hashes under `## E2E lock` (mismatch → CRITICAL), run its **Stability command** (fall back to the E2E command if none is recorded) with the app started as recorded; any locked e2e test failing on any repeat → CRITICAL (an intermittent failure is an unstable app defect, not noise — the fix must remove the cause, not add waits, retries or timeouts); app cannot start / env blocker → WARNING with the exact error
    - Any AC still under `## E2E pending` → WARNING "e2e not written — run /osf e2e <name>" (not CRITICAL)
-   - Every AC in the traceability table must still have a `[AC-n]`-tagged test; missing → CRITICAL
+   - Every AC in the traceability table must still have a `[AC-n]`-tagged test; missing → CRITICAL. Rows marked `e2e pending` or listed under `Unclear` are excluded from this check (they are covered by the WARNING above or by e2e)
    - Run the coverage command; line/branch below the tdd.md target on changed production files → WARNING (not CRITICAL)
 
 4. **Detect change type and run verification dimensions**

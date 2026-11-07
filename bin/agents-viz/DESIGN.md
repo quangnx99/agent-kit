@@ -1,7 +1,7 @@
 # DESIGN — osf agents visualizer
 
 ## Brief
-- Who uses it: a developer running `/osf:autopilot` or `/osf:team`, with the page open next to the terminal (about 900px wide) or full screen.
+- Who uses it: a developer running `/osf:autopilot`, with the page open next to the terminal (about 900px wide) or full screen.
 - Main job: see which step the pipeline is on, spot agents that need a look (stalled, cut), and read each agent's report.
 - Live session over SSE, or replay of a finished one. Read-only.
 
@@ -26,7 +26,8 @@
 - Left pane:
   - Summary: step and round, meta line, and chips counting running, stalled and cut agents.
   - Round tabs, shown only when there is more than one round.
-  - Steps listed vertically, each step's agents nested under it.
+  - Steps listed vertically, each step's agents nested under it. Order: Spec → Spec gate → TDD → Coding → Security ‖ Verify (one position, marked "song song") → E2E → Archive → Knowledge.
+  - A fix round starts again at Coding when the gates or E2E report defects; the earlier round ends with a loop note such as "E2E báo lỗi → sửa ở vòng 2".
 - Right pane: the selected agent's detail. By default it opens the agent that most needs a look.
   - Badge and name.
   - A "now" box for running, stalled or cut agents.

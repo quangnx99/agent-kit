@@ -1,140 +1,56 @@
 ---
 name: "brainstorm"
-description: "Brainstorm a new feature: grill the requirements, assess scope, then implement with optional spec creation."
+description: "Start of every dev request: grill the requirement until zero fog, then run the chosen flow (default Full: spec → tdd → code → verify → e2e → knowledge). Work types: feature, refactor, perf, docs, test, ci, docker."
 metadata:
   kit: osf
 ---
 
-You are planning a new feature. This command helps you explore the feature space, assess its size, and decide on the best implementation path.
+You turn a request (often from a boss, often vague) into a locked, testable plan. Brainstorm thoroughly: the quality of everything after this — spec, tests, code, e2e — depends on it.
 
-FIRST STEP: You MUST use the Skill tool to invoke "enhance" with the user's request (below) as args, unless the request is empty or the caller context explicitly says the prompt has already been enhanced. The enhance instructions ("output only the rewritten prompt", "do not use Skill/Agent", "do not read files") apply ONLY to producing that rewrite. Then show the user:
-- the rewritten prompt under an "Enhanced prompt:" heading
-- a Feynman Echo of it (one or two plain sentences, as described below)
-- the question: "OK / sửa / dùng bản gốc?"
+FIRST STEP: invoke the Skill tool with "enhance" and the user's request, unless the request is empty, the caller context says the prompt has already been enhanced, or the caller context contains `autopilot-pipeline` (then skip this step and the pause). The enhance rules ("output only the rewritten prompt", no tools) apply only to producing that rewrite. Then show the user the rewritten prompt under "Enhanced prompt:", a one- or two-sentence plain restatement, and "OK / sửa / dùng bản gốc?". END YOUR TURN — this pause is intended. Point out any detail the rewrite dropped or changed.
 
-Then END YOUR TURN and wait — this pause is intended. On the user's reply, take the confirmed version (edited, or the original if they choose it) as the working request; the Feynman Echo is done, do not repeat it. If the rewrite dropped or changed a detail of the original, point it out when you show it.
-
-BEFORE PROCEEDING: After the user confirms the prompt, you MUST use the Skill tool to invoke "explore" unless the caller context explicitly says shared explore mode has already been loaded for this request. This loads the shared explore mode behavior (stance, verification, workflow, subagent protocols, OpenSpec awareness, guardrails) that this command depends on. Do not proceed until explore is loaded exactly once.
+BEFORE PROCEEDING: after the user confirms, invoke the Skill tool with "explore" unless the caller context says shared explore mode is already loaded. Load it exactly once.
 
 ---
 
-## What You Might Do
+## Work type
 
-**Explore the problem space**
-- Feynman Echo — restate the user's requirement in the simplest possible language (as if explaining to a non-technical person), then ask user to confirm or correct. Gaps reveal themselves when you struggle to simplify a part. When you get stuck simplifying, name the gap explicitly and offer concrete options to resolve it.
-- Ask clarifying questions that emerge from what they said
-- Challenge assumptions
-- Reframe the problem
-- Find analogies
+Classify the request first and say it in one line (`Loại việc: <type>`). The type adds its questions and checklist items to the shared ones below; when a request mixes types, apply each. Bugs go to `/osf fix`; small, already-decided changes go to `/osf chore`.
 
-**Investigate the codebase**
-- Map existing architecture relevant to the discussion
-- Find integration points
-- Identify patterns already in use
-- Surface hidden complexity
+| Type | Look at first | Stress-test (★ = narrowest option grounded in the codebase) | Zero-fog additions |
+|---|---|---|---|
+| **feature** (default) | integration points, existing patterns, who else uses the touched data | error path per operation · edge cases (empty, huge, duplicate, concurrent) · UI states and accessibility if UI · ★ follow the project's error-handling pattern | every operation that can fail has a specific failure behavior; UI states listed |
+| **refactor** | callers and consumers of every touched symbol; existing tests that pin behavior | will behavior change? (★ no — locked by characterization tests) · scope (★ the component named, direct callers only when a signature changes) · approach (★ the project's existing pattern) | what must stay identical is named; affected files listed |
+| **perf** | the hot path, measured — profile or timing, never a guess | metric and target (latency p95, memory, queries per request) · acceptable trade-off · scope (★ the measured hot path) | before/after measurement method is a runnable command |
+| **docs** | existing docs structure, what is stale | audience · format (README, API reference, guide) · scope (★ the component named) | audience and scope stated; every documented command is verified to run |
+| **test** | current test layout, untested paths, flaky tests | level (unit / integration / e2e) · coverage target · what gets mocked (★ only external services) · test data | scope and level decided; coverage target is a number or a file list |
+| **ci** | existing workflows, triggers, secrets in use | scope (★ build + test + staging; prod only if CI already deploys prod) · triggers · failure handling · rollback | triggers, environments and approval gates explicit |
+| **docker** | existing Dockerfiles / compose, how the app runs today | base image · build (★ multi-stage) · security (non-root, minimal layers) · orchestration (★ what the project already runs) | base image and build strategy decided; local run command works |
 
-**Compare options**
-- Brainstorm multiple approaches
-- Build comparison tables
-- Sketch tradeoffs
-- Recommend a path (if asked)
+## What you do
 
-**Visualize**
-```
-┌─────────────────────────────────────────┐
-│     Use ASCII diagrams liberally        │
-├─────────────────────────────────────────┤
-│   System diagrams, state machines,      │
-│   data flows, architecture sketches,    │
-│   dependency graphs, comparison tables  │
-└─────────────────────────────────────────┘
-```
+- **Restate simply.** Explain the request in two plain sentences. Any part you cannot simplify is a gap — name it and turn it into a decision with options.
+- **Investigate before asking.** Map the code the request touches: entry points, data model, callers, tests, config. Use codebase-retrieval first, then Grep/Read. Use `osf-analyze` (with `Mode: deep` for multi-root, auth, public contracts) when the blast radius is unclear, and `osf-researcher` for external libraries, standards or versions.
+- **Compare approaches** when more than one is reasonable: a small table of options with the good and bad of each, and your ★ choice grounded in the codebase.
+- **Draw** an ASCII diagram when a flow, state machine or data path is easier to see than to read.
+- **Surface risks**: what could break, which existing data or users are affected, what needs a migration or a rollback.
 
-**Research external knowledge**
-- When discussion involves technology choices, best practices, or security concerns → delegate to osf-researcher
+## Shared stress-test (every type)
 
-**Look up API documentation**
-- When discussion needs precise API usage → delegate to osf-researcher for web research
+Self-answer from the code first; only decisions reach the user, through explore's Grilling rounds.
 
-**Investigate a problem (bug, unexpected behavior)**
-- Trace, don't theorize — read actual code, follow execution flow step by step
-- Form hypotheses then verify in code
-- 5 Whys — each answer becomes the next question until you hit the real cause
+1. **Failure** — when each operation fails, times out or gets bad input: exact behavior (message, status code, resulting state)
+2. **Boundaries** — empty, huge, duplicate, concurrent, out-of-order inputs
+3. **Who else** — other roles, services, screens or jobs that read or write the same data
+4. **Change over time** — existing data, migration, backward compatibility, rollback
+5. **Proof** — how each behavior will be tested: unit / integration / e2e (UI journey or API flow), and how the app runs locally for e2e
 
-**Design UI/UX**
-- When user needs UI for a new feature → delegate to osf-uiux-designer
+## Zero-fog checklist (additions)
 
-**Surface risks and unknowns**
-- Identify what could go wrong
-- Find gaps in understanding
-- Suggest spikes or investigations
-
----
-
-## Stress-test Questions
-
-Resolve these before ending discovery. Self-answer by exploring the codebase. Only surface items to the user that are genuinely ambiguous or require a personal/team style choice:
-
-1. Error paths:
-   "When [operation] fails:
-    A. Redirect to error page
-    B. Silent retry (max N times) then show error
-    C. ★ Show inline error + retry button
-    D. Khác/Other: ___"
-
-2. Edge cases:
-   "For [input/data], edge cases to handle:
-    A. Empty/null — show empty state
-    B. Too long — truncate at N chars
-    C. Special characters — sanitize
-    D. ★ All of the above
-    E. Khác/Other: ___"
-
-3. Component states (if UI):
-   "Component [X] needs which states:
-    A. Loading + Success (minimal)
-    B. ★ Loading + Error + Empty + Success (complete)
-    C. Khác/Other: ___"
-
-4. Accessibility (if UI):
-   "Accessibility requirements:
-    A. Basic (contrast + focus states)
-    B. ★ Full WCAG 2.1 AA (keyboard nav, screen reader, contrast)
-    C. Khác/Other: ___"
-
-5. Test strategy:
-   "Test level needed:
-    A. Unit tests for all public functions + edge cases
-    B. Unit + integration tests
-    C. ★ Unit + integration + E2E
-    D. Khác/Other: ___"
-
-6. Architecture decisions:
-   "Error handling strategy for this feature:
-    A. Throw exceptions, catch at boundary
-    B. Result/Either pattern (no exceptions)
-    C. Error codes + error handler
-    D. ★ Follow existing project pattern: [detected pattern]
-    E. Khác/Other: ___"
-
----
-
-## Zero-Fog Checklist (additions)
-
-- [ ] Every requirement is specific enough for a verifier to objectively check (no "handle errors gracefully", no "good UX")
-- [ ] All edge cases are explicitly named (not "handle edge cases" — which ones?)
-- [ ] Error paths are defined for every operation that can fail (what happens on failure? specific behavior, not "show error")
-- [ ] If UI exists: component states listed (loading, error, empty, disabled, overflow)
-- [ ] If UI exists: accessibility requirements stated (keyboard nav, contrast, ARIA, focus management)
-- [ ] Test strategy decided (unit? integration? E2E? which functions need edge case tests?)
-- [ ] Architecture decisions explicit (error handling strategy, dependency direction, state management approach)
-
----
-
-## Extra Subagents
-
-| Subagent | When to Use |
-|----------|-------------|
-| osf-uiux-designer | User is building a new feature that needs UI, or wants to modify/add UI components |
+- [ ] Every requirement is checkable by a verifier (no "handle errors gracefully", "good UX", "fast")
+- [ ] Every edge case and error path is named with its exact behavior
+- [ ] Every user-visible behavior has a planned proof: an AC that becomes a test (unit/integration) or a journey (e2e UI/API)
+- [ ] How to run the whole app locally for e2e is known (services, data, start order) or listed as a decision
+- [ ] The work type's additions above pass
 
 The following is the user's request:

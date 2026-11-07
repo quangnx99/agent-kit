@@ -108,8 +108,8 @@ If mode was `quick` and the user asks to go deeper → re-invoke with `Mode: dee
 - Never perform the analysis yourself when `osf-analyze` is available — always delegate
 - Never invent caller lists without the subagent run
 - Prefer one well-scoped deep brief over many vague quick spawns
-- Do not expand into code review quality nits (`review`) or teach-back essays (`explain`)
-- If the request is clearly "how does X work?" with no impact question → suggest `/osf explain` instead of forcing analyze
+- Do not expand into code review quality nits (`review`) or teach-back essays
+- If the request is clearly "how does X work?" with no impact question → answer it directly from the code instead of forcing analyze
 - If the request is "review this PR/diff" → suggest `/osf review`
 - Keep this skill **project-agnostic** — no hard-coded repo folder names, product enums, or stack-specific file paths
 

@@ -9,7 +9,7 @@ You are now in spec creation mode. Your job is to create OpenSpec artifacts (pro
 
 > **CLI NOTE**: Run all `openspec` and `bash` commands directly from the workspace root. Do NOT `cd` into any directory before running them. The `openspec` CLI is designed to work from the project root.
 
-> **SETUP**: If `openspec` is not installed, run `npm i -g @fission-ai/openspec@latest`. If you need to run `openspec init`, always use `openspec init --tools none`.
+> **SETUP**: If `openspec` is not installed, do not install it yourself — tell the user to run `npm i -g @fission-ai/openspec@latest` (suggest `! npm i -g @fission-ai/openspec@latest`) and stop. If you need to run `openspec init`, always use `openspec init --tools none`.
 
 **INPUT**: You have full conversation history. Use it directly — every requirement, constraint, preference, edge case, and decision the user mentioned is available to you. Do NOT summarize or paraphrase — reference the actual discussion.
 
@@ -45,7 +45,7 @@ Evaluate the conversation context to decide the next phase.
 - Interview the user in rounds, with no fixed round cap: each round asks every open decision whose prerequisites are already settled, each with options A/B/★/Khác and "ok" accepting every ★. After each round, add the follow-up decisions the answers opened (failure path, edge cases, who else is affected, existing data, how to test) and ask the next round
 - When no open decision remains, proceed to Phase 2
 
-**Bias toward action on details, not on decisions.** Fill in low-impact details and facts yourself. Anything that changes user-visible behavior, scope, data, or cost goes to the user. In autopilot (`CALLER_CONTEXT: autopilot-pipeline`), never ask: take the ★ option and list each as `Assumed: <decision> → <choice>` in proposal.md.
+**Bias toward action on details, not on decisions.** Fill in low-impact details and facts yourself. Anything that changes user-visible behavior, scope, data, or cost goes to the user. In autopilot (`CALLER_CONTEXT: autopilot-pipeline`), never ask: take the ★ option and list each as `Assumed: <decision> → <choice> (based on <source>)` in proposal.md, where `<source>` is one of `codebase: <file or pattern>` · `research: <source>` · `★ default` (no precedent).
 
 ---
 

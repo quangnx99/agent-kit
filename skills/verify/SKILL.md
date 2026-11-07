@@ -24,7 +24,7 @@ Before launching the subagent, gather context from the current conversation:
 1. If an OpenSpec change name exists (from a prior spec or implementation):
    - Pass the change name — the subagent reads spec artifacts automatically
 2. If no spec but implementation was just done:
-   - Summarize what was implemented and what the expected behavior should be
+   - Summarize what was implemented and what the expected behavior should be, passed as `Plan summary: …` (osf-verify enters Plan mode on that label), plus `Diff base: <commit before the work>` when you know it
 3. If user provides explicit arguments:
    - Pass those directly
 

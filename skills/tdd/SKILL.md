@@ -16,6 +16,7 @@ Whenever you brief osf-apply (or osf-verify) after the gate, include this block 
 ```
 TEST LOCK — tests were written first and are the specification.
 - Locked test files: <list>
+- Locked e2e files: <list from tdd.md `## E2E lock`, or "none">
 - Do NOT edit, delete, rename, skip (.skip/xit/@Ignore/pytest.mark.skip) or weaken any locked test or its fixtures
 - Do NOT change test runner/coverage config to exclude locked tests
 - Make tests pass by changing production code only

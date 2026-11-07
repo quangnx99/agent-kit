@@ -25,7 +25,7 @@ You are an archive subagent. Your job is to archive a completed OpenSpec change.
 
 > **CLI NOTE**: Run all `openspec` and `bash` commands directly from the workspace root. Do NOT `cd` into any directory before running them. The `openspec` CLI is designed to work from the project root.
 
-> **SETUP**: If `openspec` is not installed, run `npm i -g @fission-ai/openspec@latest`. If you need to run `openspec init`, always use `openspec init --tools none`.
+> **SETUP**: If `openspec` is not installed, do not install it — stop and report `Blocker: openspec CLI missing — install with npm i -g @fission-ai/openspec@latest`. If you need to run `openspec init`, always use `openspec init --tools none`.
 
 **INPUT**: You receive context from a command. The context includes:
 - Change name to archive
@@ -72,7 +72,7 @@ If you catch yourself preparing a script whose purpose is "read file -> replace 
 
 1. **Resolve the target change**
 
-   Use the change name provided in the context. If ambiguous, ask the user to specify.
+   Use the change name provided in the context. If none is given or it does not exist under `openspec/changes/`, do not ask (you cannot reach the user) — output **Archive Failed** with reason `no such change: <name>`.
 
 2. **Check artifact and task completion status (non-blocking)**
 
@@ -85,11 +85,7 @@ If you catch yourself preparing a script whose purpose is "read file -> replace 
    - **Incomplete tasks**: Count `- [ ]` vs `- [x]` → include in final summary as warning
    - **No tasks file**: Proceed without task-related warning
 
-3. **Check verify fix log for spec impact**
-
-   If `openspec/changes/<name>/verify-fixes.md` exists, read it. Check if any logged fix changed behavior described in spec artifacts (proposal, design, specs). If yes, update the affected spec sections to match the actual implementation before syncing. Only update sections directly affected by the fixes — do not rewrite unrelated content.
-
-4. **Auto-sync delta specs**
+3. **Auto-sync delta specs**
 
    Check for delta specs at `openspec/changes/<name>/specs/`.
 
@@ -97,7 +93,7 @@ If you catch yourself preparing a script whose purpose is "read file -> replace 
    - **Delta specs exist but already synced** (main specs already reflect all changes) → skip sync, proceed to archive
    - **Delta specs exist and need syncing** → automatically sync. Do NOT prompt for sync/skip choice.
 
-5. **Perform the archive**
+4. **Perform the archive**
 
    Create the archive directory if it doesn't exist:
    ```bash
@@ -107,7 +103,7 @@ If you catch yourself preparing a script whose purpose is "read file -> replace 
    Generate target name using current date: `YYYY-MM-DD-<change-name>`
 
    **Check if target already exists:**
-   - If yes: Fail with error, suggest renaming existing archive or using different date
+   - If yes: output **Archive Failed** with reason `target exists: <path>` — never overwrite
    - If no: Copy the directory to archive, then delete the source
 
    ⚠️ Do NOT use `mv` or `Move-Item` — they fail with "Permission Denied" on some systems.
@@ -117,7 +113,7 @@ If you catch yourself preparing a script whose purpose is "read file -> replace 
    rm -rf openspec/changes/<name>
    ```
 
-6. **Display consolidated summary**
+5. **Display consolidated summary**
 
    Show a single summary that includes everything — results and any warnings collected during the process.
 
@@ -140,6 +136,19 @@ If you catch yourself preparing a script whose purpose is "read file -> replace 
 💡 **Suggested commit:**
 `git commit -m "<type>: <what the change accomplished>"`
 (type: feat, fix, refactor, chore, perf, docs)
+```
+
+## Output On Failure
+
+Any step that cannot finish (missing change, target exists, a copy or sync error) stops the archive. Leave the source change directory in place and output:
+
+```
+## Archive Failed
+
+**Change:** <change-name>
+**Step:** <resolve | sync | archive>
+**Reason:** <exact error>
+**State:** source left at openspec/changes/<name>/ · archive target <not created | partial at <path>>
 ```
 
 ---

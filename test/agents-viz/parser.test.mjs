@@ -82,6 +82,21 @@ test('osf agent missing its closing report: done with a report warning', () => {
   assert.match(s.reportWarning, /### Gate:/);
 });
 
+test('new closing markers: archive failed, apply paused, e2e report, knowledge updated', () => {
+  for (const [type, text] of [
+    ['osf:osf-archive', '## Archive Failed\n\nStep: move'],
+    ['osf:osf-apply', '## ⏸ Implementation Paused\n\nwaiting'],
+    ['osf:osf-e2e', '## 🧪 E2E Report\n\n3/3 green'],
+    ['osf:osf-knowledge', '## ✅ Knowledge Updated\n\n2 notes'],
+  ]) {
+    const a = one(type, agentText(text));
+    assert.equal(a.status, 'done', type);
+    assert.equal(a.reportWarning, null, type);
+  }
+  assert.match(one('osf:osf-e2e', agentText('All journeys pass.')).reportWarning, /E2E Report/);
+  assert.match(one('osf:osf-knowledge', agentText('Saved notes.')).reportWarning, /Knowledge Updated/);
+});
+
 test('unknown agent type finished without error counts as done', () => {
   assert.equal(one('Explore', agentText('Found it.')).status, 'done');
 });
@@ -126,9 +141,9 @@ test('parallel wave: two Agent calls in one assistant message share a wave', () 
 test('skill call node: agents attach to the skill that spawned them', () => {
   const s = parseSession({
     mainText: jl(
-      { type: 'user', uuid: 'c1', timestamp: '2026-01-01T09:00:00Z', message: { role: 'user', content: '<command-name>/osf:team</command-name><command-args>go</command-args>' } },
+      { type: 'user', uuid: 'c1', timestamp: '2026-01-01T09:00:00Z', message: { role: 'user', content: '<command-name>/osf:autopilot</command-name><command-args>go</command-args>' } },
       { type: 'assistant', uuid: 'k1', timestamp: '2026-01-01T09:01:00Z', message: { id: 'mk', content: [{ type: 'tool_use', id: 'sk1', name: 'Skill', input: { skill: 'osf:tdd', args: 'x' } }] } },
-      callLine('mw', 'tu1', 'osf:osf-tdd', { attributionSkill: 'osf:team' }),
+      callLine('mw', 'tu1', 'osf:osf-tdd', { attributionSkill: 'osf:autopilot' }),
       callLine('mz', 'tu2', 'osf:osf-tdd'),
     ),
     agents: [
@@ -137,7 +152,7 @@ test('skill call node: agents attach to the skill that spawned them', () => {
     ],
     now: NOW,
   });
-  assert.deepEqual(s.skills.map((k) => [k.name, k.source]), [['osf:team', 'command'], ['osf:tdd', 'tool']]);
+  assert.deepEqual(s.skills.map((k) => [k.name, k.source]), [['osf:autopilot', 'command'], ['osf:tdd', 'tool']]);
   const byId = Object.fromEntries(s.agents.map((a) => [a.id, a.skillId]));
   assert.equal(byId.x1, s.skills[0].id, 'attributionSkill wins when the skill appears earlier');
   assert.equal(byId.x2, 'sk1', 'otherwise the most recent skill call');
@@ -319,51 +334,162 @@ const command = (name, args, min) => ({ type: 'user', uuid: `c-${name}`, timesta
 
 // lines: transcript records; running: tool_use ids whose agent is still running;
 // cut: tool_use ids whose agent ended on a rate-limit error.
-function pipelineOf(lines, { running = [], cut = [], mainMtimeMs = NOW - STALLED_MS - 1000 } = {}) {
+// reports: tool_use id → final report text (default "### Gate: PASS").
+function pipelineOf(lines, { running = [], cut = [], reports = {}, mainMtimeMs = NOW - STALLED_MS - 1000 } = {}) {
   const flat = lines.flat();
   const agents = flat.flatMap((r) => (Array.isArray(r.message.content) ? r.message.content : []))
     .filter((c) => c.type === 'tool_use' && c.name === 'Agent')
     .map((c) => ({
       agentId: `g-${c.id}`,
       metaText: meta(c.input.subagent_type, c.id, !running.includes(c.id), c.input.description),
-      jsonlText: cut.includes(c.id) ? CUT_TEXT : agentText('### Gate: PASS'),
+      jsonlText: cut.includes(c.id) ? CUT_TEXT : agentText(reports[c.id] || '### Gate: PASS'),
       mtimeMs: running.includes(c.id) ? NOW - 1000 : NOW - STALLED_MS - 5000,
     }));
   return parseSession({ mainText: jl(...flat), mainMtimeMs, agents, now: NOW });
 }
 const stepMap = (p) => Object.fromEntries(p.steps.map((s) => [s.key, s]));
+// The loop note text lives in the page; evaluate its roundNote() as-is.
+const HTML = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'bin', 'agents-viz', 'index.html'), 'utf8');
+const roundNote = new Function(`${/function roundNote\([\s\S]*?\n}\n/.exec(HTML)[0]}; return roundNote;`)();
 
-test('pipeline: team run with kickoff, spec gate re-run, --no-e2e and archive', () => {
+test('pipeline: full run in the new order maps every agent to its step', () => {
   const s = pipelineOf([
-    command('osf:team', 'add tags to the notes CLI', 0),
-    wave('mK', 1, ['k1', 'osf:osf-pm'], ['k2', 'osf:osf-ba'], ['k3', 'osf:osf-analyze'], ['k4', 'osf:osf-qa'], ['k5', 'osf:osf-security']),
-    skillCall('sa', 'osf:autopilot', '--full --parallel=3 --no-e2e --yes', 10),
-    skillCall('sp', 'osf:proposal', 'create the change', 11),
-    wave('mG1', 15, ['g1', 'osf:osf-spec-review']),
-    wave('mG2', 20, ['g2', 'osf:osf-spec-review']),
-    wave('mT', 25, ['t1', 'osf:osf-tdd'], ['t2', 'osf:osf-tdd']),
-    wave('mA', 30, ['a1', 'osf:osf-apply']),
-    wave('mV', 40, ['v1', 'osf:osf-security'], ['v2', 'osf:osf-verify']),
-    wave('mR', 50, ['r1', 'osf:osf-archive']),
+    skillCall('sa', 'osf:autopilot', '--full --parallel=3 --yes', 0),
+    wave('mS', 1, ['n1', 'osf:osf-analyze'], ['n2', 'osf:osf-researcher']),
+    skillCall('sp', 'osf:proposal', 'create the change', 5),
+    wave('mG1', 10, ['g1', 'osf:osf-spec-review']),
+    wave('mT', 15, ['t1', 'osf:osf-tdd'], ['t2', 'osf:osf-tdd']),
+    wave('mA', 20, ['a1', 'osf:osf-apply']),
+    wave('mV', 30, ['v1', 'osf:osf-security'], ['v2', 'osf:osf-verify']),
+    skillCall('se', 'osf:e2e', 'change', 35),
+    wave('mE', 36, ['e1', 'osf:osf-e2e']),
+    wave('mR', 45, ['r1', 'osf:osf-archive']),
+    skillCall('sk', 'osf:knowledge', 'change', 50),
+    wave('mN', 51, ['k1', 'osf:osf-knowledge']),
   ]);
   const p = s.pipeline;
   const st = stepMap(p);
-  assert.equal(p.kind, 'team');
-  assert.deepEqual(p.steps.map((x) => x.key), ['kickoff', 'spec', 'specGate', 'tdd', 'coding', 'e2e', 'security', 'verify', 'archive']);
-  assert.ok(st.kickoff.agentIds.includes('g-k5'), 'the kickoff security agent belongs to kickoff');
-  assert.ok(!st.security.agentIds.includes('g-k5'));
-  assert.equal(s.agents.find((a) => a.id === 'g-k3').step, 'kickoff');
-  assert.equal(st.spec.state, 'done');
-  assert.equal(st.specGate.attempts, 2);
-  assert.equal(st.specGate.state, 'done');
-  assert.equal(st.e2e.state, 'skipped');
-  assert.equal(st.security.state, 'done');
-  assert.equal(st.verify.state, 'done');
-  assert.equal(st.archive.state, 'done');
+  assert.equal(p.kind, 'autopilot');
+  assert.deepEqual(p.steps.map((x) => x.key), ['spec', 'specGate', 'tdd', 'coding', 'security', 'verify', 'e2e', 'archive', 'knowledge']);
+  assert.deepEqual(p.steps.map((x) => x.label), ['Spec', 'Spec gate', 'TDD', 'Coding', 'Security', 'Verify', 'E2E', 'Archive', 'Knowledge']);
+  const want = { n1: 'spec', n2: 'spec', g1: 'specGate', t1: 'tdd', t2: 'tdd', a1: 'coding', v1: 'security', v2: 'verify', e1: 'e2e', r1: 'archive', k1: 'knowledge' };
+  for (const [tu, step] of Object.entries(want)) {
+    assert.equal(s.agents.find((a) => a.id === `g-${tu}`).step, step, tu);
+    assert.ok(st[step].agentIds.includes(`g-${tu}`), tu);
+  }
+  for (const x of p.steps) assert.equal(x.state, 'done', x.key);
   assert.equal(p.finished, true);
-  assert.deepEqual(p.current, []);
+  assert.equal(p.round, 1);
   assert.deepEqual(p.loops, []);
+  assert.deepEqual(p.current, []);
   assert.deepEqual(p.otherAgentIds, []);
+});
+
+test('pipeline: no kickoff step — old team kickoff agents are "other", --no-e2e still skips E2E', () => {
+  const s = pipelineOf([
+    command('osf:team', 'add tags', 0),
+    wave('mK', 1, ['k1', 'osf:osf-pm'], ['k2', 'osf:osf-ba'], ['k3', 'osf:osf-qa'], ['k4', 'osf:osf-analyze']),
+    skillCall('sa', 'osf:autopilot', '--full --no-e2e --yes', 10),
+    wave('mG', 15, ['g1', 'osf:osf-spec-review']),
+    wave('mA', 20, ['a1', 'osf:osf-apply']),
+    wave('mV', 30, ['v1', 'osf:osf-security'], ['v2', 'osf:osf-verify']),
+    wave('mR', 40, ['r1', 'osf:osf-archive']),
+  ]);
+  const p = s.pipeline;
+  const st = stepMap(p);
+  assert.equal(p.kind, 'autopilot');
+  assert.ok(!p.steps.some((x) => x.key === 'kickoff'));
+  assert.ok(s.agents.every((a) => a.step !== 'kickoff'));
+  assert.deepEqual(p.otherAgentIds.sort(), ['g-k1', 'g-k2', 'g-k3']);
+  assert.equal(s.agents.find((a) => a.id === 'g-k4').step, 'spec');
+  assert.equal(st.e2e.state, 'skipped');
+  assert.equal(st.archive.state, 'done');
+  assert.equal(st.knowledge.state, 'skipped', 'idle after archive: knowledge never started');
+  assert.equal(p.finished, true);
+
+  const teamOnly = pipelineOf([command('osf:team', 'x', 0), wave('mK', 1, ['k1', 'osf:osf-pm'])]);
+  assert.equal(teamOnly.pipeline.kind, 'none');
+  assert.ok(!teamOnly.pipeline.steps.some((x) => x.key === 'kickoff'));
+});
+
+test('pipeline: e2e finds app defects → coding fix in round 2 with an E2E loop note', () => {
+  const lines = [
+    skillCall('sa', 'osf:autopilot', '--full', 0),
+    wave('mA1', 1, ['a1', 'osf:osf-apply', 'Implement']),
+    wave('mV1', 5, ['s1', 'osf:osf-security', 'Security gate'], ['v1', 'osf:osf-verify', 'Verify gate']),
+    wave('mE1', 10, ['e1', 'osf:osf-e2e', 'E2E journeys']),
+    wave('mA2', 15, ['a2', 'osf:osf-apply', 'Fix e2e app defects']),
+  ];
+  const mid = pipelineOf(lines, { mainMtimeMs: NOW });
+  let p = mid.pipeline;
+  assert.deepEqual(p.loops, [{ from: 'e2e', to: 'coding', round: 2 }]);
+  assert.equal(p.round, 2);
+  assert.equal(stepMap(p).coding.round, 2);
+  assert.equal(mid.agents.find((a) => a.id === 'g-a2').round, 2);
+  assert.equal(mid.agents.find((a) => a.id === 'g-e1').round, 1);
+  assert.deepEqual(stepMap(p).e2e.prevAgentIds, ['g-e1']);
+  assert.equal(p.waiting, true);
+  assert.deepEqual(p.current, ['security', 'verify'], 'after the fix the gates come first again');
+  assert.equal(roundNote(p, 1, 2), 'E2E báo lỗi → sửa ở vòng 2');
+
+  const done = pipelineOf([
+    ...lines,
+    wave('mV2', 20, ['s2', 'osf:osf-security', 'Security gate'], ['v2', 'osf:osf-verify', 'Verify gate']),
+    wave('mE2', 25, ['e2', 'osf:osf-e2e', 'E2E journeys']),
+    wave('mR', 30, ['r1', 'osf:osf-archive']),
+    wave('mN', 35, ['k1', 'osf:osf-knowledge']),
+  ]);
+  p = done.pipeline;
+  const st = stepMap(p);
+  assert.equal(p.round, 2);
+  assert.equal(p.loops.length, 1);
+  assert.equal(st.e2e.round, 2);
+  assert.equal(st.e2e.attempts, 1, 'the round-2 E2E run is a fresh attempt in that round');
+  assert.equal(st.security.round, 2);
+  assert.equal(st.knowledge.state, 'done');
+  assert.equal(p.finished, true);
+  assert.ok(!p.steps.some((x) => x.key === 'kickoff'));
+
+  // Gates loop keeps its own wording.
+  assert.equal(roundNote({ loops: [{ from: 'gates', to: 'coding', round: 2 }], steps: [] }, 1, 2), 'Security, Verify báo lỗi → sửa ở vòng 2');
+});
+
+test('pipeline: active session after archive waits on Knowledge', () => {
+  const s = pipelineOf([
+    skillCall('sa', 'osf:autopilot', '--full', 0),
+    wave('mA', 1, ['a1', 'osf:osf-apply']),
+    wave('mV', 5, ['s1', 'osf:osf-security'], ['v1', 'osf:osf-verify']),
+    wave('mR', 10, ['r1', 'osf:osf-archive']),
+  ], { mainMtimeMs: NOW });
+  const p = s.pipeline;
+  assert.equal(p.finished, false);
+  assert.deepEqual(p.current, ['knowledge']);
+  assert.equal(stepMap(p).knowledge.state, 'waiting');
+  assert.equal(stepMap(p).e2e.state, 'skipped');
+
+  const running = pipelineOf([
+    skillCall('sa', 'osf:autopilot', '--full', 0),
+    wave('mR', 10, ['r1', 'osf:osf-archive']),
+    skillCall('sk', 'osf:knowledge', 'change', 12),
+  ], { mainMtimeMs: NOW });
+  assert.deepEqual(running.pipeline.current, ['knowledge']);
+  assert.equal(stepMap(running.pipeline).knowledge.state, 'running');
+});
+
+test('pipeline: an idle run whose archive failed stops at Archive, not finished', () => {
+  const lines = [
+    skillCall('sa', 'osf:autopilot', '--full', 0),
+    wave('mA', 1, ['a1', 'osf:osf-apply']),
+    wave('mV', 5, ['s1', 'osf:osf-security'], ['v1', 'osf:osf-verify']),
+    wave('mR', 10, ['r1', 'osf:osf-archive']),
+  ];
+  const failed = pipelineOf(lines, { reports: { r1: '## Archive Failed\n\n**Reason:** target exists' } }).pipeline;
+  assert.equal(failed.finished, false);
+  assert.equal(failed.stopped, true);
+  assert.equal(failed.stoppedAt, 'archive');
+
+  const ok = pipelineOf(lines, { reports: { r1: '## Archive Complete' } }).pipeline;
+  assert.equal(ok.finished, true);
 });
 
 test('pipeline: verified run loops apply → gates → apply → gates into round 2', () => {
@@ -416,8 +542,16 @@ test('pipeline: current step is the latest wave with a running agent', () => {
 });
 
 test('pipeline: active session between steps waits on the next step; skill start makes a step active', () => {
-  // No e2e evidence and no step ran in an earlier round: the next step is unknown.
-  const waiting = pipelineOf([skillCall('sa', 'osf:autopilot', 'x', 0), wave('m1', 1, ['a1', 'osf:osf-apply'])], { mainMtimeMs: NOW });
+  // After coding the gates are next.
+  const gatesNext = pipelineOf([skillCall('sa', 'osf:autopilot', 'x', 0), wave('m1', 1, ['a1', 'osf:osf-apply'])], { mainMtimeMs: NOW });
+  assert.deepEqual(gatesNext.pipeline.current, ['security', 'verify']);
+  assert.equal(stepMap(gatesNext.pipeline).security.state, 'waiting');
+
+  // After the gates with no e2e evidence and no step from an earlier round: the next step is unknown.
+  const waiting = pipelineOf([
+    skillCall('sa', 'osf:autopilot', 'x', 0), wave('m1', 1, ['a1', 'osf:osf-apply']),
+    wave('m2', 5, ['s1', 'osf:osf-security'], ['v1', 'osf:osf-verify']),
+  ], { mainMtimeMs: NOW });
   assert.deepEqual(waiting.pipeline.current, []);
   assert.equal(waiting.pipeline.waiting, true);
   assert.equal(waiting.pipeline.finished, false);
@@ -509,10 +643,8 @@ test('stopped: idle session that stopped after Coding is not finished', () => {
   assert.equal(stepMap(cutGates.pipeline).archive.state, 'pending');
 });
 
-test('finished: team run like 9c6aba05 (fan-out, re-review, gates re-run after cut, archive)', () => {
+test('finished: run like 9c6aba05 (fan-out, re-review, gates re-run after cut, archive)', () => {
   const s = pipelineOf([
-    command('osf:team', 'notes CLI', 0),
-    wave('mK', 1, ['k1', 'osf:osf-pm', 'PM kickoff'], ['k2', 'osf:osf-ba', 'BA kickoff'], ['k3', 'osf:osf-security', 'SEC threat model']),
     skillCall('sa', 'osf:autopilot', '--full --parallel=3 --no-e2e', 10),
     skillCall('sp', 'osf:proposal', 'create', 11),
     wave('mG1', 15, ['g1', 'osf:osf-spec-review', 'Spec gate review']),
@@ -533,6 +665,7 @@ test('finished: team run like 9c6aba05 (fan-out, re-review, gates re-run after c
   assert.deepEqual([st.specGate.attempts, st.tdd.attempts, st.coding.attempts, st.security.attempts, st.verify.attempts, st.archive.attempts], [2, 1, 1, 2, 2, 1]);
   assert.equal(st.e2e.state, 'skipped');
   assert.equal(st.archive.state, 'done');
+  assert.equal(st.knowledge.state, 'skipped');
 });
 
 test('standalone: e2e-only session shows just E2E and finishes when all agents are done', () => {
@@ -591,7 +724,7 @@ test('labels: PowerShell maps like Bash', () => {
   assert.deepEqual(toolLabel('PowerShell', { command: 'Get-ChildItem  src' }), { verb: 'Đang chạy lệnh', verbPast: 'Đã chạy lệnh', object: 'Get-ChildItem src' });
 });
 
-test('waiting after a coding loop: gates are next (not E2E) and keep earlier-round agents apart', () => {
+test('waiting after a coding loop: gates are next and keep earlier-round agents apart', () => {
   const s = pipelineOf([
     skillCall('sa', 'osf:autopilot', 'build it', 0),
     wave('m1', 1, ['a1', 'osf:osf-apply']),
@@ -602,7 +735,7 @@ test('waiting after a coding loop: gates are next (not E2E) and keep earlier-rou
   const st = stepMap(p);
   assert.equal(p.round, 2);
   assert.equal(p.waiting, true);
-  assert.deepEqual(p.current, ['security', 'verify'], 'no e2e evidence: the gates from round 1 are next');
+  assert.deepEqual(p.current, ['security', 'verify'], 'the gates follow coding');
   assert.equal(st.security.state, 'waiting');
   assert.equal(st.e2e.state, 'pending');
   assert.deepEqual(st.security.prevAgentIds, ['g-s1'], 'round-1 gate agents are earlier-round agents');
@@ -610,13 +743,14 @@ test('waiting after a coding loop: gates are next (not E2E) and keep earlier-rou
   assert.deepEqual(st.coding.prevAgentIds, ['g-a1']);
   assert.deepEqual(st.coding.agentIds, ['g-a1', 'g-a2']);
 
-  // With e2e evidence from round 1, E2E is named as next again.
+  // With e2e evidence from round 1, E2E is named as next once the gates pass again.
   const e2e = pipelineOf([
     skillCall('sa', 'osf:autopilot', 'build it', 0),
     wave('m1', 1, ['a1', 'osf:osf-apply']),
-    wave('m2', 5, ['e1', 'osf:osf-e2e']),
-    wave('m3', 10, ['s1', 'osf:osf-security'], ['v1', 'osf:osf-verify']),
+    wave('m2', 5, ['s1', 'osf:osf-security'], ['v1', 'osf:osf-verify']),
+    wave('m3', 10, ['e1', 'osf:osf-e2e']),
     wave('m4', 12, ['a2', 'osf:osf-apply']),
+    wave('m5', 14, ['s2', 'osf:osf-security'], ['v2', 'osf:osf-verify']),
   ], { mainMtimeMs: NOW });
   assert.deepEqual(e2e.pipeline.current, ['e2e']);
   assert.equal(stepMap(e2e.pipeline).e2e.state, 'waiting');

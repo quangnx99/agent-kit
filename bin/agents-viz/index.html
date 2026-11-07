@@ -301,7 +301,7 @@ const ICONS = {
 // parser status -> view status
 const ST_OF = { running: 'run', done: 'done', cut: 'cut', stalled: 'stalled' };
 const ST_LABEL = { run: 'Đang chạy', done: 'Xong', cut: 'Bị cắt', stalled: 'Đứng im', pending: 'Chưa chạy' };
-const STEP_ORDER = ['kickoff', 'spec', 'specGate', 'tdd', 'coding', 'e2e', 'security', 'verify', 'archive'];
+const STEP_ORDER = ['spec', 'specGate', 'tdd', 'coding', 'security', 'verify', 'e2e', 'archive', 'knowledge'];
 const STEP_IDX = Object.fromEntries(STEP_ORDER.map((k, i) => [k, i]));
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const $ = (id) => document.getElementById(id);
@@ -593,7 +593,7 @@ function renderContent(d) {
 
 // ---------- summary ----------
 function skillName(d) {
-  const sk = (d.skills || []).find((s) => /autopilot|team/.test(s.name)) || (d.skills || [])[0];
+  const sk = (d.skills || []).find((s) => /autopilot/.test(s.name)) || (d.skills || [])[0];
   if (!sk) return '';
   const n = String(sk.name).replace(/^\//, '');
   return `/${n.includes(':') ? n : `osf:${n}`}`;
@@ -693,7 +693,6 @@ function pipelineGroups(d, p, byId, round, curRound) {
     if (g.agents.length) return;
     const laterRan = out.slice(i + 1).some((x) => x.agents.length);
     if (g.waiting) g.empty = 'Đang chờ';
-    else if (g.key === 'e2e' && round > 1) g.empty = 'Vòng sửa không chạy E2E';
     else if (laterRan || g.st === 'done') g.empty = 'Không chạy agent';
     else g.empty = 'Chưa chạy';
   });
