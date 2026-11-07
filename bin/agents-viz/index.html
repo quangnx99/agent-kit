@@ -12,12 +12,13 @@
   --bg: #f4f4f6; --surface: #ffffff; --surface-overlay: #ffffff;
   --item-hover: #f4f4f6; --selected: #ececf0;
   --border: #ececef; --border-strong: #dedee3;
-  --text: #18181b; --muted: #52525b; --faint: #63636b;
+  --text: #18181b; --muted: #4a4a52; --faint: #5c5c66;
   --accent: #4f46e5; --accent-bg: #eef0ff; --on-accent: #fff;
   --run: var(--accent); --run-bg: var(--accent-bg);
   --cut: #c70036; --cut-bg: #fff1f3;
   --stalled: #973c00; --stalled-bg: #fffbeb;
   --done: #71717a; --done-bg: #f4f4f5;
+  --ok: #047857; --ok-bg: #ecfdf5;
   --elevation: 0 20px 25px -5px rgb(0 0 0 / .1), 0 8px 10px -6px rgb(0 0 0 / .1);
   --font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   --r: 12px; --r-sm: 8px;
@@ -33,6 +34,7 @@
     --cut: #fb7185; --cut-bg: rgb(251 113 133 / .12);
     --stalled: #fbbf24; --stalled-bg: rgb(251 191 36 / .12);
     --done: #8b8e99; --done-bg: rgb(255 255 255 / .06);
+    --ok: #34d399; --ok-bg: rgb(52 211 153 / .12);
     --elevation: 0 20px 25px -5px rgb(0 0 0 / .6), 0 8px 10px -6px rgb(0 0 0 / .6);
   }
 }
@@ -65,7 +67,7 @@ button { font: inherit; color: inherit; }
 .app { display: flex; flex-direction: column; height: 100dvh; }
 .app-top { flex: none; display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; }
-.brand-mark { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: var(--text); color: var(--surface); font-size: 12px; font-weight: 700; }
+.brand-mark { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-size: 12px; font-weight: 700; }
 .picker { position: relative; min-width: 0; }
 .picker > button { display: flex; align-items: center; gap: 8px; height: 36px; max-width: 460px; padding: 0 10px 0 12px; border: 1px solid var(--border-strong); border-radius: var(--r-sm); background: var(--surface); cursor: pointer; }
 .picker > button:hover { background: var(--item-hover); }
@@ -85,9 +87,6 @@ button { font: inherit; color: inherit; }
 .live[data-off] i { background: var(--cut); }
 
 /* ===== Summary ===== */
-.summary { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; margin-bottom: 20px; }
-.summary h1 { margin: 0; font-size: 20px; font-weight: 600; line-height: 28px; }
-.summary .meta { margin-top: 2px; color: var(--muted); }
 .counts { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
 .counts:empty { display: none; }
 .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 14px; background: var(--done-bg); color: var(--muted); font-size: 13px; font-weight: 500; white-space: nowrap; }
@@ -132,10 +131,6 @@ button { font: inherit; color: inherit; }
 .step + .step { margin-top: 4px; }
 .step::before { content: ""; position: absolute; left: 9px; top: 28px; bottom: -6px; width: 2px; background: var(--border); }
 .step:last-child::before { display: none; }
-.step-head { position: relative; display: flex; align-items: center; gap: 8px; height: 32px; margin-left: -28px; font-weight: 600; }
-.step-head .par { color: var(--faint); font-size: 12px; font-weight: 500; }
-.step-head .n { margin-left: auto; color: var(--faint); font-size: 13px; font-weight: 400; }
-.step[data-st="pending"] .step-head { color: var(--muted); font-weight: 500; }
 .step-body { display: flex; flex-direction: column; gap: 4px; padding: 0 0 8px; }
 .step-body .agent { margin-left: -12px; width: calc(100% + 12px); }
 .step-empty { padding: 2px 0 10px; color: var(--faint); font-size: 13px; }
@@ -157,8 +152,6 @@ button { font: inherit; color: inherit; }
 .now[data-st="cut"] .t { color: var(--cut); }
 .now[data-st="stalled"] .t { color: var(--stalled); }
 .now .s { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
-.sec { margin-top: 28px; }
-.sec h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
 .tools { margin: 0; padding: 0; list-style: none; }
 .tools li { display: grid; grid-template-columns: 52px minmax(64px, max-content) minmax(0, 1fr); gap: 12px; padding: 7px 0; border-top: 1px solid var(--border); font-size: 13px; }
 .tools li:first-child { border-top: 0; }
@@ -178,16 +171,10 @@ button { font: inherit; color: inherit; }
 .report .tbl { overflow-x: auto; }
 .report pre.code { margin: 0; padding: 10px 12px; overflow-x: auto; border-radius: 6px; background: var(--selected); font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12.5px; line-height: 1.5; white-space: pre; }
 .report * + pre.code, .report pre.code + * { margin-top: 8px; }
-.brief-sec summary { display: inline-flex; align-items: center; gap: 6px; height: 32px; margin-left: -6px; padding: 0 8px 0 6px; border-radius: var(--r-sm); font-weight: 600; cursor: pointer; list-style: none; }
-.brief-sec summary::-webkit-details-marker { display: none; }
-.brief-sec summary:hover, .brief-sec summary:focus-visible { background: var(--item-hover); }
-.brief-sec summary .ico { color: var(--muted); rotate: -90deg; transition: rotate .15s; }
-.brief-sec[open] summary .ico { rotate: 0deg; }
-.brief { margin: 4px 0 0; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
 .report code { padding: 1px 4px; border-radius: 4px; background: var(--selected); font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12.5px; }
 .muted-box { padding: 14px 16px; border: 1px dashed var(--border-strong); border-radius: var(--r-sm); color: var(--faint); }
 
-.drawer-wrap { position: fixed; inset: 0; z-index: 30; pointer-events: none; }
+.drawer-wrap { position: fixed; inset: 0; z-index: 30; pointer-events: none; overflow: hidden; }
 .drawer-wrap .scrim { position: absolute; inset: 0; background: rgb(0 0 0 / .25); opacity: 0; transition: opacity .2s; }
 .drawer { position: absolute; top: 0; right: 0; bottom: 0; width: min(560px, 100vw); overflow-y: auto; padding: 20px 24px 40px; background: var(--surface); border-left: 1px solid var(--border); box-shadow: var(--elevation); translate: 100% 0; visibility: hidden; transition: translate .25s cubic-bezier(.2,.8,.2,1), visibility 0s linear .25s; }
 body[data-drawer] .drawer-wrap { pointer-events: auto; }
@@ -213,9 +200,84 @@ body[data-drawer] .drawer { translate: 0 0; visibility: visible; transition: tra
 .banner .btn { margin-left: auto; height: 30px; }
 .stale .split { opacity: .6; }
 
+/* ===== Header: project and session pickers ===== */
+.pickers { flex: 1 1 auto; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.picker > button .lab { color: var(--faint); font-size: 12px; font-weight: 500; white-space: nowrap; }
+.picker-proj > button { max-width: 240px; }
+.picker-sess > button { max-width: min(520px, 100%); }
+.picker-proj { flex: none; }
+.picker-sess { flex: 1 1 auto; min-width: 0; }
+.picker-sess .menu { width: min(560px, calc(100vw - 32px)); }
+.menu .opt .two { display: flex; flex-direction: column; min-width: 0; line-height: 18px; }
+.menu .opt .two .sub2 { color: var(--faint); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dot-st { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--done); }
+.dot-st[data-st="run"] { background: var(--run); }
+
+/* ===== Run bar: summary of the whole run ===== */
+.content { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.runbar { flex: none; padding: 16px 20px 14px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.run-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.run-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.run-title h1 { margin: 0; font-size: 18px; font-weight: 600; line-height: 26px; }
+.runbar .meta { margin-top: 2px; color: var(--muted); font-size: 13px; }
+.verdict { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+.verdict[data-v="READY"] { background: var(--ok-bg); color: var(--ok); }
+.verdict[data-v="NOT READY"] { background: var(--stalled-bg); color: var(--stalled); }
+.runbar .counts { margin-left: auto; }
+.stepper { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; }
+.stepper button { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px 0 6px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--muted); font-size: 13px; font-weight: 500; white-space: nowrap; cursor: pointer; }
+.stepper button:hover, .stepper button:focus-visible { background: var(--item-hover); color: var(--text); }
+.stepper button[data-st="done"] { color: var(--text); }
+.stepper button[data-st="run"] { border-color: transparent; background: var(--run-bg); color: var(--run); }
+.stepper button[data-st="cut"] { border-color: transparent; background: var(--cut-bg); color: var(--cut); }
+.stepper button[data-st="stalled"] { border-color: transparent; background: var(--stalled-bg); color: var(--stalled); }
+.stepper button[data-st="pending"] { border-style: dashed; color: var(--faint); }
+.stepper .st { width: 18px; height: 18px; }
+.stepper .st .ico { width: 14px; height: 14px; }
+.runbar .rounds { margin: 12px 0 0; }
+
+/* ===== Steps: one line each, open only where it matters ===== */
+.step-toggle { display: flex; align-items: center; gap: 8px; width: calc(100% + 28px); height: 36px; margin-left: -28px; padding: 0 8px 0 0; border: 0; border-radius: var(--r-sm); background: transparent; color: inherit; font-weight: 500; text-align: left; cursor: pointer; }
+.step-toggle:hover, .step-toggle:focus-visible { background: var(--item-hover); }
+.step-toggle .lbl { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.step-toggle .n { flex: 1; text-align: right; color: var(--faint); font-size: 12px; font-weight: 400; white-space: nowrap; }
+.step-toggle .chev { color: var(--faint); rotate: -90deg; transition: rotate .15s; }
+.step-toggle[aria-expanded="true"] .chev { rotate: 0deg; }
+.step[data-st="pending"] .step-toggle { color: var(--muted); font-weight: 500; }
+.step[data-st="cut"] .step-toggle .lbl { color: var(--cut); font-weight: 600; }
+.step[data-st="run"] .step-toggle .lbl { font-weight: 600; }
+.step[data-st="stalled"] .step-toggle .lbl { color: var(--stalled); font-weight: 600; }
+.step::before { top: 30px; }
+
+/* ===== Agent detail: verdict card, then tabs ===== */
+.d-sub { margin-top: 2px; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.verdict-card { display: flex; gap: 10px; align-items: flex-start; margin-top: 16px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); }
+.verdict-card .t { font-weight: 600; overflow-wrap: anywhere; }
+.verdict-card .s { margin-top: 2px; color: var(--muted); font-size: 13px; }
+.verdict-card[data-tone="ok"] { border-color: transparent; background: var(--ok-bg); }
+.verdict-card[data-tone="ok"] .t { color: var(--ok); }
+.verdict-card[data-tone="bad"] { border-color: transparent; background: var(--cut-bg); }
+.verdict-card[data-tone="bad"] .t { color: var(--cut); }
+.verdict-card[data-tone="warn"] { border-color: transparent; background: var(--stalled-bg); }
+.verdict-card[data-tone="warn"] .t { color: var(--stalled); }
+.tabs { display: flex; gap: 4px; margin-top: 20px; border-bottom: 1px solid var(--border-strong); }
+.tabs button { position: relative; height: 36px; padding: 0 12px; border: 0; background: transparent; color: var(--muted); font-weight: 500; white-space: nowrap; cursor: pointer; }
+.tabs button:hover, .tabs button:focus-visible { color: var(--text); background: var(--item-hover); border-radius: 6px 6px 0 0; }
+.tabs button[aria-selected="true"] { color: var(--text); font-weight: 600; }
+.tabs button[aria-selected="true"]::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--accent); }
+.tabs .n { margin-left: 4px; color: var(--faint); font-weight: 400; }
+.tab-panel { padding-top: 14px; }
+.tab-panel .brief { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); color: var(--text); }
+
 /* ===== Narrow screens ===== */
 @media (max-width: 1023px) {
   .app { height: auto; min-height: 100dvh; }
+  .picker { position: static; }
+  .picker .menu, .picker-sess .menu { position: fixed; top: 60px; left: 12px; right: 12px; width: auto; }
+  /* One scrolling row of steps; the faded right edge says there is more. */
+  .stepper { flex-wrap: nowrap; overflow-x: auto; padding: 0 24px 6px 0; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); }
+  .stepper li { flex: none; }
+  .content { flex: 1 0 auto; }
   .split { grid-template-columns: minmax(0, 1fr); flex: 1 0 auto; }
   .list-pane { border-right: 0; padding: 16px; overflow: visible; }
   .detail-wrap { display: none !important; }
@@ -225,6 +287,10 @@ body[data-drawer] .drawer { translate: 0 0; visibility: visible; transition: tra
   .brand span:last-child { display: none; }
   .picker .crumb { display: none; }
   .picker { position: static; }
+  .picker-proj > button { max-width: 120px; }
+  .picker > button .lab { display: none; }
+  .runbar { padding: 12px; }
+  .runbar .counts { margin-left: 0; }
   .menu { position: fixed; top: 60px; left: 12px; right: 12px; width: auto; }
   .live span { display: none; }
   .page { padding: 16px 12px 40px; }
@@ -243,9 +309,15 @@ body[data-drawer] .drawer { translate: 0 0; visibility: visible; transition: tra
 <div class="app" id="app">
   <header class="app-top">
     <div class="brand"><span class="brand-mark" aria-hidden="true">a</span><span>agent-kit</span></div>
-    <div class="picker" id="picker">
-      <button type="button" id="pickerBtn" aria-haspopup="true" aria-expanded="false" aria-controls="pickerMenu"><span class="crumb" id="pickerCrumb"></span><span class="name" id="pickerName">Đang tải…</span><svg class="ico ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-      <div class="menu" id="pickerMenu"></div>
+    <div class="pickers">
+      <div class="picker picker-proj" id="projPicker">
+        <button type="button" id="projBtn" aria-haspopup="true" aria-expanded="false" aria-controls="projMenu"><span class="lab">Project</span><span class="name" id="projName">Đang tải…</span><svg class="ico ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="menu" id="projMenu"></div>
+      </div>
+      <div class="picker picker-sess" id="picker">
+        <button type="button" id="pickerBtn" aria-haspopup="true" aria-expanded="false" aria-controls="pickerMenu"><span class="lab">Phiên</span><span class="name" id="pickerName">Đang tải…</span><svg class="ico ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="menu" id="pickerMenu"></div>
+      </div>
     </div>
     <span class="live" id="live" role="status"><i></i><span>Live</span></span>
   </header>
@@ -269,16 +341,20 @@ body[data-drawer] .drawer { translate: 0 0; visibility: visible; transition: tra
       <button class="btn" type="button" id="emptyPick">Chọn session khác</button>
     </div>
   </main>
-  <main class="split" id="content" hidden>
-    <div class="pane-wrap"><div class="list-pane" id="listPane">
-      <div class="summary">
-        <div><h1 id="sumTitle"></h1><div class="meta" id="sumMeta"></div></div>
+  <main class="content" id="content" hidden>
+    <section class="runbar" aria-label="Tóm tắt lượt chạy">
+      <div class="run-top">
+        <div class="run-title"><span id="sumIcon"></span><h1 id="sumTitle"></h1><span class="verdict" id="verdict" hidden></span></div>
         <div class="counts" id="counts"></div>
       </div>
+      <div class="meta" id="sumMeta"></div>
+      <ol class="stepper" id="stepper" aria-label="Các bước"></ol>
       <div class="rounds" id="rounds" hidden><span class="seg" id="seg" role="group" aria-label="Vòng"></span><span class="round-note" id="roundNote"></span></div>
-      <div id="steps"></div>
-    </div></div>
-    <div class="pane-wrap detail-wrap"><div class="detail-pane" id="detailPane"></div></div>
+    </section>
+    <div class="split">
+      <div class="pane-wrap"><div class="list-pane" id="listPane"><div id="steps"></div></div></div>
+      <div class="pane-wrap detail-wrap"><div class="detail-pane" id="detailPane"></div></div>
+    </div>
   </main>
 </div>
 <div class="drawer-wrap"><div class="scrim" id="scrim"></div><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Chi tiết agent" inert></aside></div>
@@ -311,6 +387,7 @@ const S = {
   projects: [], labels: new Map(), project: null, sessions: [], sessionsLoaded: false, sessionId: null,
   data: null, es: null, sessTimer: null, connOk: true, lastData: null,
   round: null, sel: null, userSel: false, opener: null, detailSig: '', ann: null,
+  projMeta: new Map(), open: new Map(), tab: 'report',
 };
 
 // ---------- helpers ----------
@@ -420,6 +497,7 @@ async function loadProjects() {
   try {
     const { projects, defaultProject } = await getJson('/api/projects');
     S.projects = projects.map((p) => p.name);
+    S.projMeta = new Map(projects.map((p) => [p.name, p]));
     S.agentProjects = new Set(projects.filter((p) => p.kitSessions > 0).map((p) => p.name));
     const labels = projectLabels(S.projects);
     S.labels = new Map(S.projects.map((n, i) => [n, labels[i]]));
@@ -470,58 +548,69 @@ async function loadSessions(wantId) {
   }
   S.sessTimer = setTimeout(() => loadSessions(), 10000);
 }
-const sessionName = (s) => (s.title || s.id).replace(/\s+/g, ' ').trim();
+// "/agent:brainstorm /agent:brainstorm X" (older titles) -> "/agent:brainstorm X".
+const sessionName = (s) => (s.title || s.id).replace(/\s+/g, ' ').trim().replace(/^\/?([\w.-]+:[\w.-]+)\s+\/\1(?=\s|$)/, '/$1');
 
-// ---------- session picker ----------
-const picker = $('picker');
-const pickerBtn = $('pickerBtn');
+// ---------- pickers: project and session ----------
+const PICKERS = {
+  proj: { root: $('projPicker'), btn: $('projBtn'), menu: $('projMenu'), build: buildProjMenu },
+  sess: { root: $('picker'), btn: $('pickerBtn'), menu: $('pickerMenu'), build: buildSessMenu },
+};
+const isOpen = (p) => p.root.hasAttribute('data-open');
 function renderPicker() {
   const cur = S.sessions.find((s) => s.id === S.sessionId);
-  setText($('pickerCrumb'), S.project ? `${S.labels.get(S.project) || S.project} /` : '');
-  setText($('pickerName'), cur ? sessionName(cur) : S.sessionsLoaded ? 'Chưa có session' : 'Đang tải…');
-  pickerBtn.title = cur ? sessionName(cur) : '';
-  if (picker.hasAttribute('data-open')) return; // keep the open menu stable
-  buildMenu();
+  setText($('projName'), S.project ? (S.labels.get(S.project) || S.project) : 'Chưa có project');
+  PICKERS.proj.btn.title = S.project || '';
+  setText($('pickerName'), cur ? sessionName(cur) : S.sessionsLoaded ? 'Chưa có phiên' : 'Đang tải…');
+  PICKERS.sess.btn.title = cur ? sessionName(cur) : '';
+  for (const p of Object.values(PICKERS)) if (!isOpen(p)) p.build(); // keep an open menu stable
 }
-function buildMenu() {
+function buildSessMenu() {
+  const opts = S.sessions.map((s) => el('button', { type: 'button', class: 'opt', 'aria-current': s.id === S.sessionId ? 'true' : null, title: sessionName(s), onclick: () => { closePicker(PICKERS.sess, true); if (s.id !== S.sessionId) selectSession(s.id); } },
+    el('i', { class: 'dot-st', 'data-st': s.anyRunning ? 'run' : 'done', 'aria-hidden': 'true' }),
+    el('span', { class: 'two' }, el('span', { class: 'name' }, sessionName(s)),
+      el('span', { class: 'sub2' }, [s.anyRunning ? 'Đang chạy' : ago(s.updatedAt), `${s.kitAgentCount || s.agentCount} agent`].join(' · ')))));
   const label = S.labels.get(S.project) || S.project || '';
-  const opts = S.sessions.map((s) => el('button', { type: 'button', class: 'opt', 'aria-current': s.id === S.sessionId ? 'true' : null, title: sessionName(s), onclick: () => { closePicker(true); if (s.id !== S.sessionId) selectSession(s.id); } },
-    stIcon(s.anyRunning ? 'run' : 'done'), el('span', { class: 'name' }, sessionName(s)), el('span', { class: 'sub' }, s.anyRunning ? 'đang chạy' : ago(s.updatedAt))));
-  const kids = [el('div', { class: 'menu-label' }, `Session trong ${label}`), ...opts];
-  if (!opts.length) kids.push(el('div', { class: 'menu-label' }, 'Chưa có session nào gọi agent'));
-  // Only projects with a session that called agents; the current one always stays listed.
-  const projects = S.projects.filter((n) => n === S.project || !S.agentProjects || S.agentProjects.has(n));
-  if (projects.length > 1) {
-    kids.push(el('div', { class: 'menu-label' }, 'Project'));
-    for (const name of projects) kids.push(el('button', { type: 'button', class: 'opt', 'aria-current': name === S.project ? 'true' : null, title: name, onclick: () => { closePicker(true); if (name !== S.project) switchProject(name); } },
-      el('span', { class: 'name' }, S.labels.get(name) || name)));
-  }
-  $('pickerMenu').replaceChildren(...kids);
+  PICKERS.sess.menu.replaceChildren(el('div', { class: 'menu-label' }, `Phiên trong ${label}`), ...(opts.length ? opts : [el('div', { class: 'menu-label' }, 'Chưa có phiên nào chạy agent của kit')]));
 }
-function openPicker() {
-  buildMenu();
-  picker.setAttribute('data-open', '');
-  pickerBtn.setAttribute('aria-expanded', 'true');
-  const cur = $('pickerMenu').querySelector('.opt[aria-current="true"]') || $('pickerMenu').querySelector('.opt');
+function buildProjMenu() {
+  // Only projects with a session that ran kit agents; the current one always stays listed.
+  const projects = S.projects.filter((n) => n === S.project || !S.agentProjects || S.agentProjects.has(n));
+  const opts = projects.map((name) => {
+    const m = S.projMeta.get(name) || {};
+    return el('button', { type: 'button', class: 'opt', 'aria-current': name === S.project ? 'true' : null, title: name, onclick: () => { closePicker(PICKERS.proj, true); if (name !== S.project) switchProject(name); } },
+      el('span', { class: 'two' }, el('span', { class: 'name' }, S.labels.get(name) || name),
+        el('span', { class: 'sub2' }, [m.kitSessions ? `${m.kitSessions} phiên` : '', ago(m.updatedAt)].filter(Boolean).join(' · '))));
+  });
+  PICKERS.proj.menu.replaceChildren(el('div', { class: 'menu-label' }, 'Project đã chạy agent của kit'), ...opts);
+}
+function openPicker(p) {
+  for (const o of Object.values(PICKERS)) if (o !== p) closePicker(o, false);
+  p.build();
+  p.root.setAttribute('data-open', '');
+  p.btn.setAttribute('aria-expanded', 'true');
+  const cur = p.menu.querySelector('.opt[aria-current="true"]') || p.menu.querySelector('.opt');
   if (cur) cur.focus({ preventScroll: true });
 }
-function closePicker(restore) {
-  if (!picker.hasAttribute('data-open')) return;
-  picker.removeAttribute('data-open');
-  pickerBtn.setAttribute('aria-expanded', 'false');
-  if (restore) pickerBtn.focus({ preventScroll: true });
+function closePicker(p, restore) {
+  if (!isOpen(p)) return;
+  p.root.removeAttribute('data-open');
+  p.btn.setAttribute('aria-expanded', 'false');
+  if (restore) p.btn.focus({ preventScroll: true });
 }
-pickerBtn.addEventListener('click', (e) => { e.stopPropagation(); if (picker.hasAttribute('data-open')) closePicker(false); else openPicker(); });
-$('emptyPick').addEventListener('click', (e) => { e.stopPropagation(); openPicker(); });
-$('pickerMenu').addEventListener('keydown', (e) => {
-  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-  e.preventDefault();
-  const opts = [...$('pickerMenu').querySelectorAll('.opt')];
-  const i = opts.indexOf(document.activeElement);
-  const next = opts[(i + (e.key === 'ArrowDown' ? 1 : -1) + opts.length) % opts.length];
-  if (next) next.focus();
-});
-document.addEventListener('click', (e) => { if (!picker.contains(e.target)) closePicker(false); });
+for (const p of Object.values(PICKERS)) {
+  p.btn.addEventListener('click', (e) => { e.stopPropagation(); if (isOpen(p)) closePicker(p, false); else openPicker(p); });
+  p.menu.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const opts = [...p.menu.querySelectorAll('.opt')];
+    const i = opts.indexOf(document.activeElement);
+    const next = opts[(i + (e.key === 'ArrowDown' ? 1 : -1) + opts.length) % opts.length];
+    if (next) next.focus();
+  });
+}
+$('emptyPick').addEventListener('click', (e) => { e.stopPropagation(); openPicker(PICKERS.sess); });
+document.addEventListener('click', (e) => { for (const p of Object.values(PICKERS)) if (!p.root.contains(e.target)) closePicker(p, false); });
 
 // ---------- stream ----------
 function closeStream() { if (S.es) { S.es.close(); S.es = null; } }
@@ -558,8 +647,9 @@ function logWarnings(d) {
 
 // ---------- view ----------
 function resetView() {
-  S.round = null; S.sel = null; S.userSel = false; S.detailSig = ''; S.groupsSig = ''; S.ann = null;
+  S.round = null; S.sel = null; S.userSel = false; S.detailSig = ''; S.groupsSig = ''; S.ann = null; S.open = new Map(); S.stepperSig = '';
   $('steps').replaceChildren();
+  $('stepper').replaceChildren();
   $('detailPane').replaceChildren();
 }
 function renderAll() {
@@ -581,12 +671,24 @@ function renderContent(d) {
   const sum = pipe ? pipelineSummary(d, p, byId) : wavesSummary(d);
   setText($('sumTitle'), sum.title);
   setText($('sumMeta'), sum.meta);
+  const sumSt = { finished: 'done', stopped: 'cut', waiting: 'pending' }[sum.mode] || (sum.mode === 'xong' ? 'done' : sum.mode === 'đứng im' ? 'stalled' : 'run');
+  if (($('sumIcon').firstChild || {}).dataset?.st !== sumSt) $('sumIcon').replaceChildren(stIcon(sumSt));
+  const v = d.verdict && d.verdict.value;
+  $('verdict').hidden = !v;
+  if (v) { $('verdict').dataset.v = v; setText($('verdict'), v); $('verdict').title = 'Production verdict của autopilot'; }
   renderCounts(d);
   renderRounds(d, p, pipe && curRound > 1, round, curRound);
 
   const groups = pipe ? pipelineGroups(d, p, byId, round, curRound) : waveGroups(d);
   pickDefault(d, groups);
-  renderGroups(groups);
+  let pipeSteps = pipe ? groups.filter((g) => g.key !== '__other') : [];
+  if (pipe && round > 1) {
+    // Fix rounds start at Coding; the run bar still shows the whole pipeline.
+    const first = pipelineGroups(d, p, byId, 1, curRound).filter((g) => g.key !== '__other' && STEP_IDX[g.key] < STEP_IDX.coding);
+    pipeSteps = [...first.map((g) => ({ ...g, round: 1 })), ...pipeSteps];
+  }
+  renderStepper(pipeSteps);
+  renderGroups(groups, p);
   renderDetail();
   announceChanges(d, sum);
 }
@@ -696,9 +798,20 @@ function pipelineGroups(d, p, byId, round, curRound) {
     else if (laterRan || g.st === 'done') g.empty = 'Không chạy agent';
     else g.empty = 'Chưa chạy';
   });
+  // Security and Verify run in parallel: one step "Security ‖ Verify".
+  const sec = out.find((g) => g.key === 'security');
+  const ver = out.find((g) => g.key === 'verify');
+  if (sec || ver) {
+    const both = [sec, ver].filter(Boolean);
+    const agents = both.flatMap((g) => g.agents).sort(byAttention);
+    const rank = ['cut', 'stalled', 'run', 'pending', 'done'];
+    const st = agents.length ? stepStateFromAgents(agents) : both.map((g) => g.st).sort((x, y) => rank.indexOf(x) - rank.indexOf(y))[0];
+    const gates = { key: 'gates', label: both.length === 2 ? 'Security & Verify' : both[0].label, st, waiting: both.some((g) => g.waiting), agents, empty: both[both.length - 1].empty, members: both.map((g) => g.key) };
+    out.splice(out.indexOf(both[0]), both.length, gates);
+  }
   if (round < curRound) {
     const loop = p.loops.find((l) => l.round === round + 1);
-    const at = loop && (loop.from === 'gates' ? 'verify' : loop.from);
+    const at = loop && (loop.from === 'gates' || loop.from === 'security' || loop.from === 'verify' ? 'gates' : loop.from);
     const g = out.find((x) => x.key === at) || [...out].reverse().find((x) => x.agents.length);
     if (g) g.loop = roundNote(p, round, curRound);
   }
@@ -740,21 +853,64 @@ function agentRow(a) {
   return el('button', { type: 'button', class: 'agent', 'data-st': st, 'data-id': a.id, 'aria-current': a.id === S.sel ? 'true' : 'false', title: `${shortType(a.type)} — ${nameOf(a)}`, onclick: (e) => selectAgent(a.id, e.currentTarget) },
     stIcon(st), el('span', { class: 'nm' }, el('span', { class: 'sr-only' }, `${ST_LABEL[st]}: `), nameOf(a)), el('span', { class: 'dur', 'data-dur': a.id }, agentDur(a)));
 }
+// Time a group of agents covered: first start to last end (or now while one is busy).
+function groupDur(list) {
+  const starts = list.map((a) => msOf(a.startedAt)).filter((x) => x != null);
+  if (!starts.length) return '';
+  const busy = list.some((a) => a.status === 'running' || a.status === 'stalled');
+  const ends = list.map((a) => msOf(a.endedAt || a.lastActivityAt)).filter((x) => x != null);
+  const e = busy ? Date.now() : ends.length ? Math.max(...ends) : null;
+  return e == null ? '' : dur(e - Math.min(...starts));
+}
+// A step is open when it needs a look (running, stalled, cut, fix-loop note), holds the selected
+// agent, or the user opened it. Done steps stay one line.
+function isOpenGroup(g, p) {
+  if (S.open.has(g.key)) return S.open.get(g.key);
+  if (g.st === 'run' || g.st === 'stalled' || g.st === 'cut' || g.loop) return true;
+  if (g.agents.some((a) => a.id === S.sel)) return true;
+  return !!(p && p.current && (p.current.includes(g.key) || (g.members || []).some((k) => p.current.includes(k))));
+}
+// Run bar: every step as a pill, colored by state; a click selects the step's agent.
+function renderStepper(groups) {
+  const box = $('stepper');
+  box.hidden = !groups.length;
+  const sig = JSON.stringify(groups.map((g) => [g.key, g.st, g.label, g.agents.length]));
+  if (sig === S.stepperSig) return;
+  S.stepperSig = sig;
+  box.replaceChildren(...groups.map((g) => el('li', null, el('button', { type: 'button', 'data-st': g.st, title: `${g.label}: ${ST_LABEL[g.st]}`,
+    onclick: () => {
+      if (g.round && g.round !== (S.round || S.data.pipeline.round)) S.round = g.round;
+      S.open.set(g.key, true);
+      const a = g.agents[0];
+      if (a) { const row = () => $('steps').querySelector(`.agent[data-id="${CSS.escape(a.id)}"]`); S.groupsSig = ''; renderContent(S.data); selectAgent(a.id, row()); const r = row(); if (r) r.scrollIntoView({ block: 'nearest' }); }
+      else { S.groupsSig = ''; renderContent(S.data); }
+    } }, stIcon(g.st), g.label))));
+}
 // Rebuilt only when what it shows changes, so running spinners keep turning between SSE frames.
-function renderGroups(groups) {
-  const sig = JSON.stringify(groups.map((g) => [g.key, g.st, g.label, g.count, g.empty, g.loop, g.agents.map((a) => [a.id, a.status, nameOf(a), a.endedAt])]));
+function renderGroups(groups, p) {
+  const sig = JSON.stringify([S.sel, [...S.open], groups.map((g) => [g.key, g.st, g.label, g.count, g.empty, g.loop, g.agents.map((a) => [a.id, a.status, nameOf(a), a.endedAt])])]);
   if (sig === S.groupsSig) {
     for (const r of $('steps').querySelectorAll('.agent')) r.setAttribute('aria-current', r.dataset.id === S.sel ? 'true' : 'false');
     return;
   }
   S.groupsSig = sig;
-  const focusedId = document.activeElement && document.activeElement.closest('#steps .agent') ? document.activeElement.dataset.id : null;
-  $('steps').replaceChildren(...groups.map((g) => el('div', { class: 'step', 'data-st': g.st },
-    el('div', { class: 'step-head' }, stIcon(g.st), g.label, g.par ? el('span', { class: 'par' }, 'song song') : null, g.count ? el('span', { class: 'n' }, g.count) : null),
-    el('div', { class: 'step-body' },
-      g.agents.length ? g.agents.map(agentRow) : el('div', { class: 'step-empty' }, g.empty),
-      g.loop ? el('div', { class: 'loop-note' }, icon('loop', 'ico ico-sm'), g.loop) : null))));
+  const focused = document.activeElement;
+  const focusedId = focused && focused.closest('#steps .agent') ? focused.dataset.id : null;
+  const focusedStep = focused && focused.closest('#steps .step-toggle') ? focused.dataset.key : null;
+  $('steps').replaceChildren(...groups.map((g) => {
+    const open = isOpenGroup(g, p);
+    const bodyId = `step-${g.key}`;
+    const n = g.count || [g.agents.length ? `${g.agents.length} agent` : '', groupDur(g.agents)].filter(Boolean).join(' · ');
+    return el('div', { class: 'step', 'data-st': g.st },
+      el('button', { type: 'button', class: 'step-toggle', 'data-key': g.key, 'aria-expanded': open ? 'true' : 'false', 'aria-controls': bodyId,
+        onclick: () => { S.open.set(g.key, !open); S.groupsSig = ''; renderContent(S.data); } },
+        stIcon(g.st), el('span', { class: 'lbl' }, g.label), el('span', { class: 'n' }, n), icon('chev', 'ico ico-sm chev')),
+      el('div', { class: 'step-body', id: bodyId, hidden: !open },
+        g.agents.length ? g.agents.map(agentRow) : el('div', { class: 'step-empty' }, g.empty),
+        g.loop ? el('div', { class: 'loop-note' }, icon('loop', 'ico ico-sm'), g.loop) : null));
+  }));
   if (focusedId) { const r = $('steps').querySelector(`.agent[data-id="${CSS.escape(focusedId)}"]`); if (r) r.focus({ preventScroll: true }); }
+  else if (focusedStep) { const b = $('steps').querySelector(`.step-toggle[data-key="${CSS.escape(focusedStep)}"]`); if (b) b.focus({ preventScroll: true }); }
 }
 
 // ---------- detail ----------
@@ -816,8 +972,9 @@ function mdBlocks(src) {
 function detailNodes(a, inDrawer) {
   const st = stOf(a);
   const last = a.lastTool || (a.toolTimeline || [])[a.toolTimeline.length - 1] || null;
+  const sub = [shortType(a.type), (a.round ?? 1) > 1 ? `vòng ${a.round}` : '', a.startedAt ? `bắt đầu ${hhmm(a.startedAt)}` : '', agentDur(a)].filter(Boolean).join(' · ');
   const head = el('div', { class: 'd-head' },
-    el('div', null, el('span', { class: 'badge', 'data-st': st }, ST_LABEL[st]), el('h2', { id: inDrawer ? 'drawerTitle' : null }, nameOf(a))),
+    el('div', null, el('span', { class: 'badge', 'data-st': st }, ST_LABEL[st]), el('h2', { id: inDrawer ? 'drawerTitle' : null }, nameOf(a)), el('div', { class: 'd-sub' }, sub)),
     inDrawer ? el('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Đóng', onclick: () => closeDrawer(true) }, icon('x')) : null);
   let now = null;
   if (st === 'run') {
@@ -837,14 +994,58 @@ function detailNodes(a, inDrawer) {
       el('div', { class: 't' }, `Bị cắt: ${a.statusReason || 'không rõ lý do'}`), el('div', { class: 's' }, sub)));
   }
   const report = a.report
-    ? el('div', { class: 'report' }, mdBlocks(a.report))
-    : el('div', { class: 'muted-box' }, st === 'cut' ? 'Không có report: agent bị cắt trước khi xong.' : st === 'done' ? 'Agent xong nhưng không gửi report.' : 'Chưa có report. Report hiện ở đây khi agent xong.');
-  const tools = (a.toolTimeline || []).slice(-5).reverse();
-  return [head, now || '',
-    el('section', { class: 'sec' }, el('h3', null, 'Report'), report),
-    tools.length ? el('section', { class: 'sec sec-tools' }, el('h3', null, 'Tool gần nhất'), el('ol', { class: 'tools' }, tools.map((t) =>
-      el('li', null, el('span', { class: 'tm' }, hhmm(t.ts)), el('span', { class: 'tn', title: t.tool }, String(t.tool || '').replace(/^mcp__[^_]+(?:_[^_]+)*?__/, '')), el('span', { class: 'tt', title: t.target || '' }, t.target || (t.label && t.label.object) || ''))))) : '',
-    a.brief ? el('details', { class: 'sec brief-sec' }, el('summary', null, icon('chev', 'ico ico-sm'), 'Brief'), el('p', { class: 'brief' }, a.brief)) : ''];
+    ? el('div', { class: 'report' }, mdBlocks(rel(a.report)))
+    : el('div', { class: 'muted-box' }, st === 'cut' ? 'Không có báo cáo: agent bị cắt trước khi xong.' : st === 'done' ? 'Agent xong nhưng không gửi báo cáo.' : 'Chưa có báo cáo. Báo cáo hiện ở đây khi agent xong.');
+  const allTools = a.toolTimeline || [];
+  const tools = allTools.slice(-30).reverse();
+  const toolsList = tools.length
+    ? el('ol', { class: 'tools' }, tools.map((t) => {
+      const target = rel(t.target || (t.label && t.label.object) || '');
+      return el('li', null, el('span', { class: 'tm' }, hhmm(t.ts)), el('span', { class: 'tn', title: t.tool }, String(t.tool || '').replace(/^mcp__[^_]+(?:_[^_]+)*?__/, '')), el('span', { class: 'tt', title: target }, target));
+    }))
+    : el('div', { class: 'muted-box' }, 'Agent chưa gọi tool nào.');
+  const tabs = [['report', 'Báo cáo', null], ['tools', 'Tool', allTools.length || null], ['brief', 'Brief', null]];
+  if (!tabs.some(([k]) => k === S.tab)) S.tab = 'report';
+  const pid = (k) => `${inDrawer ? 'dr' : 'pn'}-tab-${k}`;
+  const tablist = el('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Nội dung agent', onkeydown: tabKeys },
+    tabs.map(([k, label, n]) => el('button', { type: 'button', role: 'tab', id: `${pid(k)}-t`, 'aria-selected': S.tab === k ? 'true' : 'false', 'aria-controls': pid(k), tabindex: S.tab === k ? '0' : '-1', 'data-tab': k,
+      onclick: () => { S.tab = k; S.detailSig = ''; renderDetail(); const b = document.getElementById(`${pid(k)}-t`); if (b) b.focus({ preventScroll: true }); } }, label, n ? el('span', { class: 'n' }, n) : null)));
+  const panel = (k, body, extra) => el('div', { class: `tab-panel${extra ? ` ${extra}` : ''}`, role: 'tabpanel', id: pid(k), 'aria-labelledby': `${pid(k)}-t`, hidden: S.tab !== k }, body);
+  return [head, verdictCard(a, st), now || '', tablist,
+    panel('report', report),
+    panel('tools', toolsList, 'sec-tools'),
+    panel('brief', a.brief ? el('p', { class: 'brief' }, rel(a.brief)) : el('div', { class: 'muted-box' }, 'Không có brief.'))];
+}
+// Arrow keys move between tabs (WAI-ARIA tabs pattern).
+function tabKeys(e) {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const btns = [...e.currentTarget.querySelectorAll('[role="tab"]')];
+  const i = btns.indexOf(document.activeElement);
+  if (i < 0) return;
+  e.preventDefault();
+  btns[(i + (e.key === 'ArrowRight' ? 1 : -1) + btns.length) % btns.length].click();
+}
+// The agent's conclusion first: the first "Gate:" / "## " line of its report.
+function verdictCard(a, st) {
+  if (st !== 'done' || !a.resultLine) return '';
+  const line = a.resultLine.replace(/^[\s\u2705\u26d4\u26a0\ufe0f\u274c\u{1F534}\u{1F9EA}]+/u, '');
+  const tone = /FAIL|CRITICAL|⛔|Failed|Paused|stopped|NOT READY|lỗi/i.test(line) ? 'bad'
+    : /WARN|⚠️|skipped/i.test(line) ? 'warn'
+    : /PASS|✅|Complete|Updated|READY/i.test(line) ? 'ok' : '';
+  return el('div', { class: 'verdict-card', 'data-tone': tone || null }, stIcon(tone === 'bad' ? 'cut' : tone === 'warn' ? 'stalled' : 'done'),
+    el('div', null, el('div', { class: 't', title: 'Kết luận của agent (dòng đầu báo cáo)' }, line)));
+}
+// Paths inside the session's repo are shown relative to it.
+function rel(text) {
+  const root = S.data && S.data.cwd;
+  if (!root || !text) return text || '';
+  const variants = new Set([root, root.replace(/\\/g, '/'), root.replace(/\//g, '\\')]);
+  let out = String(text);
+  for (const r of variants) {
+    const esc = r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    out = out.replace(new RegExp(`${esc}[\\\\/]`, 'gi'), '');
+  }
+  return out;
 }
 // A new tool call on the same agent only patches the "now" text and the tool list;
 // anything else (other agent, new status, report) rebuilds the detail.
@@ -912,7 +1113,8 @@ function closeDrawer(restore) {
 $('scrim').addEventListener('click', () => closeDrawer(true));
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
-  if (picker.hasAttribute('data-open')) { e.preventDefault(); closePicker(true); return; }
+  const op = Object.values(PICKERS).find(isOpen);
+  if (op) { e.preventDefault(); closePicker(op, true); return; }
   if (document.body.hasAttribute('data-drawer')) { e.preventDefault(); closeDrawer(true); }
 });
 // Focus stays inside the open drawer.

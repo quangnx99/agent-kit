@@ -759,3 +759,29 @@ test('waiting after a coding loop: gates are next and keep earlier-round agents 
   assert.equal(stepMap(e2e.pipeline).e2e.state, 'waiting');
   assert.deepEqual(stepMap(e2e.pipeline).e2e.prevAgentIds, ['g-e1']);
 });
+
+test('session exposes cwd and the last autopilot production verdict', () => {
+  const say = (text, min) => ({ type: 'assistant', uuid: `t-${min}`, timestamp: at(min), message: { id: `mt-${min}`, content: [{ type: 'text', text }] } });
+  const lines = [
+    { type: 'user', uuid: 'u0', cwd: 'D:\Projects\tasklist', timestamp: at(0), message: { role: 'user', content: 'go' } },
+    say('**Production verdict**: NOT READY\n- e2e skipped', 5),
+    say('## ✅ Autopilot Complete\n\n**Production verdict**: READY', 9),
+  ];
+  const s = parseSession({ mainText: jl(...lines), mainMtimeMs: NOW, agents: [], now: NOW });
+  assert.equal(s.cwd, 'D:\Projects\tasklist');
+  assert.equal(s.verdict.value, 'READY');
+  const none = parseSession({ mainText: jl(lines[0]), mainMtimeMs: NOW, agents: [], now: NOW });
+  assert.equal(none.verdict, null);
+});
+
+test('listSessions titles a slash command once, without the repeated command name', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agents-viz-'));
+  try {
+    fs.mkdirSync(path.join(dir, 'P--x'));
+    const content = '<command-message>agent:brainstorm</command-message>\n<command-name>/agent:brainstorm</command-name>\n<command-args>Sếp yêu cầu: thêm tag</command-args>';
+    fs.writeFileSync(path.join(dir, 'P--x', 's1.jsonl'), `${JSON.stringify({ type: 'user', uuid: 'u', message: { role: 'user', content } })}\n`);
+    assert.equal(listSessions(dir, 'P--x')[0].title, '/agent:brainstorm Sếp yêu cầu: thêm tag');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

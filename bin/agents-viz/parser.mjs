@@ -285,12 +285,18 @@ const stripTags = (s) => String(s).replace(/<\/?(?:command-[a-z]+|local-command-
 const CMD_RE = /<command-name>\s*\/?([^<\s]+)\s*<\/command-name>/;
 const ARGS_RE = /<command-args>([\s\S]*?)<\/command-args>/;
 
+// Autopilot's Done block: "**Production verdict**: READY | NOT READY".
+const VERDICT_RE = /Production verdict\**\s*:\s*\**\s*(NOT READY|READY)\b/gi;
+
 export function parseMainTranscript(records) {
   const skills = [];
   const calls = []; // Agent/Task tool_use in the orchestrator
   const results = new Map(); // tool_use_id -> {isError, status}
   let title = '';
+  let cwd = null; // working directory of the session (repo root for path shortening)
+  let verdict = null; // last autopilot production verdict, if any
   records.forEach((rec, order) => {
+    if (!cwd && typeof rec.cwd === 'string' && rec.cwd) cwd = rec.cwd;
     if (rec.type === 'last-prompt' && typeof rec.lastPrompt === 'string' && !title) title = rec.lastPrompt;
     if (rec.type === 'user') {
       const c = rec.message && rec.message.content;
@@ -311,6 +317,8 @@ export function parseMainTranscript(records) {
       return;
     }
     if (rec.type !== 'assistant') return;
+    const said = textOf(rec.message && rec.message.content);
+    if (said) for (const m of said.matchAll(VERDICT_RE)) verdict = { value: m[1].toUpperCase(), ts: rec.timestamp || null };
     for (const b of contentOf(rec)) {
       if (!b || b.type !== 'tool_use') continue;
       const input = b.input || {};
@@ -321,7 +329,7 @@ export function parseMainTranscript(records) {
       }
     }
   });
-  return { skills, calls, results, title: truncate(title, 160) };
+  return { skills, calls, results, title: truncate(title, 160), cwd, verdict };
 }
 
 // ---------- session ----------
@@ -339,7 +347,7 @@ export function parseSession({ mainText, mainMtimeMs, mainTruncated = false, age
   const warnings = { malformedLines: 0, unlinkedAgents: 0, badMeta: 0, truncated: mainTruncated ? 1 : 0 };
   const main = parseJsonl(mainText);
   warnings.malformedLines += main.malformed;
-  const { skills, calls, results, title } = parseMainTranscript(main.records);
+  const { skills, calls, results, title, cwd, verdict } = parseMainTranscript(main.records);
 
   const out = [];
   const byToolUse = new Map(); // tool_use id -> agent
@@ -471,6 +479,8 @@ export function parseSession({ mainText, mainMtimeMs, mainTruncated = false, age
   return {
     pipeline,
     title,
+    cwd,
+    verdict,
     skills: skills.map(({ order, rawArgs, ...s }) => s),
     agents: out,
     waves,
@@ -850,6 +860,12 @@ function sessionTitle(mainPath) {
     if (rec.type === 'user' && !rec.isMeta && !rec.toolUseResult) {
       const c = rec.message && rec.message.content;
       const t = typeof c === 'string' ? c : textOf(c);
+      // A slash command: "/<name> <args>" once, not the message + name + args tags run together.
+      const m = t && CMD_RE.exec(t);
+      if (m) {
+        const a = ARGS_RE.exec(t);
+        return truncate(`/${m[1]} ${a ? a[1] : ''}`.replace(/\s+/g, ' ').trim(), 160);
+      }
       if (t) return truncate(stripTags(t), 160);
     }
   }
