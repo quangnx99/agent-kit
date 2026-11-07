@@ -5,7 +5,7 @@ metadata:
   kit: osf
 ---
 
-Available skills: agents, analyze, apply, archive, autopilot, brainstorm, browser, chore, ci, clean-room, docker, docs, e2e, enhance, explain, explore, fix, gap-audit, git, osf, perf, proposal, refactor, research, review, security, setup, tdd, team, test, uiux-design, verify
+Available skills: agents, analyze, apply, archive, autopilot, brainstorm, browser, chore, ci, clean-room, docker, docs, e2e, enhance, explain, explore, fix, gap-audit, git, indexing, osf, perf, proposal, refactor, research, review, security, setup, tdd, team, test, uiux-design, verify
 
 RUNTIME GUARD:
 This prompt is already the `osf` dispatcher. Do NOT invoke `osf` again. Resolve the target skill from ARGUMENTS and dispatch directly. Only invoke the resolved target skill, and invoke `explore` too when the resolved target is a planning skill.
@@ -69,6 +69,7 @@ KIT_CATALOG (presentation source of truth — group order and blurbs are fixed):
 | automation | clean-room | Port feature từ repo ngoài |
 | automation | uiux-design | Phân tích & đề xuất UI/UX |
 | automation | enhance | Viết lại prompt cho rõ, không thực thi |
+| automation | indexing | Index/re-index workspace qua Context Engine, hiện % |
 | internal | explore | Shared explore stance, auto-load |
 | internal | osf | Dispatcher này |
 
@@ -82,10 +83,10 @@ Group headings for list output:
 LIST RULES (higher priority than dispatch — evaluate first):
 
 1. If "$0" is exactly one of: `list`, `ls`, `--list`, `-l`, run the list flow and STOP. Do not dispatch. Do not infer a skill.
-2. Print the catalog **exactly** in this structure (use KIT_CATALOG for skill order and blurbs; do **not** invent blurbs from frontmatter `description`). Header count is always the KIT_CATALOG size (32). Do not scan `~/.claude/skills` or any other disk path — KIT_CATALOG is the source of truth.
+2. Print the catalog **exactly** in this structure (use KIT_CATALOG for skill order and blurbs; do **not** invent blurbs from frontmatter `description`). Header count is always the KIT_CATALOG size (33). Do not scan `~/.claude/skills` or any other disk path — KIT_CATALOG is the source of truth.
 
 ```
-**OSF kit — 32 skills**
+**OSF kit — 33 skills**
 
 **Planning** (explore → implement, có thể tạo spec)
   brainstorm  Brainstorm tính năng mới
@@ -124,6 +125,7 @@ LIST RULES (higher priority than dispatch — evaluate first):
   clean-room  Port feature từ repo ngoài
   uiux-design Phân tích & đề xuất UI/UX
   enhance     Viết lại prompt cho rõ, không thực thi
+  indexing    Index/re-index workspace qua Context Engine, hiện %
 
 **Internal** (không gọi trực tiếp)
   explore     Shared explore stance, auto-load
@@ -173,6 +175,7 @@ Dispatch rules:
    - UI/UX review or design direction → `uiux-design`
    - clean-room, port feature from external repo, clean-room reimplementation → `clean-room`
    - enhance/rewrite/clarify a prompt, "làm rõ prompt", "viết lại prompt" → `enhance`
+   - index/re-index workspace, Context Engine, codebase-retrieval index, "đánh index", "index lại" → `indexing`
    - fully autonomous end-to-end workflow → `autopilot`
    - a squad/team of roles working at once, "spawn nhiều agent", "đội PM BA DEV", max parallel, burn spare tokens for speed → `team`
    - visualize/monitor agents, "agent đang làm gì", dashboard agent, which agents ran in parallel → `agents`

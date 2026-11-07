@@ -1,6 +1,6 @@
 # OSF kit
 
-32 OpenSpec-flow skills and 15 supporting agents for Claude Code and OMP.
+33 OpenSpec-flow skills and 15 supporting agents for Claude Code and OMP.
 
 Marketplace `osf-kit`, plugin `osf`, `source: "./"`.
 
@@ -48,7 +48,7 @@ Planning: brainstorm, fix, chore, refactor, perf, docs, test, ci, docker, setup
 Spec: proposal, tdd, apply, e2e, verify, archive
 
 Investigate: analyze, gap-audit, explain, review, security, research, browser
-Utility: enhance
+Utility: enhance, indexing
 
 Automation: autopilot, team, agents, git, clean-room, uiux-design
 
