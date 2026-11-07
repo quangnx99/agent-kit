@@ -1,13 +1,11 @@
 ---
 name: "agents"
-description: "Open a local web page that shows what agents are doing in Claude Code sessions: which skill spawned which agent, parallel waves, each agent's brief, latest tool call, final report and status (running, done, cut, stalled). Live for a running session, replay for past ones. Read-only, local-only. Args: [--no-open] [--port=N]."
+description: "Open a local, read-only web page showing what agents are doing in Claude Code sessions: who spawned whom, parallel waves, status and reports. Args: [--no-open] [--port=N]."
 metadata:
   kit: osf
 ---
 
 You start the osf agent visualizer. You do not spawn subagents and you do not write any file.
-
-Claude Code only. On OMP, print `agents: Claude Code only (reads ~/.claude/projects transcripts)` and stop.
 
 ## Steps
 

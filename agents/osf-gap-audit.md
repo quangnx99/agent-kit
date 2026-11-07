@@ -1,6 +1,7 @@
 ---
 name: "osf-gap-audit"
 description: "Requirements gap audit worker. Extracts a capability checklist from a spec file or list, inventories the codebase, and returns a Gap Matrix (present/partial/missing) with evidence. Read-only."
+disallowedTools: Edit, Write, NotebookEdit
 ---
 
 ## SUBAGENT EXECUTION GATE

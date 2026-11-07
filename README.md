@@ -1,17 +1,13 @@
 # OSF kit
 
-33 OpenSpec-flow skills and 15 supporting agents for Claude Code and OMP.
+OpenSpec-flow skills and supporting agents for Claude Code. `/osf:osf list` prints the current catalog.
 
 Marketplace `osf-kit`, plugin `osf`, `source: "./"`.
 
 ## Install
 
 ```bash
-# Claude Code
 claude plugin marketplace add quangnx99/osf-kit && claude plugin install osf@osf-kit
-
-# OMP
-omp plugin install github:quangnx99/osf-kit
 ```
 
 Claude Code TUI (if the marketplace is not registered yet):
@@ -21,23 +17,16 @@ Claude Code TUI (if the marketplace is not registered yet):
 /plugin install osf@osf-kit
 ```
 
-Restart the OMP session after install.
-
-- Claude Code: `/osf:osf list` · `/osf:brainstorm …`
-- OMP: `/skill:osf list` · `/skill:osf brainstorm …`
+Then: `/osf:osf list` · `/osf:brainstorm …`
 
 ## Update
 
 ```bash
-# Claude Code
 claude plugin marketplace update osf-kit
 claude plugin update osf@osf-kit
-
-# OMP (reinstall from git; same command as install)
-omp plugin install github:quangnx99/osf-kit
 ```
 
-Restart the OMP session after update. Claude Code: restart or `/reload-plugins`.
+Then restart Claude Code or run `/reload-plugins`.
 
 Version is pinned in `plugin.json`. Bump it on every release or users will not get the new tree.
 
@@ -64,6 +53,10 @@ Stages stay in order (spec → tests → code → gates); fan-out happens inside
 - `/osf:tdd <change> --parallel=N` — one osf-tdd part per spec capability, merged into tdd.md
 - `/osf:autopilot … --parallel=N` — fans out analyze, tdd, implement; runs osf-security ‖ osf-verify together
 - `/osf:team <request> [--parallel=N]` — PM, BA, DEV, QA, SEC (and researcher) kick off in one message, reports are merged, then autopilot Full runs with N workers. Trades tokens for wall-clock time.
+
+## Autopilot verdict
+
+Full pipeline ends with **READY** or **NOT READY**. Run cold (`/osf:autopilot <request>`), autopilot decides alone and tags each `Assumed:` line with its source: `codebase:` (the project already does it this way), `research:` or `★ default`. Only unconfirmed `★ default` choices that change behavior, scope, data or cost (and `research:` ones without clear consensus) make the verdict NOT READY; they are listed first, marked ⛔, so you can confirm them.
 
 ## Agent visualizer
 
@@ -93,6 +86,6 @@ Stages stay in order (spec → tests → code → gates); fan-out happens inside
 - **Status** (icon + text): Đang chạy, Xong, Bị cắt (API or rate-limit error, or no final report), Đứng im (no write for >10 min). An unfinished agent with no write for 2–10 min still shows as running.
 - **Look:** flat, follows light/dark mode, respects reduced motion, keyboard and screen-reader friendly. Layout and tokens are in `bin/agents-viz/DESIGN.md`.
 
-Read-only: it reads `~/.claude/projects/**` transcripts, binds 127.0.0.1 only, needs no hooks and no dependencies (Node only). Claude Code only — OMP sessions are not supported.
+Read-only: it reads `~/.claude/projects/**` transcripts, binds 127.0.0.1 only, needs no hooks and no dependencies (Node only).
 
 Tests: `npm test`.

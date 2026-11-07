@@ -1,6 +1,6 @@
 ---
 name: "autopilot"
-description: "Autonomous pipeline — assesses work complexity, then runs the appropriate pipeline (Full/Verified/Light). Full = spec → spec gate → tdd → implement → e2e → security → verify → archive, with a production-readiness verdict. Args: [request] [--full] [--no-tdd] [--no-e2e] [--parallel=N] [--team] [--yes]. --parallel fans out analyze, tdd, implement and the security‖verify gates; --team runs a PM/BA/DEV/QA/SEC kickoff first."
+description: "Autonomous end-to-end pipeline: picks Full / Verified / Light from the work's risk, then runs spec → tests → code → gates → archive without stopping. Args: [request] [--full] [--no-tdd] [--no-e2e] [--parallel=N] [--team] [--yes]."
 metadata:
   kit: osf
 ---
@@ -56,17 +56,19 @@ Same working tree, no worktrees. Safety = disjoint files per batch, workers neve
 
 ---
 
-## STEP 0: LOAD SKILLS (MANDATORY — DO THIS FIRST)
+## STEP 0: LOAD SKILLS (Mode A only — DO THIS FIRST)
 
-Before you read any code, before you explore anything, before you do ANYTHING else:
+First apply **Detect Mode** below. **Mode B skips this step entirely**: the planning already happened, so do not load a domain skill or `explore` again — go straight to Assess Pipeline. The AUTOPILOT OVERRIDES below still apply to anything you do.
 
-1. Classify the work type from the user's request: brainstorm, fix, chore, refactor, perf, docs, test, ci, docker
+In Mode A, before you read any code, before you explore anything, before you do ANYTHING else:
+
+1. Classify the work type from the user's request: brainstorm, fix, chore, refactor, perf, docs, test, ci, docker, setup
 2. Announce: "Autopilot: classifying as **[type]**"
 3. Use the Skill tool to invoke the classified domain command and `explore` in parallel:
    - Invoke the classified domain command with the user's request plus this context: `CALLER_CONTEXT: shared explore mode has already been loaded for this request. Do not invoke the explore skill again.`
    - Invoke `explore` with the same user request plus this context: `CALLER_CONTEXT: autopilot-pipeline`.
 
-You MUST make both Skill tool calls before proceeding. If the domain skill sees the caller context above, it must skip its own `explore` invocation. If you find yourself reading code or exploring the codebase without having made these calls, STOP and make them now.
+In Mode A you MUST make both Skill tool calls before proceeding. If the domain skill sees the caller context above, it must skip its own `explore` invocation. If you find yourself reading code or exploring the codebase without having made these calls, STOP and make them now.
 
 ---
 
@@ -82,18 +84,18 @@ You MUST make both Skill tool calls before proceeding. If the domain skill sees 
 
 ## Detect Mode
 
-**Mode A: Cold Start** — `/autopilot [request]` (request provided)
+**Mode A: Cold Start** — `/osf autopilot [request]` (request provided)
 - User provides a fresh request with no prior brainstorm
 - Proceed to AUTONOMOUS EXPLORATION below
 
-**Mode B: Continuation** — `/autopilot` (no args or minimal args, mid-conversation)
+**Mode B: Continuation** — `/osf autopilot` (no args or minimal args, mid-conversation)
 - Conversation already contains brainstorm context (plan, decisions, scope)
 - Gather the plan summary, key decisions, and scope from conversation history
 - Skip exploration, proceed directly to PIPELINE
 
-To detect: if the conversation contains a prior planning session (from `/brainstorm`, `/fix`, `/chore`, etc.) with a teach-back or "Ready to Implement" summary, use Mode B. Otherwise, use Mode A.
+To detect: if the conversation contains a prior planning session (from `/osf brainstorm`, `/osf fix`, `/osf chore`, etc.) with a teach-back or "Ready to Implement" summary, use Mode B. Otherwise, use Mode A.
 
-An invocation from explore (option F or C) or from the `team` skill (`CALLER_CONTEXT: team-kickoff-done`) that carries a locked requirement summary or a decision list is **always Mode B**, even though it has arguments such as `--full`. Never re-explore or re-decide what the user already decided. A `Batch plan` in that context is the implement step's partition.
+An invocation from explore (the Auto or Production option) or from the `team` skill (`CALLER_CONTEXT: team-kickoff-done`) that carries a locked requirement summary or a decision list is **always Mode B**, even though it has arguments such as `--full`. Never re-explore or re-decide what the user already decided. A `Batch plan` in that context is the implement step's partition.
 
 ---
 
@@ -162,7 +164,7 @@ After exploration (Mode A) or gathering context (Mode B), assess the work to sel
 
 **`--full` in the request** → skip the assessment and run **Full**. Announce `**Pipeline**: Full — forced by --full`.
 
-**Collect the decision list (all pipelines with a spec).** In Mode B, gather from the conversation, verbatim: the locked requirement summary, "Decisions made", every answered grilling question with the chosen option, every ★ the user accepted with "ok", and every `Assumed:` line. In Mode A, it is your own decisions from exploration step 3, each as `Assumed: <decision> → <choice> (based on <pattern/research>)`. This list is passed to osf-spec-review — subagents have no conversation history, so anything not in the list cannot be checked.
+**Collect the decision list (all pipelines with a spec).** In Mode B, gather from the conversation, verbatim: the locked requirement summary, "Decisions made", every answered grilling question with the chosen option, every ★ the user accepted with "ok", and every `Assumed:` line. In Mode A, it is your own decisions from exploration step 3, each as `Assumed: <decision> → <choice> (based on <source>)`, where `<source>` is exactly one of: `codebase: <file or pattern>` (the project already does it this way), `research: <source>` (external docs or standard), or `★ default` (no precedent — your own judgment). Keep this tag; the Done verdict uses it. This list is passed to osf-spec-review — subagents have no conversation history, so anything not in the list cannot be checked.
 
 **Full** — spec → spec gate → tdd → implement → e2e → security → verify → archive
 - Complex work (4+ tasks, multi-component, needs design decisions)
@@ -205,7 +207,7 @@ Announce your assessment — in the same response as the first pipeline tool cal
 
 Before invoking the first pipeline step, use the TodoWrite tool to lay out every step of the selected pipeline as a todo list. This list is your forward-momentum anchor.
 
-**No todo tool?** "TodoWrite" in this file means the host's todo or task-list tool (TodoWrite, TaskCreate/TaskUpdate, …). Some hosts have none. Then print the list once as plain lines — starting with the `**Pipeline**` / `**Steps**` announcement, in the same response as the first step's tool call — and wherever a step below says "TodoWrite — mark …", print one line instead: `Step <k>/<n> ✓ <done> → <next>`, followed by the next tool call in the same response. Nothing else changes: still no other text, still no turn end between steps.
+"TodoWrite" in this file means this session's todo tool — TodoWrite, or TaskCreate/TaskUpdate when that is what the session has.
 
 When security is on (Full, or Verified with security), also run `git rev-parse HEAD` once and keep the result as the **diff base** for osf-security. Leave switched-off steps out of the todo list.
 
@@ -294,7 +296,7 @@ When the report returns:
 - **Gate: PASS** → next response, two tool calls, zero text before them: (1) TodoWrite — mark "Spec gate" completed, "TDD gate" in_progress; (2) Skill `tdd` — args: `<change-name> --parallel=<N>` plus `CALLER_CONTEXT: autopilot-pipeline`.
 - **CRITICAL items only** → Skill `proposal` with `Change name: <change-name>`, `Spec review findings:` (the CRITICAL list verbatim) and `CALLER_CONTEXT: autopilot-pipeline`; then re-run osf-spec-review with `Previous review:`. Max 2 update rounds (stop point 0b).
 - **DECISION items exist:**
-  - **Mode A** → take the ★ option for each, add `Assumed: <decision> → <★ choice>` to the decision list, and update the spec as for CRITICAL items, passing the choices with the findings.
+  - **Mode A** → take the ★ option for each, add `Assumed: <decision> → <★ choice> (based on <source>)` to the decision list with the same source tags as above, and update the spec as for CRITICAL items, passing the choices with the findings.
   - **Mode B with `--yes`** → same as Mode A: take ★, add `Assumed:` lines, no stop.
   - **Mode B** → stop point 0. Print a short spec digest (requirements, scenario count, decisions encoded) and the DECISION items as one grilling round (A/B/★/Khác, `"ok" = chấp nhận tất cả ★`), then end the turn.
   - **Resume contract (Mode B):** the user's next message is the answer to that round. Re-create the Full todo list if it is gone, add the answers to the decision list, invoke `proposal` with the findings plus the answers, re-run osf-spec-review, and on PASS continue with Step 1b in the same turn — from then on the pipeline is non-stop again.
@@ -381,7 +383,7 @@ When osf-apply returns, your next response must contain:
   1. TodoWrite — mark "Implement" completed.
   2. The Done announcement.
 
-osf-apply's internal auto-verify handles basic quality checks.
+osf-apply runs its Self-check (the tests covering its files, plus type-check/lint when the project defines them) before it reports. Carry its `**Checks:**` line into the Done block; if it says `none available` or failing, the Done block says so.
 
 ---
 
@@ -405,10 +407,10 @@ Announce completion based on pipeline used:
 - unspecified behaviors or test disputes reported by e2e
 - security WARNING the user has not accepted
 - verify WARNING about failing/unstable tests or env blockers
-- decisions taken as `Assumed:` that the user never confirmed (Mode A)
+- `Assumed:` decisions tagged `★ default` that change user-visible behavior, scope, data or cost and the user never confirmed (Mode A). Assumptions tagged `codebase:` follow an existing project rule and do not block; `research:` ones block only when the research found no clear consensus
 
-**Assumed decisions** (confirm or change these):
-- <every Assumed line — or "none">
+**Assumed decisions** (confirm or change these — the blocking ones first):
+- <every Assumed line with its source tag, blocking ones marked ⛔ — or "none">
 
 **Evidence**: <e2e trace/screenshot paths, one per journey>
 **Warnings**: <security, e2e, verify warnings — or "none">
@@ -430,6 +432,7 @@ Never report READY to be agreeable. READY means every gate above actually ran an
 ## ✅ Autopilot Complete
 
 **Pipeline**: implement ✓
+**Checks**: <osf-apply's Checks line, verbatim>
 ```
 
 **If verify-fix loop exhausted (any pipeline):**
@@ -450,7 +453,7 @@ Options:
 ## Guardrails
 
 - **IDENTITY GATE applies at all times** — see ORCHESTRATOR IDENTITY GATE above. You explore and plan, osf-apply writes code. No exceptions, not even for 1-line changes. When osf-verify reports issues, delegate fixes to osf-apply via Agent tool, then re-verify via osf-verify. Never skip re-verify after fixing.
-- **PIPELINE IS NON-STOP** — see "PIPELINE IS NON-STOP" in the Pipeline section above. Never end your turn between pipeline steps. After proposal prints `✅ Spec created: <change-name>`, the NEXT action is osf-spec-review (Full) or the `tdd` skill; after spec gate PASS, the NEXT action is the `tdd` skill (osf-apply only with `--no-tdd`); after `✅ TDD gate passed`, the NEXT action is osf-apply; after the last implement wave and the full test run on the Full pipeline, the NEXT action is the `e2e` skill (the gates when e2e is off); after e2e, osf-security AND osf-verify in one message (verify alone when security is off); after both gates are green, osf-archive — not a status message, not a confirmation prompt.
+- **PIPELINE IS NON-STOP** — see the red-flag list in the Pipeline section: after every step marker, the next action is the next step's tool call, never a status message or a confirmation prompt.
 - Never stop to ask the user during the pipeline — except stop point 0 (spec gate DECISION items in Mode B without `--yes`); archive only exists in the Full pipeline
 - Cold start exploration must be thorough — same depth as interactive brainstorm
 - All autonomous decisions must be grounded in codebase patterns or web research, never guessed

@@ -1,6 +1,7 @@
 ---
 name: "osf-qa"
 description: "QA worker for a team kickoff. From one request, detects the project's test stack and commands, drafts the acceptance-criteria list with test level (unit/integration/e2e), the e2e journey list with probes, and the fixtures needed. Read-only."
+disallowedTools: Edit, Write, NotebookEdit
 ---
 
 ## SUBAGENT EXECUTION GATE

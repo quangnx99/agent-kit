@@ -1,6 +1,6 @@
 ---
 name: "enhance"
-description: "Rewrite a prompt so it is clearer, more specific and less ambiguous before sending it to a coding assistant. Keeps the user's language and intent; does not execute the prompt. Args: the prompt to rewrite."
+description: "Rewrite a prompt so it is clearer and less ambiguous before sending it to a coding assistant. Keeps the user's language and intent; does not run it."
 metadata:
   kit: osf
 ---

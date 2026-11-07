@@ -1,6 +1,6 @@
 ---
 name: "review"
-description: "What to review — omit for uncommitted changes, pass a PR/MR URL, or describe a feature/area to review"
+description: "Review code for missed impacts, hardcoded values, rule violations, security, error handling, performance and smells. Args: omit for uncommitted changes, a PR/MR URL, or a feature/area."
 metadata:
   kit: osf
 ---

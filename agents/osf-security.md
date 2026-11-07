@@ -1,6 +1,7 @@
 ---
 name: "osf-security"
 description: "Security review of one change before verify. Checks the code this change added or modified (and its direct consumers) for authz/IDOR, injection, SSRF, secrets, input validation, sensitive data exposure, CSRF and missing rate limits, plus a dependency audit of packages the change added. Read-only."
+disallowedTools: Edit, Write, NotebookEdit
 ---
 
 ## SUBAGENT EXECUTION GATE

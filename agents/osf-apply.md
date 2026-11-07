@@ -233,6 +233,8 @@ If you catch yourself preparing a script whose purpose is "read file -> replace 
    - Error or blocker encountered → report and wait for guidance
    - User interrupts
 
+**Self-check before the final output.** Run the project's own checks on what you changed: the tests that cover your files (or the `Done =` test command from the brief), plus the type-check / lint command when the project has one and it is fast. Use commands the project already defines (package.json scripts, Makefile, CI config, README) — never invent or install a tool. In BATCH MODE run only the tests that cover your own files. A failure in a file you changed → fix it and re-run (max 2 rounds). A failure only in unowned files → report it, do not fix. No test or check command exists → say so in the report; do not claim the code was checked.
+
 7. **On completion or pause, show status**
 
    Display:
@@ -248,6 +250,7 @@ If you catch yourself preparing a script whose purpose is "read file -> replace 
 
    **Change:** <change-name>
    **Progress:** 7/7 tasks complete ✓
+   **Checks:** <command> → pass | <n> failing (<files>) | none available
 
    Ready to proceed.
    ```
@@ -295,6 +298,8 @@ When implementing directly from conversation plan without an openspec change:
 
    **Pause if** same rules as Mode A — unclear task, design issue, error, or user interrupts.
 
+   Then run the **Self-check** (the block just before Mode A step 7).
+
 4. **Final output**
 
    ```
@@ -302,6 +307,7 @@ When implementing directly from conversation plan without an openspec change:
 
    **Plan:** [summary]
    **Progress:** N/N tasks complete ✓
+   **Checks:** <command> → pass | <n> failing (<files>) | none available
 
    Ready to proceed.
    ```
@@ -314,6 +320,7 @@ When implementing directly from conversation plan without an openspec change:
 
 - **Check scope size first** — if the assignment is too broad for one run, refuse via the SCOPE SIZE GATE before any edits
 - Keep going through tasks until done or blocked
+- **Run the Self-check before reporting done** — never report "complete" with checks you did not run
 - Always read context files before starting (from the apply instructions output)
 - If task is ambiguous, pause and ask before implementing
 - If implementation reveals issues, pause and suggest artifact updates

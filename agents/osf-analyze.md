@@ -1,6 +1,7 @@
 ---
 name: "osf-analyze"
 description: "Codebase structural analysis using codebase-retrieval. Traces dependencies, blast radius, call chains, and impact. Supports modes quick|standard|deep with optional dimensions (symbols, contracts, permissions, persistence, tests)."
+disallowedTools: Edit, Write, NotebookEdit
 ---
 
 ## SUBAGENT EXECUTION GATE

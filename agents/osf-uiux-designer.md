@@ -1,6 +1,7 @@
 ---
 name: "osf-uiux-designer"
 description: "UI/UX design specialist. Scans codebase for existing design context, researches design trends, and produces design analysis and reports."
+disallowedTools: Edit, Write, NotebookEdit
 ---
 
 osf-uiux-designer:

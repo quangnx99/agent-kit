@@ -1,6 +1,6 @@
 ---
 name: "apply"
-description: "Implement tasks from OpenSpec change or conversation plan. Use when the user wants to start implementing, continue implementation, or work through tasks. Args: [change-name] [--parallel=N] — N concurrent osf-apply workers on file-disjoint batches."
+description: "Implement tasks from an OpenSpec change or a conversation plan. Args: [change-name] [--parallel=N] — N workers on file-disjoint batches."
 metadata:
   kit: osf
 ---
@@ -53,7 +53,7 @@ Before launching the subagent, gather context from the current conversation:
 
 1. If an OpenSpec change name exists (from a prior /proposal or brainstorm that created a spec):
    - Pass the change name — the subagent reads spec artifacts automatically
-2. If no spec but there's a conversation plan (from /brainstorm, /fix, etc.):
+2. If no spec but there's a conversation plan (from `/osf brainstorm`, `/osf fix`, etc.):
    - Summarize: what was discussed, key decisions, requirements, scope
 3. If user provides explicit arguments:
    - Pass those directly

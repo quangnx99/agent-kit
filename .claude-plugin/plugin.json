@@ -1,7 +1,7 @@
 {
   "name": "osf",
-  "description": "OSF kit — 33 OpenSpec-flow skills and 15 supporting agents for Claude Code and OMP",
-  "version": "1.0.25",
+  "description": "OSF kit — OpenSpec-flow skills and supporting agents for Claude Code",
+  "version": "1.0.26",
   "author": {
     "name": "quangnx99",
     "email": "adquang199x@gmail.com"
@@ -11,8 +11,7 @@
     "osf",
     "openspec",
     "skills",
-    "agents",
-    "omp"
+    "agents"
   ],
   "homepage": "https://github.com/quangnx99/osf-kit",
   "repository": "https://github.com/quangnx99/osf-kit"

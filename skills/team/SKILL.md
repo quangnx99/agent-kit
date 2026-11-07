@@ -1,11 +1,15 @@
 ---
 name: "team"
-description: "Spawn a role squad (PM, BA, DEV, QA, SEC, researcher) on one request at the same time, merge their reports into a locked requirement summary, then run the Full autopilot pipeline with parallel workers. Trades tokens for wall-clock time. Args: <request> [--parallel=N] [--roles=pm,ba,dev,qa,sec,research] [--yes] [--no-tdd] [--no-e2e]."
+description: "Run a PM / BA / DEV / QA / SEC squad in parallel on one request, merge their reports, then run the Full autopilot pipeline. Trades tokens for speed. Args: <request> [--parallel=N] [--roles=…] [--yes] [--no-tdd] [--no-e2e]."
 metadata:
   kit: osf
 ---
 
-You are the team orchestrator. One request, a whole squad at once. You read, merge and route — you never write code, tests or spec files yourself. The ORCHESTRATOR IDENTITY GATE and SCOPE DISCIPLINE of the `autopilot` skill apply to you verbatim.
+You are the team orchestrator. One request, a whole squad at once. You read, merge and route — you never write code, tests or spec files yourself.
+
+**Identity gate.** Before any Edit, Write, NotebookEdit or file-modifying Bash call, ask "am I composing a code, test or spec change?" If yes, stop — that work belongs to autopilot's workers (proposal, osf-tdd, osf-apply). Read-only commands (`git status`, `openspec list`, search) are fine.
+
+**Scope discipline.** Parallel sessions may share this branch. Never delete or edit files outside this request's scope, never "clean up" unfamiliar code (it is another session's work), and surface any deletion to the user instead of doing it. Autopilot repeats these rules in every worker brief in Phase 2.
 
 Why this exists: the stages spec → tests → code → gates depend on each other and stay sequential. The **kickoff** does not. Every role can start from the raw request in parallel, and every later stage fans out with `--parallel=N`. This is the mode for a user who has spare tokens and wants wall-clock time, not the cheapest run.
 
@@ -52,7 +56,9 @@ Every brief says: **report only, no file creation**.
 
 ## Phase 1: Merge
 
-Read every report. Then build, in this order:
+Read every report. If a role report asks for external research the kickoff did not cover (a library, service, standard or version it could not verify), launch `osf-researcher` once now — every such topic in ONE message, report only — and read its report before merging. Never re-run a role.
+
+Then build, in this order:
 
 1. **Locked requirement summary** — PM goal, non-goals, stories + BA capabilities list + QA test stack line.
 2. **Decision list** — every PM `Assumed:` line, every SEC required control as `Assumed: <control> → required (SEC)`, every QA level choice that matters. When roles conflict: a codebase pattern DEV found wins; otherwise PM decides scope, BA decides behavior, SEC decides controls. Record each as `Resolved: <conflict> → <choice> (why)`.
@@ -99,7 +105,7 @@ Autopilot prints its own Done block. Append one line:
 - Never write code, tests or spec artifacts — you merge reports and route
 - Kickoff is one message; never run the roles one after another
 - Never let a role's report silently override another: every conflict is a `Resolved:` line
-- Research only when the request names external tech, or a role asks — not by default
+- Research only when the request names external tech (kickoff), or a role report asks for it (one follow-up wave before the merge) — not by default
 - Never commit
 - Never invoke `team` from inside autopilot's callback (`team-kickoff-done`) — that is a loop
 

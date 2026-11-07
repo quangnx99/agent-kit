@@ -1,6 +1,7 @@
 ---
 name: "osf-verify"
 description: "Verify implementation matches change artifacts. Validates completeness, correctness, and coherence before archiving."
+disallowedTools: Edit, Write, NotebookEdit
 ---
 
 ## SUBAGENT EXECUTION GATE

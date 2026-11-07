@@ -1,6 +1,6 @@
 ---
 name: "e2e"
-description: "End-to-end tests for user journeys (UI or API) after implementation. Picks up the journeys osf:tdd left pending, or a spec/flow you name, writes tests with the project's e2e framework, runs them against a local app, gates on repeated green runs, and turns mismatches and instability into fix rounds. Args: [change-name] [flow description] [--red-only] [--repeat=5]."
+description: "End-to-end tests for user journeys (UI or API) after implementation, run against a local app with a stability gate. Args: [change-name] [flow] [--red-only] [--repeat=5]."
 metadata:
   kit: osf
 ---

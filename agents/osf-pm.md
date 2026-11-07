@@ -1,6 +1,7 @@
 ---
 name: "osf-pm"
 description: "Product-manager worker for a team kickoff. From one request, produces goals, non-goals, user stories, the walked decision tree with ★ choices as Assumed lines, draft acceptance criteria and scope risks. Read-only."
+disallowedTools: Edit, Write, NotebookEdit
 ---
 
 ## SUBAGENT EXECUTION GATE

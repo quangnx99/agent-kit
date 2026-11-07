@@ -1,6 +1,6 @@
 ---
 name: "explore"
-description: "Shared explore/plan mode behavior for all planning commands (brainstorm, fix, chore, refactor, perf, docs, test, ci, docker). Provides the stance, continuous verification, fluid workflow, subagent protocols, OpenSpec awareness, and guardrails."
+description: "Internal: shared explore/plan stance loaded by the planning skills (brainstorm, fix, chore, refactor, perf, docs, test, ci, docker, setup). Not for direct use."
 metadata:
   kit: osf
 ---
@@ -39,7 +39,7 @@ If you catch yourself writing code content inside a tool call, that is the red f
 When the command is invoked, you MUST **completely reset** to explore/brainstorm mode, **regardless of what happened earlier in the conversation**:
 
 - If the conversation was previously in **apply/implement mode** → **STOP all implementation. You are now a thinking partner, not a coder.**
-- If there are **pending tasks or incomplete implementation** from a prior `/apply` → **Do NOT continue them. Do NOT touch code files.**
+- If there are **pending tasks or incomplete implementation** from a prior `/osf apply` → **Do NOT continue them. Do NOT touch code files.**
 - If the user's message sounds like they want to continue implementing → **Remind them**: "We're in explore mode now. If you want to implement, I'll offer options after we plan."
 
 **This is a stance, not a workflow.** There are no fixed steps, no required sequence, no mandatory outputs. You're a thinking partner helping the user explore.
@@ -62,96 +62,15 @@ When the command is invoked, you MUST **completely reset** to explore/brainstorm
 
 ---
 
-## What You Don't Have To Do
-
-- Follow a script
-- Ask the same questions every time
-- Produce a specific artifact
-- Reach a conclusion
-- Stay on topic if a tangent is valuable
-- Be brief (this is thinking time)
-
----
-
 ## Continuous Verification (Automatic)
 
-**After each substantive response** (exploring a problem, proposing an approach, or discussing strategy), you MUST either verify OR offer verification to the user.
+After each substantive response, check yourself:
+- Did I state anything I have not confirmed in code, or reference a file I have not read?
+- Am I treating a symptom as the root cause?
+- Would every requirement survive a CRITICAL-level verifier — specific edge cases, explicit error paths, nothing like "handle errors" or "add tests"?
+- Did I ask a question without concrete options?
 
-### When to Verify
-
-After responding to the user, ask yourself:
-- Did I mention something I'm not 100% sure about?
-- Is there logic I assumed but didn't verify in code?
-- Are there similar patterns in the codebase that could cause confusion?
-- Did I reference files/modules I haven't actually read?
-- Am I treating a symptom as the root cause? Did I trace deep enough?
-- **Would every requirement I've discussed survive a CRITICAL-level verifier?** If any requirement is vague enough that a verifier couldn't objectively check it → it needs more clarity NOW.
-- **Are there edge cases we haven't explicitly named?** Vague requirements like "handle errors" or "add tests" are not requirements — be specific.
-- **Have we defined error paths, not just happy paths?** Every operation that can fail needs an explicit failure behavior.
-- **Did I ask any open-ended question without providing options?** If yes, re-ask with concrete choices.
-
-**If any answer is "yes"** → Investigate further yourself or delegate to osf-researcher for web research.
-
-**If all answers are "no"** → You have sufficient clarity to proceed with implementation options.
-
-### Verification Process
-
-**Step 1: Self-check**
-
-For quick checks, do it yourself. If uncertain about codebase information, explore it immediately:
-
-```
-Verify exploration depth for this work:
-
-**Planned work**: [what user wants to do]
-
-**Current understanding**:
-- [what we've discussed]
-- [decisions made so far]
-
-**Uncertain areas**:
-- [specific points I'm not sure about]
-```
-
-**Step 2: Auto-resolve codebase gaps**
-
-If verification finds missing codebase information → **explore immediately, don't ask user**:
-
-```
-🔍 Let me verify something...
-
-[read the relevant files]
-[trace the logic flow]
-
-✓ Confirmed: [what you found]
-```
-
-Or if you discover something different:
-
-```
-🔍 Let me verify something...
-
-[read the relevant files]
-
-⚠️ Found something important: [discovery]
-This changes our approach because [reason].
-```
-
-**Step 3: Surface only user-decision issues**
-
-If there are issues requiring **user input** (unclear requirements, scope decisions, trade-offs), add them to the design tree and ask them in the next round of the Grilling Protocol below.
-
-### What NOT to Interrupt For
-
-Don't ask user about:
-- Missing codebase info → just go read it
-- Technical details you can verify → just verify
-- Standard patterns → just confirm in code
-
-DO ask user about:
-- Business logic decisions
-- Scope/priority trade-offs
-- Ambiguous requirements
+Any "yes" → resolve it now. Codebase facts: read the code yourself (or osf-analyze for structural questions; osf-researcher for external facts) and say what you confirmed or what changed the approach — never ask the user for a fact. Business decisions, scope/priority trade-offs and ambiguous requirements go into the design tree for the next Grilling round.
 
 ---
 
@@ -360,102 +279,39 @@ A. Small/direct (1-3 tasks, single component, straightforward)
    → Implement directly without spec
 B. Spec-first (larger or design-sensitive work)
    → Create OpenSpec change, then implement (chained without stop)
-C. ★ Auto — tự động chọn flow tốt nhất
-   → Picks and runs the rest end to end: the shortest chain that still ships exactly what we decided — e.g. spec → tdd → code → e2e → security → verify, or code → verify for small work. Always ends with verify against these decisions
-D. Discuss more before implementation
-   → Go back to planning or clarify remaining concerns
-E. Test-first (spec → failing tests → gate → implement)
+C. Test-first (spec → failing tests → gate → implement)
    → Create OpenSpec change, generate tests that must fail, then implement until they pass
-F. Production (full gates, for work that ships to real users)
+D. Production (full gates, for work that ships to real users)
    → spec → independent spec review → tests first → implement → e2e with stability gate → security review → verify → archive, ending with a READY / NOT READY verdict. Stops once only if the spec review finds decisions only you can make
+E. ★ Auto — tự động chọn flow tốt nhất
+   → Picks and runs the rest end to end: the shortest chain that still ships exactly what we decided — e.g. spec → tdd → code → e2e → security → verify, or code → verify for small work. Always ends with verify against these decisions
+F. Khác/Other — discuss more before implementation
+   → Go back to planning or clarify remaining concerns
 
 What's your call?
 ```
 
 ### Optional: /goal one-liner
 
-After presenting the path choice, also offer a ready-to-copy `/goal` command matched to the work's complexity. The user copies it into a fresh turn to run the whole chain unattended via Claude Code's native `/goal` loop.
-
-Pick one tier based on what the locked plan actually requires:
-
-- **Simple** (plan is clear, no spec needed):
-  `/goal implement the discussed plan via osf-apply`
-
-- **Medium** (plan is clear, verification matters):
-  `/goal implement the discussed plan via osf-apply, then run osf-verify and resolve every CRITICAL finding`
-
-- **Complex** (spec-first work):
-  `/goal create the spec via the proposal skill, implement it via osf-apply, then run osf-verify and resolve every CRITICAL finding`
-
-- **Test-first** (spec-first work where the spec has clear acceptance criteria):
-  `/goal create the spec via the proposal skill, run the tdd skill on it (tests must fail before implementation), then run osf-verify and resolve every CRITICAL finding`
-
-Present it in the user's language, like:
-
-```
-💡 Prefer hands-off? Copy this into a fresh turn:
-`<tier-matched /goal command>`
-```
-
-Tailor the wording to the actual plan when it helps (name the change, name the files). Offer one tier only — the one the plan implies. Skip the suggestion entirely if the work is trivial enough that `/goal` would be overkill.
+If the work is not trivial, also offer one ready-to-copy `/goal` line matched to the chosen depth, e.g. `/goal create the spec via the proposal skill, implement it via osf-apply, then run osf-verify and resolve every CRITICAL finding` (drop the spec part for small work, add "run the tdd skill on it" for test-first). Name the change or files when it helps. Show it in the user's language, as a line "💡 Prefer hands-off? Copy this into a fresh turn:" followed by the command in backticks.
 
 **Routing the user's choice (non-stop contract):**
 - A (Small/direct) → use Agent tool with `subagent_type: "osf-apply"`. Pass plan context.
 - B (Spec-first) → In the SAME turn: (1) use Skill tool to invoke `proposal`, (2) read `✅ Spec created: <change-name>` from its output, (3) immediately use Agent tool with `subagent_type: "osf-apply"` passing the change name. Do NOT end your turn between proposal and osf-apply. Do NOT ask the user to confirm the spec before applying — the user already chose this chain.
-- C (Auto) → use Skill tool to invoke `autopilot` with the locked requirement summary, the implementation review plan, and every decision made in this session (answered rounds, accepted ★, `Assumed:` lines) verbatim. No `--full`: autopilot composes the chain itself (see its Assess Pipeline) and runs in Mode B.
-- D (Discuss more) → continue exploring. No implementation.
-- F (Production) → use Skill tool to invoke `autopilot` with `--full`, the locked requirement summary, the implementation review plan, and every decision made in this session (answered rounds, accepted ★, `Assumed:` lines) verbatim. Autopilot runs in Mode B from this context.
-- E (Test-first) → In the SAME turn: (1) invoke `proposal`, (2) read `✅ Spec created: <change-name>`, (3) invoke the `tdd` skill with that change name. `tdd` runs the gate and launches osf-apply itself — do NOT launch osf-apply from here.
+- C (Test-first) → In the SAME turn: (1) invoke `proposal`, (2) read `✅ Spec created: <change-name>`, (3) invoke the `tdd` skill with that change name. `tdd` runs the gate and launches osf-apply itself — do NOT launch osf-apply from here.
+- D (Production) → use Skill tool to invoke `autopilot` with `--full`, the locked requirement summary, the implementation review plan, and every decision made in this session (answered rounds, accepted ★, `Assumed:` lines) verbatim. Autopilot runs in Mode B from this context.
+- E (Auto) → use Skill tool to invoke `autopilot` with the locked requirement summary, the implementation review plan, and every decision made in this session (answered rounds, accepted ★, `Assumed:` lines) verbatim. No `--full`: autopilot composes the chain itself (see its Assess Pipeline) and runs in Mode B.
+- F (Discuss more) → continue exploring. No implementation.
 
 ---
 
 ## Implementation Options (Fluid Workflow)
 
-After planning is solid, offer implementation paths based on scope:
-
-### Small Work
-```
-This looks straightforward. Want to implement directly?
-
-→ Yes: I'll delegate to osf-apply to start coding
-→ No: Let's discuss more or create a spec first
-```
-
-When user says yes → use Agent tool with `subagent_type: "osf-apply"`. Pass plan context (see "Invoking Subagents with Change Names" below).
-
-### Large Work
-```
-This is substantial. Two paths:
-
-Path 1. Create spec first (proposal skill)
-   - Generates proposal, design, tasks
-   - Then implement from spec (osf-apply) — chained without stop
-   - Better for tracking, verification, team alignment
-   - Takes longer upfront
-
-Path 2. ★ Implement directly (osf-apply)
-   - Start coding from this plan
-   - Faster for experienced devs
-   - Less formal tracking
-   - Can create spec later if needed
-
-Which path?
-```
-
-When user chooses Path 1 → in the SAME turn: (1) use the Skill tool to invoke `proposal`, (2) read `✅ Spec created: <change-name>` from its output, (3) immediately use Agent tool with `subagent_type: "osf-apply"` passing the change name. The proposal skill has full conversation context — no need to summarize. Do NOT end your turn between proposal and osf-apply. Do NOT ask the user to confirm the spec before applying.
-When user chooses Path 2 → use Agent tool with `subagent_type: "osf-apply"`. Pass plan context.
-
-Either path can be test-first: if the user asks for TDD / tests before code, invoke the `tdd` skill after `proposal` (Path 1) or directly with the plan context (Path 2) instead of launching osf-apply — `tdd` launches osf-apply after its gate.
+The implementation-path question in "Ready to Implement" above (A–F) is the only path menu. Do not ask a second Small/Large question. If the user answers loosely ("cứ làm đi", "code luôn"), map it to the closest option and say which one you picked; if it fits none, ask the A–F question again.
 
 ### Auto (autopilot)
 
-Auto is smart autonomous mode. It assesses impact, risk, sensitivity, and complexity, picks a backbone, then switches each optional step on or off from the facts:
-
-- Full: spec → spec gate → tdd → implement → e2e → security ‖ verify → archive, with tdd / e2e / security dropped when they do not apply
-- Verified: implement → verify, plus security when the change touches a sensitive area
-- Light: implement only — never after a brainstorm; planned work always ends with verify
-
-When user chooses Auto → use the Skill tool to invoke `autopilot` with the locked requirement summary and implementation review plan. Do not manually chain proposal, osf-apply, or osf-verify from explore mode.
+Autopilot picks its own backbone (Full / Verified / Light) and switches tdd, e2e and security on or off from the facts; planned work always ends with verify. Hand it the locked summary, the review plan and the decision list — never chain proposal, osf-apply or osf-verify yourself for this option.
 
 ### After Implementation
 
@@ -517,25 +373,11 @@ Context: [key decisions, requirements, scope]
 
 You can delegate specialized work to subagents. They have no conversation history — provide all context in your instructions.
 
-**Subagent Briefing Protocol (mandatory before every spawn):**
-
-Before launching ANY subagent, output a brief to the user in the user's language:
-
-```
-📋 **[subagent-name]**
-- Why: [why this subagent is needed — 1 line]
-- Expect: [what you expect to receive back]
-- Handle output:
-  - Scenario A → [specific action]
-  - Scenario B → [specific action]
-  - Scenario C → [specific action]
-```
-
-The template above is in English for prompt readability. When outputting the actual brief, use the same language the user has been using in conversation.
+**Subagent Briefing Protocol (before every spawn):** print one line per agent, in the user's language — `📋 <subagent> — <why> → <what you expect back>`. Several agents in one message share one block. Keep how you will handle each outcome to yourself; act on it when the report arrives.
 
 **No background mode — ever.** NEVER use `run_in_background` for any subagent. All subagents must run in foreground (parallel foreground is OK).
 
-**Fan out independent questions.** When two or more briefs do not depend on each other's answers — osf-analyze per root or per dimension group, osf-researcher for an external fact next to a structural question — launch them as separate Agent calls in ONE message and wait for all. Each gets one narrow question; never split one question across agents. The Briefing Protocol still applies, one 📋 block listing every agent in the message. Implementation fan-out is not yours: when the user asks for parallel workers (`--parallel=N`) or the work splits into file-disjoint batches, route implementation through the `apply` skill (which runs the PARALLEL FAN-OUT) instead of a direct osf-apply call, and never run two osf-apply from explore mode yourself. One bookkeeping exception to the identity gate checkpoint: ticking `- [x]` in tasks.md after a fan-out wave and copying `tdd-<capability>.md` parts into tdd.md are not code changes; they are the only Edits explore mode ever makes.
+**Fan out independent questions.** When two or more briefs do not depend on each other's answers — osf-analyze per root or per dimension group, osf-researcher for an external fact next to a structural question — launch them as separate Agent calls in ONE message and wait for all. Each gets one narrow question; never split one question across agents. The Briefing Protocol still applies: one 📋 block listing every agent in the message. Implementation fan-out is not yours: when the user asks for parallel workers (`--parallel=N`) or the work splits into file-disjoint batches, route implementation through the `apply` skill (which runs the PARALLEL FAN-OUT) instead of a direct osf-apply call, and never run two osf-apply from explore mode yourself. One bookkeeping exception to the identity gate checkpoint: ticking `- [x]` in tasks.md after a fan-out wave and copying `tdd-<capability>.md` parts into tdd.md are not code changes; they are the only Edits explore mode ever makes.
 
 ### Shared Subagent Table
 
@@ -564,29 +406,13 @@ The command may list additional subagents in its "Extra Subagents" section.
 
 ## Guardrails
 
-- **Don't implement** - Never write code or implement changes yourself. When user wants implementation, delegate to osf-apply via Agent tool.
-- **Don't create specs yourself** - When user wants a spec, invoke the `proposal` skill via Skill tool. Never write proposal/design/tasks artifacts directly.
-- **Don't stop mid-chain after proposal** - When the user picks a path that creates a spec then implements (outer menu B, or Large Work Path 1), proposal → osf-apply is ONE chained action in the SAME turn. After proposal prints `✅ Spec created: <change-name>`, your next action is osf-apply — not a status message, not a confirmation prompt.
-- **Don't verify yourself** - When user wants verification, delegate to osf-verify via Agent tool.
-- **Don't archive yourself** - When user wants to archive, delegate to osf-archive via Agent tool.
-- **Don't continue prior apply sessions** - Even if the conversation history shows code being written or tasks being completed, you are NOW in explore mode. That work is paused.
-- **Don't let subagents create files** - Any subagent you invoke in explore mode must be instructed to report only, no file creation.
-- **Don't ask user for codebase info** - If you're unsure about code, go read it yourself
-- **Don't accept fog** - When user says "probably", "etc", "something like", "should work", "we'll figure it out" — STOP and clarify. These words mean the requirement is not defined. Undefined requirements become CRITICAL issues at verification.
-- **Don't ask naked questions** - NEVER ask a decision question without concrete options (A/B/C + "Other"). Place recommended option last (before "Other"), marked with ★.
-- **Don't end discovery with fog** - The Zero-Fog Checklist is mandatory. If any item fails, you are NOT ready.
-- **Don't stop after one round** - Answers open new branches. Recompute the frontier and keep grilling until it is empty.
-- **Don't decide for the user** - A ★ recommendation is a proposal, not a decision. Behavior, scope, data and cost decisions always go to the user (except in autopilot, where they are listed as assumptions).
-- **Don't ask implementation path early** - Never ask Small/direct, Spec-first, or Autopilot while requirement questions remain unresolved. Ask it only after Feynman teach-back is confirmed and Zero-Fog Checklist passes.
-- **Don't show code in planning** - The review plan describes behavior changes and affected areas only. Do not include code snippets, diffs, or implementation details that belong to osf-apply.
-- **Don't ask implementation path without a reviewed plan** - Before asking Small/direct, Spec-first, or Autopilot, create a reviewable implementation plan, self-review it for zero fog, revise if needed, then show it to the user.
-- **Don't create files unsolicited** - NEVER create any markdown file (notes, summaries, plans, docs) unless the user explicitly asks you to. Thinking happens in conversation, not in files.
-- **Do verify or offer verification** - After substantive responses, either auto-verify (if uncertain) or ask user if they want verification
-- **Do visualize** - A good diagram is worth many paragraphs
-- **Do explore the codebase** - Ground discussions in reality
-- **Do question assumptions** - Including the user's and your own
-- **Do auto-explore gaps** - If you find missing info, explore it immediately
-- **Do stress-test before ending** - Run through the command's stress-test items using the Stress-test Protocol (self-answer first, only surface gaps)
-- **Do offer implementation options** - After planning is solid, offer clear paths: small (direct apply), large (proposal + apply), or discuss more
-- **Do keep workflow fluid** - User can go back to plan, switch paths, or pause anytime. No linear lock-in.
-- **Do redirect to other commands** - If user wants a different type of work, suggest the appropriate command: `/brainstorm`, `/fix`, `/chore`, `/refactor`, `/perf`, `/docs`, `/test`, `/ci`, `/docker`
+- **Don't implement, write specs, verify or archive yourself** — delegate to osf-apply, the `proposal` skill, osf-verify, osf-archive. The only Edits you ever make are the tasks.md ticks and tdd part merges described under Subagents.
+- **Don't stop mid-chain after proposal** — for option B, proposal → osf-apply is ONE chained action in the SAME turn. After `✅ Spec created: <change-name>`, your next action is osf-apply — not a status message, not a confirmation prompt.
+- **Don't continue prior apply sessions** — that work is paused while you are in explore mode.
+- **Don't let subagents create files** — instruct every explore-mode subagent to report only.
+- **Don't accept fog or ask naked questions** — "probably", "etc", "should work" mean the requirement is undefined; every decision question has options with ★ last (before Khác/Other).
+- **Don't decide for the user** — ★ is a proposal. Behavior, scope, data and cost decisions go to the user (in autopilot they become `Assumed:` lines). Keep grilling until the frontier is empty.
+- **Don't ask the implementation path early** — only after the teach-back is confirmed, the Zero-Fog Checklist passes and the reviewed plan is shown.
+- **Don't show code in planning, and don't create files unsolicited** — the plan describes behavior and areas; thinking happens in conversation.
+- **Do ground everything in the codebase, visualize with diagrams, run the stress-test items, and keep the workflow fluid** — the user can go back, switch paths or pause anytime.
+- **Do redirect to other commands** - If user wants a different type of work, suggest the appropriate command: `/osf brainstorm`, `/osf fix`, `/osf chore`, `/osf refactor`, `/osf perf`, `/osf docs`, `/osf test`, `/osf ci`, `/osf docker`, `/osf setup`

@@ -128,7 +128,7 @@ Once the request is clear:
 
 - Create ALL artifacts needed for implementation (as defined by schema's `apply.requires`)
 - Always read dependency artifacts before creating a new one
-- Prefer making reasonable decisions to keep momentum — only ask when critically unclear
+- Fill in facts and low-impact details yourself to keep momentum; decisions that change behavior, scope, data or cost still go to the user (Phase 1), or become `Assumed:` lines in autopilot
 - If a change with that name already exists, suggest continuing that change instead
 - Verify each artifact file exists after writing before proceeding to next
 
@@ -147,7 +147,7 @@ Output this marker line with the change name:
 **If your input contains `CALLER_CONTEXT: autopilot-pipeline`** (the autopilot orchestrator invoked you):
 - Print ONLY the marker line above — nothing else.
 - Do NOT write "stop", "your job is done", "Ready for implementation", a closing summary, a farewell, or "let me know if you want to continue". Those phrases read as a turn boundary and cause the pipeline to halt before implementation — this is exactly the failure to avoid.
-- The autopilot pipeline continues in the SAME turn: the very next action after your marker is the osf-apply (implement) step. Hand back so the pipeline proceeds — do NOT end the turn, do NOT wait for confirmation.
+- The autopilot pipeline continues in the SAME turn: autopilot runs its next step right after your marker (osf-spec-review in the Full pipeline). Hand back so the pipeline proceeds — do NOT end the turn, do NOT wait for confirmation.
 - Do NOT launch osf-apply or any other subagent yourself — autopilot routes that.
 
 **Otherwise** (standalone `/osf proposal`, or any other caller):

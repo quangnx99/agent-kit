@@ -1,6 +1,6 @@
 ---
 name: "tdd"
-description: "Test-first gate. Generate failing unit/integration tests from spec/docs/plan, require 100% acceptance-criteria coverage before any coding, then hand off to implementation with tests locked and report real line/branch coverage. User-journey ACs are left pending for osf:e2e. Args: [change-name] [--line=80] [--branch=N] [--red-only] [--parallel=N] — N osf-tdd workers, one per spec capability."
+description: "Test-first gate: write failing unit/integration tests from a spec or plan, require 100% AC coverage, then implement with the tests locked. Args: [change-name] [--line=80] [--branch=N] [--red-only] [--parallel=N]."
 metadata:
   kit: osf
 ---

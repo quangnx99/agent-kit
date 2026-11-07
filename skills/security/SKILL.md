@@ -1,6 +1,6 @@
 ---
 name: "security"
-description: "Full security audit of a codebase or of the files a change touched: coverage-led hunting, independent verification, schema-validated findings and a report. Use after implementation or to audit any repo. Args: [path | change-name] [--budget=N] [--profile=quick|standard|deep] [--guidance]."
+description: "Full security audit of a repo or of the files a change touched, with independent verification and a validated report. Args: [path | change-name] [--budget=N] [--profile=quick|standard|deep] [--guidance]."
 metadata:
   kit: osf
 ---
@@ -50,6 +50,8 @@ This skill is agent-neutral:
 - **`subagent_type:`** in a heading names which of these two delegated agent roles runs that work.
 
 Use equivalent platform capabilities while preserving role, write-isolation, prompt, and independence boundaries.
+
+These are role names, not literal agent types. On Claude Code, launch a `general` role with Agent `subagent_type: "general-purpose"` and a `research` role with `subagent_type: "Explore"` (read-only); never pass `general` or `research` as a `subagent_type`.
 
 ## Universal execution safety
 

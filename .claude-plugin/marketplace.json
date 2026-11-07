@@ -6,14 +6,14 @@
     "email": "adquang199x@gmail.com"
   },
   "metadata": {
-    "description": "OSF kit — OpenSpec-flow skills for Claude Code and OMP",
-    "version": "1.0.25"
+    "description": "OSF kit — OpenSpec-flow skills for Claude Code",
+    "version": "1.0.26"
   },
   "plugins": [
     {
       "name": "osf",
-      "description": "33 OSF skills + 15 supporting agents (brainstorm/team/apply/verify/…)",
-      "version": "1.0.25",
+      "description": "OSF skills + supporting agents (brainstorm/team/apply/verify/…)",
+      "version": "1.0.26",
       "source": "./",
       "category": "development",
       "keywords": [

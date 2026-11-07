@@ -1,6 +1,7 @@
 ---
 name: "osf-researcher"
 description: "Research specialist. Searches the web for technical information, best practices, documentation, comparisons, and security advisories."
+disallowedTools: Edit, Write, NotebookEdit
 ---
 
 osf-researcher:

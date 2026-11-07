@@ -10,10 +10,7 @@ Available skills: agents, analyze, apply, archive, autopilot, brainstorm, browse
 RUNTIME GUARD:
 This prompt is already the `osf` dispatcher. Do NOT invoke `osf` again. Resolve the target skill from ARGUMENTS and dispatch directly. Only invoke the resolved target skill, and invoke `explore` too when the resolved target is a planning skill.
 
-Host (see `references/host.md`):
-- Claude Code: Skill tool. Plugin → `osf:<name>`; else `<name>`.
-- OMP: `read skill://<name>`. No Skill tool. Spawn agents with `task` `agent:` (not Agent `subagent_type`).
-- `$0` / `$ARGUMENTS`: Claude placeholders. OMP: first token / remaining user text after `/osf` or `/skill:osf`.
+Invoke kit skills with the Skill tool: `osf:<name>` (plugin install); if that fails, retry the bare `<name>`. Spawn supporting agents with the Agent tool, `subagent_type: "<name>"`.
 
 Supporting subagents (used internally by skills):
 - osf-analyze — Structural codebase analysis (dependencies, blast radius, call chains) via codebase-retrieval; modes quick|standard|deep
@@ -155,7 +152,7 @@ Dispatch rules:
    - docs, README, guide, comments → `docs`
    - TDD, test-first, "viết test trước", generate tests from spec before coding → `tdd`
    - e2e, end-to-end, Playwright/Cypress, user journey test, "test luồng", automated flow test to keep in repo → `e2e`
-   - tests, coverage, unit/integration/e2e tests → `test`
+   - tests, coverage, unit/integration tests (not e2e — that is `e2e` above) → `test`
    - CI/CD, workflow automation, pipelines → `ci`
    - Docker, containers, images, compose → `docker`
    - git status/commit/pull/push/merge/rebase/log/changelog → `git`
@@ -168,7 +165,6 @@ Dispatch rules:
    - research docs, best practices, comparisons, advisories → `research`
    - project scaffolding, boilerplate, initial setup → `setup`
    - proposal/spec creation → `proposal`
-   - test-first gate before implementation → `tdd`
    - implementation from plan/spec → `apply`
    - verification/review against spec → `verify`
    - archive completed change → `archive`
@@ -182,8 +178,7 @@ Dispatch rules:
 5. If the request could reasonably map to multiple skills and no best match is clear, ask the user which skill to run. Do not guess when intent is ambiguous.
 6. Planning skills are: brainstorm, fix, chore, refactor, perf, docs, test, ci, docker, setup.
 7. Invoke the resolved skill:
-   - Claude Code: Skill tool. Prefer `osf:<name>` when this kit is a plugin; fall back to `<name>`.
-   - OMP: `read skill://<name>` then follow that file. Never look for a Skill tool.
+   - Skill tool. Prefer `osf:<name>` when this kit is a plugin; fall back to `<name>`.
 8. If the resolved target is a planning skill, invoke the resolved skill and `explore` in parallel:
    - Invoke the resolved skill with the user's remaining arguments plus this context: `CALLER_CONTEXT: shared explore mode has already been loaded for this request. Do not invoke the explore skill again.`
    - Invoke `explore` with the same user request as context.

@@ -1,6 +1,6 @@
 ---
 name: "gap-audit"
-description: "Requirements gap audit — compare an external capability checklist (xlsx, docx, pdf, markdown, or pasted list) against the current system and produce a Gap Matrix (present / partial / missing). Use when the user wants coverage analysis, feature checklist vs codebase, PM/spec function groups vs implementation, 'còn thiếu gì', requirements traceability, or backlog from a requirements document. Not for structural blast-radius analysis (use analyze) or web research (use research)."
+description: "Compare a requirements checklist (xlsx, docx, pdf, markdown or a pasted list) against the codebase and return a Gap Matrix (present / partial / missing). Use for 'còn thiếu gì', coverage or traceability."
 metadata:
   kit: osf
 ---

@@ -1,6 +1,7 @@
 ---
 name: "osf-ba"
 description: "Business-analyst worker for a team kickoff. From one request, drafts OpenSpec capabilities with Requirement/Scenario WHEN/THEN blocks, data and contract changes, error paths and limits, ready for the proposal skill to turn into a spec. Read-only."
+disallowedTools: Edit, Write, NotebookEdit
 ---
 
 ## SUBAGENT EXECUTION GATE

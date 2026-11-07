@@ -1,6 +1,6 @@
 ---
 name: "browser"
-description: "Reproduce bugs, explore apps, or run QA test flows via dev-browser. Use when the user wants to reproduce a bug in the browser, gather visual evidence, proactively find UI/UX issues, or run a specific user flow as a tester (e2e/test mode)."
+description: "Reproduce bugs, explore an app or run QA flows in a real browser via dev-browser, with screenshots as evidence."
 metadata:
   kit: osf
 ---
@@ -17,13 +17,13 @@ See it, prove it, trace it. Browser is your eyes. Codebase is your brain.
 
 ## SETUP (MANDATORY — DO THIS FIRST)
 
-Before ANY browser interaction, ensure dev-browser is installed. Run this via Bash:
+Before ANY browser interaction, check that dev-browser is installed:
 
 ```bash
-which dev-browser || (npm install -g dev-browser && dev-browser install)
+which dev-browser
 ```
 
-If the install fails, ask the user to run `npm install -g dev-browser && dev-browser install` manually.
+If it is missing, do NOT install it yourself. Ask the user once: "dev-browser chưa có — cài global bằng `npm install -g dev-browser && dev-browser install` nhé?" Run that command only after the user says yes; otherwise stop and tell them how to install it (`! npm install -g dev-browser && dev-browser install`). If the install fails, show the error and stop.
 
 After install, ask user for the app URL if not obvious from context.
 
