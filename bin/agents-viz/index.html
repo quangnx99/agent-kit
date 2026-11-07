@@ -420,7 +420,7 @@ async function loadProjects() {
   try {
     const { projects, defaultProject } = await getJson('/api/projects');
     S.projects = projects.map((p) => p.name);
-    S.agentProjects = new Set(projects.filter((p) => p.agentSessions > 0).map((p) => p.name));
+    S.agentProjects = new Set(projects.filter((p) => p.osfSessions > 0).map((p) => p.name));
     const labels = projectLabels(S.projects);
     S.labels = new Map(S.projects.map((n, i) => [n, labels[i]]));
     const hash = new URLSearchParams(location.hash.slice(1));
@@ -457,7 +457,7 @@ async function loadSessions(wantId) {
   try {
     const { sessions } = await getJson(`/api/sessions?project=${encodeURIComponent(project)}`);
     if (project !== S.project) return;
-    S.sessions = sessions.filter((s) => s.agentCount > 0);
+    S.sessions = sessions.filter((s) => s.osfAgentCount > 0);
     S.sessionsLoaded = true;
     if (!S.sessions.length) {
       closeStream(); resetView(); S.sessionId = null; S.data = null; renderAll();

@@ -224,19 +224,31 @@ test('path safety rejects traversal and absolute paths', () => {
   assert.equal(listSessions(ROOT, '../projects'), null);
 });
 
-test('listProjects counts sessions that spawned agents', () => {
+test('listProjects and listSessions count only sessions that spawned osf agents', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agents-viz-'));
+  const agent = (proj, sess, id, type) => {
+    fs.mkdirSync(path.join(dir, proj, sess, 'subagents'), { recursive: true });
+    fs.writeFileSync(path.join(dir, proj, sess, 'subagents', `agent-${id}.meta.json`), JSON.stringify({ agentType: type }));
+  };
   try {
-    fs.mkdirSync(path.join(dir, 'P--agents', 's1', 'subagents'), { recursive: true });
-    fs.writeFileSync(path.join(dir, 'P--agents', 's1.jsonl'), '');
-    fs.writeFileSync(path.join(dir, 'P--agents', 's1', 'subagents', 'agent-a1.meta.json'), '{}');
-    fs.writeFileSync(path.join(dir, 'P--agents', 's2.jsonl'), '');
-    fs.mkdirSync(path.join(dir, 'P--plain'));
-    fs.writeFileSync(path.join(dir, 'P--plain', 's3.jsonl'), '');
+    for (const [proj, sess] of [['P--osf', 's1'], ['P--osf', 's2'], ['P--other', 's3'], ['P--plain', 's4']]) {
+      fs.mkdirSync(path.join(dir, proj), { recursive: true });
+      fs.writeFileSync(path.join(dir, proj, `${sess}.jsonl`), '');
+    }
+    agent('P--osf', 's1', 'a1', 'osf:osf-apply');
+    agent('P--osf', 's1', 'a2', 'Explore');
+    agent('P--osf', 's2', 'a3', 'osf-verify');
+    agent('P--other', 's3', 'a4', 'general-purpose');
+    agent('P--other', 's3', 'a5', 'claude-seo:seo-content');
     const byName = Object.fromEntries(listProjects(dir).map((p) => [p.name, p]));
-    assert.equal(byName['P--agents'].sessions, 2);
-    assert.equal(byName['P--agents'].agentSessions, 1);
-    assert.equal(byName['P--plain'].agentSessions, 0);
+    assert.equal(byName['P--osf'].sessions, 2);
+    assert.equal(byName['P--osf'].osfSessions, 2);
+    assert.equal(byName['P--other'].osfSessions, 0, 'agents of other kits do not count');
+    assert.equal(byName['P--plain'].osfSessions, 0);
+    const s1 = listSessions(dir, 'P--osf').find((x) => x.id === 's1');
+    assert.equal(s1.agentCount, 2);
+    assert.equal(s1.osfAgentCount, 1);
+    assert.equal(listSessions(dir, 'P--other')[0].osfAgentCount, 0);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -350,7 +362,8 @@ function pipelineOf(lines, { running = [], cut = [], reports = {}, mainMtimeMs =
 const stepMap = (p) => Object.fromEntries(p.steps.map((s) => [s.key, s]));
 // The loop note text lives in the page; evaluate its roundNote() as-is.
 const HTML = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'bin', 'agents-viz', 'index.html'), 'utf8');
-const roundNote = new Function(`${/function roundNote\([\s\S]*?\n}\n/.exec(HTML)[0]}; return roundNote;`)();
+// Line endings depend on the checkout (autocrlf), so accept CRLF too.
+const roundNote = new Function(`${/function roundNote\([\s\S]*?\r?\n}\r?\n/.exec(HTML)[0]}; return roundNote;`)();
 
 test('pipeline: full run in the new order maps every agent to its step', () => {
   const s = pipelineOf([

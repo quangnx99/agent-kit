@@ -811,17 +811,17 @@ export function listProjects(root) {
     const dir = path.join(root, name);
     let latest = 0;
     let sessions = 0;
-    let agentSessions = 0; // sessions that spawned at least one agent
+    let osfSessions = 0; // sessions that spawned at least one osf agent
     try {
       for (const f of fs.readdirSync(dir)) {
         if (!f.endsWith('.jsonl')) continue;
         sessions++;
-        if (isSafeName(f.slice(0, -6)) && agentFiles(path.join(dir, f.slice(0, -6), 'subagents')).length) agentSessions++;
+        if (isSafeName(f.slice(0, -6)) && osfAgentCount(path.join(dir, f.slice(0, -6), 'subagents'))) osfSessions++;
         const st = statSafe(path.join(dir, f));
         if (st && st.mtimeMs > latest) latest = st.mtimeMs;
       }
     } catch { /* unreadable dir */ }
-    return { name, sessions, agentSessions, updatedAt: latest ? new Date(latest).toISOString() : null };
+    return { name, sessions, osfSessions, updatedAt: latest ? new Date(latest).toISOString() : null };
   }).filter((p) => p.sessions > 0).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
 }
 
@@ -856,6 +856,19 @@ function sessionTitle(mainPath) {
   return '';
 }
 
+// An osf agent: agentType "osf-apply" or plugin-qualified "osf:osf-apply".
+const isOsfType = (t) => /(^|:)osf-/.test(String(t || ''));
+
+// Number of osf agents a session spawned (other kits' and built-in agents are ignored).
+function osfAgentCount(subDir) {
+  let n = 0;
+  for (const aid of agentFiles(subDir)) {
+    const meta = parseJson(readSafe(path.join(subDir, `agent-${aid}.meta.json`)) || '');
+    if (meta && isOsfType(meta.agentType)) n++;
+  }
+  return n;
+}
+
 function agentFiles(subDir) {
   let files = [];
   try { files = fs.readdirSync(subDir); } catch { return []; }
@@ -886,6 +899,7 @@ export function listSessions(root, project, now = Date.now(), limit = 200) {
       title: sessionTitle(path.join(dir, `${id}.jsonl`)),
       updatedAt: new Date(mtimeMs).toISOString(),
       agentCount: ids.length,
+      osfAgentCount: osfAgentCount(subDir),
       anyRunning,
     };
   });

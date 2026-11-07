@@ -12,7 +12,7 @@
   "plugins": [
     {
       "name": "osf",
-      "description": "OSF skills + supporting agents (brainstorm/team/apply/verify/…)",
+      "description": "OSF skills + agents: brainstorm → spec → tdd → code → verify → e2e → knowledge",
       "version": "1.1.0",
       "source": "./",
       "category": "development",

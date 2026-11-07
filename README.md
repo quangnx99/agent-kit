@@ -93,7 +93,7 @@ Run it alone with `/osf:knowledge <change>` or `/osf:knowledge --repo`.
 
 - **Header:** one picker for project and session.
   - Sessions are newest first, and a spinner marks a live one.
-  - Only projects whose sessions spawned agents are listed.
+  - Only projects and sessions that ran osf agents (`osf-*`) are listed; agents of other kits and built-in agents (Explore, general-purpose…) do not count.
   - A running session updates live; a past one replays.
 - **Left pane, top:** where the run is ("Coding · vòng 4", "Dừng ở Coding", "Hoàn tất").
   - Next to it: the skill, agent count, start time and duration.
