@@ -7,13 +7,13 @@
   },
   "metadata": {
     "description": "Agent kit — OpenSpec-flow skills for Claude Code",
-    "version": "1.2.0"
+    "version": "1.2.1"
   },
   "plugins": [
     {
       "name": "agent",
       "description": "Agent kit skills + agents: brainstorm → spec → tdd → code → verify → e2e → knowledge",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "source": "./",
       "category": "development",
       "keywords": [

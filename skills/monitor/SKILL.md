@@ -1,5 +1,5 @@
 ---
-name: "agents"
+name: "monitor"
 description: "Open a local, read-only web page showing what agents are doing in Claude Code sessions: who spawned whom, parallel waves, status and reports. Args: [--no-open] [--port=N]."
 metadata:
   kit: agent

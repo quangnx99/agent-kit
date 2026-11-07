@@ -56,7 +56,7 @@ Flow: autopilot, proposal, tdd, apply, verify, e2e, archive, knowledge
 
 Investigate: analyze, review, gap-audit, browser
 
-Tools: git, indexing, agents, enhance
+Tools: git, indexing, monitor, enhance
 
 Internal: explore, agent
 
@@ -89,7 +89,7 @@ Run it alone with `/agent:knowledge <change>` or `/agent:knowledge --repo`.
 
 ## Agent visualizer
 
-`/agent:agents` (or `node bin/agents-viz/server.mjs [--no-open] [--port=N] [--project=<dir>]`) opens `http://127.0.0.1:4317` (next free port up to 4330; a second call reuses the running server).
+`/agent:monitor` (or `node bin/agents-viz/server.mjs [--no-open] [--port=N] [--project=<dir>]`) opens `http://127.0.0.1:4317` (next free port up to 4330; a second call reuses the running server).
 
 - **Header:** one picker for project and session.
   - Sessions are newest first, and a spinner marks a live one.
