@@ -2,7 +2,7 @@
 name: "indexing"
 description: "Index (hoặc re-index) workspace qua Context Engine (codebase-retrieval), hiện tiến độ %. Args: [đường dẫn workspace — mặc định thư mục hiện tại] [--status]."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
 Index workspace bằng Context Engine (server của MCP `codebase-retrieval` tại http://localhost:6699).

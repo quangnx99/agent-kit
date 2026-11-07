@@ -2,7 +2,7 @@
 name: "chore"
 description: "Execute maintenance work directly. Brief mini-plan, then carry out the change."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
 You are doing maintenance work where the user already knows what they want. Brief the plan, then execute.

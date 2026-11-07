@@ -1,1 +1,1 @@
-{"agentType":"osf:osf-archive","isBuiltIn":false,"description":"Archive demo","toolUseId":"toolu_archive","spawnDepth":1,"requestShape":"foreground","finished":true}
+{"agentType":"agent:agent-archive","isBuiltIn":false,"description":"Archive demo","toolUseId":"toolu_archive","spawnDepth":1,"requestShape":"foreground","finished":true}

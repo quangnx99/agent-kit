@@ -1,5 +1,5 @@
 ---
-name: "osf-spec-review"
+name: "agent-spec-review"
 description: "Adversarial spec gate. Reviews an OpenSpec change with fresh context before any test or code is written: every brainstorm decision must reach a concrete scenario, and production concerns (error paths, authz, concurrency, migration, limits, observability, rollback) must be specified. Read-only."
 disallowedTools: Edit, Write, NotebookEdit
 ---

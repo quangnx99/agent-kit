@@ -1,5 +1,5 @@
 ---
-name: "osf-verify"
+name: "agent-verify"
 description: "Verify implementation matches change artifacts. Validates completeness, correctness, and coherence before archiving."
 disallowedTools: Edit, Write, NotebookEdit
 ---
@@ -91,7 +91,7 @@ DEFAULT ASSUMPTION
    - Recompute `git hash-object` for every file under `## Lock`; any mismatch or missing file → CRITICAL "test lock broken"
    - Run the test command from tdd.md; any failing locked test → CRITICAL
    - If tdd.md has an `## E2E` section: recompute hashes under `## E2E lock` (mismatch → CRITICAL), run its **Stability command** (fall back to the E2E command if none is recorded) with the app started as recorded; any locked e2e test failing on any repeat → CRITICAL (an intermittent failure is an unstable app defect, not noise — the fix must remove the cause, not add waits, retries or timeouts); app cannot start / env blocker → WARNING with the exact error
-   - Any AC still under `## E2E pending` → WARNING "e2e not written — run /osf e2e <name>" (not CRITICAL)
+   - Any AC still under `## E2E pending` → WARNING "e2e not written — run /agent e2e <name>" (not CRITICAL)
    - Every AC in the traceability table must still have a `[AC-n]`-tagged test; missing → CRITICAL. Rows marked `e2e pending` or listed under `Unclear` are excluded from this check (they are covered by the WARNING above or by e2e)
    - Run the coverage command; line/branch below the tdd.md target on changed production files → WARNING (not CRITICAL)
 

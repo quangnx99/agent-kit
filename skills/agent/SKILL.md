@@ -1,15 +1,15 @@
 ---
-name: "osf"
-description: "Launch any kit skill by name or by intent. Usage: /osf [skill] [args] · /osf list"
+name: "agent"
+description: "Launch any kit skill by name or by intent. Usage: /agent [skill] [args] · /agent list"
 metadata:
-  kit: osf
+  kit: agent
 ---
 
-Available skills: agents, analyze, apply, archive, autopilot, brainstorm, browser, chore, e2e, enhance, explore, fix, gap-audit, git, indexing, knowledge, osf, proposal, review, tdd, verify
+Available skills: agent, agents, analyze, apply, archive, autopilot, brainstorm, browser, chore, e2e, enhance, explore, fix, gap-audit, git, indexing, knowledge, proposal, review, tdd, verify
 
-You are the dispatcher. Never invoke `osf` again. Resolve the target from ARGUMENTS and invoke it with the Skill tool as `osf:<name>` (retry the bare `<name>` if that fails), passing the remaining arguments. Agents are spawned by the skills, never by you.
+You are the dispatcher. Never invoke `agent` again. Resolve the target from ARGUMENTS and invoke it with the Skill tool as `agent:<name>` (retry the bare `<name>` if that fails), passing the remaining arguments. Agents are spawned by the skills, never by you.
 
-Supporting agents: osf-analyze (structural analysis), osf-apply (writes code), osf-archive (archives a change), osf-e2e (full-env e2e tests), osf-gap-audit (checklist vs system), osf-knowledge (repo knowledge docs), osf-researcher (web research), osf-security (security review of a change), osf-spec-review (spec gate), osf-tdd (failing tests first), osf-verify (code vs spec).
+Supporting agents: agent-analyze (structural analysis), agent-apply (writes code), agent-archive (archives a change), agent-e2e (full-env e2e tests), agent-gap-audit (checklist vs system), agent-knowledge (repo knowledge docs), agent-researcher (web research), agent-security (security review of a change), agent-spec-review (spec gate), agent-tdd (failing tests first), agent-verify (code vs spec).
 
 ## KIT_CATALOG
 
@@ -35,18 +35,18 @@ Supporting agents: osf-analyze (structural analysis), osf-apply (writes code), o
 | tools | agents | Xem trực quan agent đang làm gì |
 | tools | enhance | Viết lại prompt cho rõ, không thực thi |
 | internal | explore | Stance dùng chung, tự nạp |
-| internal | osf | Dispatcher này |
+| internal | agent | Dispatcher này |
 
 Group headings: daily → **Hằng ngày** · flow → **Flow chuẩn** (brainstorm → spec → tdd → code → verify → e2e → archive → knowledge) · investigate → **Điều tra** (chỉ đọc) · tools → **Công cụ** · internal → **Nội bộ** (không gọi trực tiếp)
 
 ## List
 
-If the first argument is `list`, `ls`, `--list` or `-l`: print `**OSF kit — <number of catalog rows> skills**`, then each group heading followed by its rows as `  <skill padded to 11>  <blurb>`, then `**Alias:** auto → autopilot` and the supporting agents line. Use only KIT_CATALOG (never frontmatter, never the disk). Stop.
+If the first argument is `list`, `ls`, `--list` or `-l`: print `**Agent kit — <number of catalog rows> skills**`, then each group heading followed by its rows as `  <skill padded to 11>  <blurb>`, then `**Alias:** auto → autopilot` and the supporting agents line. Use only KIT_CATALOG (never frontmatter, never the disk). Stop.
 
 ## Dispatch
 
 1. First argument is a skill name or the alias `auto` → that skill.
-2. Otherwise infer from the request (never `explore` or `osf`):
+2. Otherwise infer from the request (never `explore` or `agent`):
    - new feature, enhancement, a request from the boss, "thêm tính năng", "lên ý tưởng"; also refactor, performance, docs, tests, CI/CD, Docker work → `brainstorm` (pass the work type)
    - bug, error, regression, broken behavior, "sửa lỗi" → `fix`
    - small, already-decided change done directly (bump a dependency, rename a config key, update a script), "bảo trì nhỏ", "làm luôn" → `chore`

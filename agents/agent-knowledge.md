@@ -1,5 +1,5 @@
 ---
-name: "osf-knowledge"
+name: "agent-knowledge"
 description: "Knowledge worker. After a change ships, updates the repo's handover knowledge — CLAUDE.md managed section and docs/knowledge/ (architecture, local environment, decisions) — from verified facts, so the next person or agent can continue the work. Writes docs only."
 ---
 
@@ -22,7 +22,7 @@ You keep the repository's **working knowledge** current: what a new developer (o
 
 | File | Content | Size budget |
 |---|---|---|
-| `CLAUDE.md` — only between `<!-- osf:knowledge:start -->` and `<!-- osf:knowledge:end -->` | Stack · repo layout (one line per top-level area) · commands that work: install, dev, unit test, e2e, build, lint · conventions the code actually follows · gotchas · links to the docs below | ≤ 80 lines inside the markers |
+| `CLAUDE.md` — only between `<!-- agent:knowledge:start -->` and `<!-- agent:knowledge:end -->` | Stack · repo layout (one line per top-level area) · commands that work: install, dev, unit test, e2e, build, lint · conventions the code actually follows · gotchas · links to the docs below | ≤ 80 lines inside the markers |
 | `docs/knowledge/architecture.md` | Modules and what each owns · main data flows (an ASCII diagram is welcome) · external services · where to start reading for each capability (link `openspec/specs/<capability>/spec.md`) | ≤ 200 lines |
 | `docs/knowledge/local-env.md` | How to run the **whole system** locally, production-like: dependencies and how to start them, env var **names** (never values) and where to get them, migrations, seed data, build, start order, ports/URLs, health checks, how to run e2e, teardown, known problems | ≤ 150 lines |
 | `docs/knowledge/decisions.md` | Append-only log, newest first: `## <YYYY-MM-DD> <change-name>` + the decisions that will matter later (from the change's `## Decision coverage`, design.md and `Assumed:` lines — mark unconfirmed ones) + one line on why | grows; one entry per change |
@@ -45,7 +45,7 @@ Create a file or the CLAUDE.md markers when missing (append the marker block at 
 **Source:** <change-name | repo>
 **Files:** <path — created | updated (sections) | unchanged>, one per line
 **Facts added:** <n> · **corrected/removed:** <n> · **unverified:** <n — list them>
-**Next person starts at:** CLAUDE.md › osf:knowledge
+**Next person starts at:** CLAUDE.md › agent:knowledge
 ```
 
 When nothing could be written (e.g. no change found), output the same header with `**Files:** none` and the reason — never stop without the report.

@@ -2,7 +2,7 @@
 name: "fix"
 description: "Fix a bug: reproduce it with a red-capable command, find the root cause, lock the plan, then run the chosen flow (direct, auto or Full with tdd, verify, e2e)."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
 You are investigating and fixing a bug. This command helps you trace the root cause, assess the fix scope, and decide on the best implementation path.
@@ -30,7 +30,7 @@ The command must be **red-capable** (asserts the user's symptom, not "didn't cra
 
 **Redact secrets** in everything you show: write `<REDACTED>` in place of tokens, keys, cookies and auth headers.
 
-If a red-capable command needs a new test or script, you cannot write it in explore mode. Make it **step 1 of the implementation plan**: "write a failing repro test at <seam>, run it, confirm it fails with the user's symptom, only then fix". Name the repro test's file path under **Files/areas** — osf-apply only touches files the plan names. Mark the root cause as `unconfirmed by runtime` until that step has run.
+If a red-capable command needs a new test or script, you cannot write it in explore mode. Make it **step 1 of the implementation plan**: "write a failing repro test at <seam>, run it, confirm it fails with the user's symptom, only then fix". Name the repro test's file path under **Files/areas** — agent-apply only touches files the plan names. Mark the root cause as `unconfirmed by runtime` until that step has run.
 
 If no loop is possible at all (needs production data, a device, a third-party account), say so explicitly, list what you tried, and ask the user for access, a redacted artifact (log, HAR, screenshot with timestamps), or permission to add temporary instrumentation. In autopilot, do not ask — proceed with code tracing and mark the root cause `unconfirmed by runtime`.
 
@@ -114,7 +114,7 @@ How: Collect all stack traces → identify functions that appear in every failin
 Diagram (ASCII) when it helps: Causal chains, state machines, data flows, dependency graphs, before/after comparisons
 
 **Research external knowledge**
-- When discussion involves technology choices, best practices, or security concerns → delegate to osf-researcher
+- When discussion involves technology choices, best practices, or security concerns → delegate to agent-researcher
 
 **Surface risks and unknowns**
 - Identify what could go wrong with the fix

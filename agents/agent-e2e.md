@@ -1,5 +1,5 @@
 ---
-name: "osf-e2e"
+name: "agent-e2e"
 description: "End-to-end test worker. Brings up the full local environment (production build, all services, seeded data), writes UI and API journey tests for every spec scenario, runs them with a stability gate, and separates app defects from test faults and environment blockers. Writes tests only — never production code."
 ---
 

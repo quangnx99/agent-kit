@@ -18,7 +18,7 @@ const skillDirs = sorted(
 const agentNames = sorted(
   readdirSync(join(root, 'agents')).filter((f) => f.endsWith('.md')).map((f) => f.slice(0, -3)),
 );
-const dispatcher = read('skills/osf/SKILL.md');
+const dispatcher = read('skills/agent/SKILL.md');
 
 function frontmatter(text) {
   const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
@@ -59,10 +59,10 @@ test('dispatcher catalog matches skills/', () => {
 
 test('agent lists match agents/', () => {
   const line = dispatcher.match(/^Supporting agents: (.+)$/m)[1];
-  assert.deepEqual(sorted(line.match(/osf-[\w-]+/g)), agentNames, 'dispatcher "Supporting agents"');
+  assert.deepEqual(sorted(line.match(/agent-[\w-]+/g)), agentNames, 'dispatcher "Supporting agents"');
 
   const readme = read('README.md').match(/^Agents: (.+)$/m)[1];
-  assert.deepEqual(sorted(readme.match(/osf-[\w-]+/g)), agentNames, 'README Agents line');
+  assert.deepEqual(sorted(readme.match(/agent-[\w-]+/g)), agentNames, 'README Agents line');
 });
 
 test('README kit lists every user-facing skill', () => {

@@ -52,7 +52,7 @@ test('server smoke: health, sessions, session tree, SSE, path safety', async (t)
     let out = '';
     child.stdout.on('data', (c) => {
       out += c;
-      const m = /osf agents → (http:\/\/127\.0\.0\.1:\d+)/.exec(out);
+      const m = /agent-kit → (http:\/\/127\.0\.0\.1:\d+)/.exec(out);
       if (m) resolve(m[1]);
     });
     child.on('exit', (code) => reject(new Error(`server exited ${code}: ${out}`)));
@@ -60,7 +60,7 @@ test('server smoke: health, sessions, session tree, SSE, path safety', async (t)
   });
 
   const health = JSON.parse((await get(base, '/api/health')).body);
-  assert.equal(health.app, 'osf-agents-viz');
+  assert.equal(health.app, 'agent-kit-viz');
   assert.equal(health.defaultProject, 'D--demo-app');
 
   const sessions = JSON.parse((await get(base, '/api/sessions?project=D--demo-app')).body).sessions;
@@ -71,7 +71,7 @@ test('server smoke: health, sessions, session tree, SSE, path safety', async (t)
   assert.deepEqual(status, { a1apply: 'done', a2explore: 'done', a3archive: 'cut' });
   assert.equal(s.waves.length, 2);
   assert.deepEqual(s.waves[0].agentIds.sort(), ['a1apply', 'a2explore']);
-  assert.ok(s.idleTypes.some((x) => x.type === 'osf-verify' && x.state === 'not-spawned'));
+  assert.ok(s.idleTypes.some((x) => x.type === 'agent-verify' && x.state === 'not-spawned'));
 
   const page = await get(base, '/');
   assert.equal(page.status, 200);

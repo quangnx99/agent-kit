@@ -1,4 +1,4 @@
-// osf agents-viz parser — reads Claude Code transcripts (read-only) and builds
+// agent-kit visualizer parser — reads Claude Code transcripts (read-only) and builds
 // the agent tree for one session. Pure parsing functions take strings; the
 // small I/O helpers at the bottom only read the paths they are given.
 import fs from 'node:fs';
@@ -142,7 +142,7 @@ export function toolLabel(name, input) {
     }
     case 'Grep': return lbl('Đang tìm', 'Đã tìm', str('pattern') ? `"${truncate(str('pattern'), LABEL_OBJECT_MAX - 2)}"` : '');
     case 'Glob': return lbl('Đang liệt kê tệp', 'Đã liệt kê tệp', str('pattern'));
-    case 'Skill': return lbl('Đang dùng skill', 'Đã dùng skill', str('skill').replace(/^osf:/, ''));
+    case 'Skill': return lbl('Đang dùng skill', 'Đã dùng skill', str('skill').replace(/^agent:/, ''));
     case 'Agent': case 'Task': return lbl('Đang giao việc cho agent', 'Đã giao việc', str('description'));
     case 'WebSearch': return lbl('Đang tìm trên web', 'Đã tìm trên web', truncate(str('query'), 30));
     case 'WebFetch': {
@@ -174,29 +174,29 @@ export function resultLine(report) {
 // is never marked as cut.
 const LIMIT_TEXT = /^\s*You['’]ve hit your .{0,40}limit/i;
 
-// Expected closing report per osf agent type. A missing header is reported as
+// Expected closing report per kit agent type. A missing header is reported as
 // a warning, not as a cut: real plan-mode runs end with prose reports.
 const CLOSING = {
-  'osf-security': [/^#{2,3} .*Gate:/m, /^## .*Threat Model/m, /^## .*Security Review/m],
-  'osf-spec-review': [/^#{2,3} .*Gate:/m],
-  'osf-verify': [/^## .*Verification Report/m],
-  'osf-apply': [/^## ✅/m, /^## ⛔/m, /^## ⏸/m],
-  'osf-archive': [/^## .*Archive Complete/m, /^## .*Archive Failed/m],
-  'osf-e2e': [/^## .*E2E Report/m],
-  'osf-knowledge': [/^## .*Knowledge Updated/m],
+  'agent-security': [/^#{2,3} .*Gate:/m, /^## .*Threat Model/m, /^## .*Security Review/m],
+  'agent-spec-review': [/^#{2,3} .*Gate:/m],
+  'agent-verify': [/^## .*Verification Report/m],
+  'agent-apply': [/^## ✅/m, /^## ⛔/m, /^## ⏸/m],
+  'agent-archive': [/^## .*Archive Complete/m, /^## .*Archive Failed/m],
+  'agent-e2e': [/^## .*E2E Report/m],
+  'agent-knowledge': [/^## .*Knowledge Updated/m],
 };
 const CLOSING_LABEL = {
-  'osf-security': '### Gate:',
-  'osf-spec-review': '### Gate:',
-  'osf-verify': '## Verification Report',
-  'osf-apply': '## ✅ …',
-  'osf-archive': '## Archive Complete',
-  'osf-e2e': '## 🧪 E2E Report',
-  'osf-knowledge': '## ✅ Knowledge Updated',
+  'agent-security': '### Gate:',
+  'agent-spec-review': '### Gate:',
+  'agent-verify': '## Verification Report',
+  'agent-apply': '## ✅ …',
+  'agent-archive': '## Archive Complete',
+  'agent-e2e': '## 🧪 E2E Report',
+  'agent-knowledge': '## ✅ Knowledge Updated',
 };
 
 export function shortType(type) {
-  return String(type || '').replace(/^osf:/, '');
+  return String(type || '').replace(/^agent:/, '');
 }
 
 export function errorMarker(rec) {
@@ -333,7 +333,7 @@ export function parseMainTranscript(records) {
  * @param {boolean} [p.mainTruncated] the orchestrator jsonl was read partially
  * @param {Array<{agentId:string, metaText?:string, jsonlText?:string, mtimeMs?:number, truncated?:boolean}>} p.agents
  * @param {number} p.now
- * @param {string[]} [p.knownTypes] osf agent types for the idle panel (e.g. "osf-apply")
+ * @param {string[]} [p.knownTypes] kit agent types for the idle panel (e.g. "agent-apply")
  */
 export function parseSession({ mainText, mainMtimeMs, mainTruncated = false, agents = [], now, knownTypes = [] }) {
   const warnings = { malformedLines: 0, unlinkedAgents: 0, badMeta: 0, truncated: mainTruncated ? 1 : 0 };
@@ -360,7 +360,7 @@ export function parseSession({ mainText, mainMtimeMs, mainTruncated = false, age
     const agent = {
       id: a.agentId,
       type,
-      isOsf: /^osf:/.test(type),
+      isKitAgent: /^agent:/.test(type),
       description: (meta && meta.description) || '',
       parentToolUseId: (meta && meta.toolUseId) || null,
       parentAgentId: null,
@@ -398,7 +398,7 @@ export function parseSession({ mainText, mainMtimeMs, mainTruncated = false, age
     else if (typeof mainMtimeMs === 'number' && now - mainMtimeMs > STALLED_MS) status = 'stalled';
     const type = String(c.input.subagent_type || 'general-purpose');
     const agent = {
-      id: `pending-${c.toolUseId}`, type, isOsf: /^osf:/.test(type), description: String(c.input.description || ''),
+      id: `pending-${c.toolUseId}`, type, isKitAgent: /^agent:/.test(type), description: String(c.input.description || ''),
       parentToolUseId: c.toolUseId, parentAgentId: null, skillId: null, wave: null, spawnDepth: 1,
       background: c.input.run_in_background === true, model: null,
       brief: typeof c.input.prompt === 'string' ? c.input.prompt : '', toolTimeline: [], doingNow: null, lastTool: null,
@@ -490,12 +490,12 @@ export const STEP_LABEL = {
 // security and verify share a position: they run together as the gates.
 const STEP_IDX = { spec: 0, specGate: 1, tdd: 2, coding: 3, security: 4, verify: 4, e2e: 5, archive: 6, knowledge: 7 };
 const TYPE_STEP = {
-  'osf-spec-review': 'specGate', 'osf-tdd': 'tdd', 'osf-apply': 'coding', 'osf-e2e': 'e2e',
-  'osf-security': 'security', 'osf-verify': 'verify', 'osf-archive': 'archive', 'osf-knowledge': 'knowledge',
-  'osf-analyze': 'spec', 'osf-researcher': 'spec',
+  'agent-spec-review': 'specGate', 'agent-tdd': 'tdd', 'agent-apply': 'coding', 'agent-e2e': 'e2e',
+  'agent-security': 'security', 'agent-verify': 'verify', 'agent-archive': 'archive', 'agent-knowledge': 'knowledge',
+  'agent-analyze': 'spec', 'agent-researcher': 'spec',
 };
 const SKILL_STEP = { proposal: 'spec', tdd: 'tdd', e2e: 'e2e', knowledge: 'knowledge' };
-const skillKey = (name) => String(name || '').replace(/^\//, '').replace(/^osf:/, '');
+const skillKey = (name) => String(name || '').replace(/^\//, '').replace(/^agent:/, '');
 const tsNum = (ts) => { const n = Date.parse(ts || ''); return Number.isNaN(n) ? Infinity : n; };
 // Review steps: a fresh wave after a cut or a skill call is a re-run, not fan-out.
 const GATE_STEPS = new Set(['specGate', 'security', 'verify', 'archive', 'knowledge']);
@@ -519,7 +519,7 @@ function stateOf(agents) {
 }
 
 /**
- * Maps agents onto the osf pipeline steps and finds the current step.
+ * Maps agents onto the kit pipeline steps and finds the current step.
  * Sets agent.step on every agent; returns
  * {kind, finished, stopped, stoppedAt, waiting, round,
  *  steps:[{key,label,state,agentIds,prevAgentIds,attempts,round,startedAt,endedAt}],
@@ -542,7 +542,7 @@ export function computePipeline({ agents, waves, skills, mainMtimeMs, now }) {
   for (const a of agents) stepOf(a);
 
   const keys = STEP_ORDER;
-  // standalone: a single osf skill (e2e, tdd, apply, ...) ran without autopilot.
+  // standalone: a single kit skill (e2e, tdd, apply, ...) ran without autopilot.
   const kind = hasSkill('autopilot') ? 'autopilot'
     : (hasSkill('proposal') || agents.some((a) => a.step !== 'other')) ? 'standalone' : 'none';
   const standalone = kind === 'standalone';
@@ -703,7 +703,7 @@ export function computePipeline({ agents, waves, skills, mainMtimeMs, now }) {
       const open = keys.filter((k) => state[k] !== 'done' && state[k] !== 'skipped');
       let next = open[0];
       // E2E runs only when the project has an e2e framework; without any e2e
-      // agent or osf:e2e call we cannot claim it is next. Prefer the next step
+      // agent or agent:e2e call we cannot claim it is next. Prefer the next step
       // that ran in an earlier round (archive after a coding loop), else unknown.
       const e2eSeen = info.e2e && (info.e2e.all.length > 0 || hasSkill('e2e'));
       if (next === 'e2e' && !e2eSeen) next = open.find((k) => k !== 'e2e' && info[k].all.length > 0);
@@ -798,7 +798,7 @@ export function readJsonlBounded(p, maxBytes = MAX_JSONL_BYTES) {
 
 export function readKnownTypes(agentsDir) {
   try {
-    return fs.readdirSync(agentsDir).filter((f) => /^osf-.*\.md$/.test(f)).map((f) => f.slice(0, -3)).sort();
+    return fs.readdirSync(agentsDir).filter((f) => /^agent-.*\.md$/.test(f)).map((f) => f.slice(0, -3)).sort();
   } catch {
     return [];
   }
@@ -811,17 +811,17 @@ export function listProjects(root) {
     const dir = path.join(root, name);
     let latest = 0;
     let sessions = 0;
-    let osfSessions = 0; // sessions that spawned at least one osf agent
+    let kitSessions = 0; // sessions that spawned at least one kit agent
     try {
       for (const f of fs.readdirSync(dir)) {
         if (!f.endsWith('.jsonl')) continue;
         sessions++;
-        if (isSafeName(f.slice(0, -6)) && osfAgentCount(path.join(dir, f.slice(0, -6), 'subagents'))) osfSessions++;
+        if (isSafeName(f.slice(0, -6)) && kitAgentCount(path.join(dir, f.slice(0, -6), 'subagents'))) kitSessions++;
         const st = statSafe(path.join(dir, f));
         if (st && st.mtimeMs > latest) latest = st.mtimeMs;
       }
     } catch { /* unreadable dir */ }
-    return { name, sessions, osfSessions, updatedAt: latest ? new Date(latest).toISOString() : null };
+    return { name, sessions, kitSessions, updatedAt: latest ? new Date(latest).toISOString() : null };
   }).filter((p) => p.sessions > 0).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
 }
 
@@ -856,15 +856,15 @@ function sessionTitle(mainPath) {
   return '';
 }
 
-// An osf agent: agentType "osf-apply" or plugin-qualified "osf:osf-apply".
-const isOsfType = (t) => /(^|:)osf-/.test(String(t || ''));
+// An kit agent: agentType "agent-apply" or plugin-qualified "agent:agent-apply".
+const isKitAgentType = (t) => /(^|:)agent-/.test(String(t || ''));
 
-// Number of osf agents a session spawned (other kits' and built-in agents are ignored).
-function osfAgentCount(subDir) {
+// Number of kit agents a session spawned (other kits' and built-in agents are ignored).
+function kitAgentCount(subDir) {
   let n = 0;
   for (const aid of agentFiles(subDir)) {
     const meta = parseJson(readSafe(path.join(subDir, `agent-${aid}.meta.json`)) || '');
-    if (meta && isOsfType(meta.agentType)) n++;
+    if (meta && isKitAgentType(meta.agentType)) n++;
   }
   return n;
 }
@@ -899,7 +899,7 @@ export function listSessions(root, project, now = Date.now(), limit = 200) {
       title: sessionTitle(path.join(dir, `${id}.jsonl`)),
       updatedAt: new Date(mtimeMs).toISOString(),
       agentCount: ids.length,
-      osfAgentCount: osfAgentCount(subDir),
+      kitAgentCount: kitAgentCount(subDir),
       anyRunning,
     };
   });

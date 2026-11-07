@@ -2,7 +2,7 @@
 name: "proposal"
 description: "Create spec (proposal, design, tasks) for implementation. Explores and clarifies when needed before creating artifacts."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
 You are now in spec creation mode. Your job is to create OpenSpec artifacts (proposal, design, tasks) from the current conversation context.
@@ -107,7 +107,7 @@ Once the request is clear:
   |----------|---------------|
   | Double submit creates one order | specs/checkout/spec.md › Requirement: Idempotent submit › Scenario: double click |
   ```
-  A decision with no scenario is a bug in the spec, not a detail for later. The `osf-spec-review` gate audits this table.
+  A decision with no scenario is a bug in the spec, not a detail for later. The `agent-spec-review` gate audits this table.
 - **Production concerns in design.md.** For what applies to this change, state: error handling per failure point, authorization rules, concurrency/idempotency, data migration and backward compatibility, limits (pagination, sizes, rate limits), logging of failure paths without secrets, and how to roll back
 - **Updating after a spec review.** When the caller passes `Spec review findings:`, update the existing change in place: add or sharpen exactly the scenarios the CRITICAL items name, encode the user's answers to DECISION items, and extend `## Decision coverage`. Do not rewrite unrelated parts
 - **Annotate verify points in tasks.md** — For the last task of each major group or any high-risk task, append a verify annotation: `← (verify: what to check)`. This tells the verifier WHERE to deep-check and WHAT to look for. Place annotations on tasks that are end-of-flow (everything before must work for this to work) or high-risk (complex logic, integration points, security). Example:
@@ -147,13 +147,13 @@ Output this marker line with the change name:
 **If your input contains `CALLER_CONTEXT: autopilot-pipeline`** (the autopilot orchestrator invoked you):
 - Print ONLY the marker line above — nothing else.
 - Do NOT write "stop", "your job is done", "Ready for implementation", a closing summary, a farewell, or "let me know if you want to continue". Those phrases read as a turn boundary and cause the pipeline to halt before implementation — this is exactly the failure to avoid.
-- The autopilot pipeline continues in the SAME turn: autopilot runs its next step right after your marker (osf-spec-review in the Full pipeline). Hand back so the pipeline proceeds — do NOT end the turn, do NOT wait for confirmation.
-- Do NOT launch osf-apply or any other subagent yourself — autopilot routes that.
+- The autopilot pipeline continues in the SAME turn: autopilot runs its next step right after your marker (agent-spec-review in the Full pipeline). Hand back so the pipeline proceeds — do NOT end the turn, do NOT wait for confirmation.
+- Do NOT launch agent-apply or any other subagent yourself — autopilot routes that.
 
-**Otherwise** (standalone `/osf proposal`, or any other caller):
+**Otherwise** (standalone `/agent proposal`, or any other caller):
 - Print the marker, then **stop your own execution immediately** and return control to the caller in the same turn.
 - Do NOT write "Ready for implementation" as a closing line — the caller decides what "ready" means.
-- Do NOT suggest next commands (`/osf apply`, etc.) — the caller will route.
+- Do NOT suggest next commands (`/agent apply`, etc.) — the caller will route.
 - Do NOT write a closing summary, farewell, or "let me know if you want to continue" — these look like turn boundaries and cause the caller to stop.
-- Do NOT launch osf-apply or any other subagent yourself.
+- Do NOT launch agent-apply or any other subagent yourself.
 - The caller reads the `✅ Spec created: <change-name>` marker, extracts the change name, and proceeds. Your job is done the moment that marker is printed.

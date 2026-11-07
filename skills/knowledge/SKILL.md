@@ -2,10 +2,10 @@
 name: "knowledge"
 description: "Package the repo's working knowledge for the next person: CLAUDE.md managed section and docs/knowledge/ (architecture, local environment, decisions) from a finished change. Args: [change-name | --repo]."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
-You run the last step of the flow: turn what this change taught us into knowledge the next developer or agent session can start from. You do not write the docs yourself — `osf-knowledge` does. You find the source, brief it, and check the result.
+You run the last step of the flow: turn what this change taught us into knowledge the next developer or agent session can start from. You do not write the docs yourself — `agent-knowledge` does. You find the source, brief it, and check the result.
 
 ## Step 0: Find the source
 
@@ -15,9 +15,9 @@ Arguments: `[change-name] [--repo]`
 
 Run `git rev-parse HEAD` only if the caller passed no diff base and you want one; otherwise use the caller's.
 
-## Step 1: Launch osf-knowledge
+## Step 1: Launch agent-knowledge
 
-Launch Agent with `subagent_type: "osf-knowledge"`:
+Launch Agent with `subagent_type: "agent-knowledge"`:
 ```
 Change name: <name>          (change mode — include the archive path if already archived)
 Scope: repo                  (repo mode)

@@ -1,5 +1,5 @@
 ---
-name: "osf-apply"
+name: "agent-apply"
 description: "Implement tasks from OpenSpec change or conversation plan. Writes code, completes tasks, modifies files."
 ---
 
@@ -98,7 +98,7 @@ Stop before any Edit/Write. Return this and yield control:
 - Batch C: <tasks/files> — depends on Batch A (needs its output)
 
 **Execution hint for orchestrator:**
-- Run independent batches in PARALLEL as concurrent osf-apply subagents
+- Run independent batches in PARALLEL as concurrent agent-apply subagents
 - Run dependent batches SEQUENTIALLY, passing prior results forward in the next prompt
 - Each batch should be self-contained: list its own files, tasks, and acceptance criteria
 - Re-dispatch with the `apply` skill's PARALLEL FAN-OUT (`--parallel=N`) and a `Batch:` block per worker
@@ -108,7 +108,7 @@ Do not start implementation after emitting this. The orchestrator re-dispatches.
 
 ## BATCH MODE (parallel fan-out)
 
-When your brief contains a `Batch:` block, you are one of several osf-apply workers running at the same time in the same working tree. These rules override the normal steps:
+When your brief contains a `Batch:` block, you are one of several agent-apply workers running at the same time in the same working tree. These rules override the normal steps:
 
 - Scope = exactly `Files you own`. A task needs a file outside that list → do not touch it; finish what you can and report `Needs file: <path> — <why>`
 - Skip the SCOPE SIZE GATE — the orchestrator already sized your batch. If it still does not fit, implement what fits and report the rest as not done
@@ -264,7 +264,7 @@ If you catch yourself preparing a script whose purpose is "read file -> replace 
    Ready to proceed.
    ```
 
-   Return control to the caller. The caller decides whether to invoke osf-verify next.
+   Return control to the caller. The caller decides whether to invoke agent-verify next.
 
 ---
 
@@ -321,7 +321,7 @@ When implementing directly from conversation plan without an openspec change:
    Ready to proceed.
    ```
 
-   Return control to the caller. The caller decides whether to invoke osf-verify next.
+   Return control to the caller. The caller decides whether to invoke agent-verify next.
 
 ---
 

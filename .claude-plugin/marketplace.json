@@ -1,23 +1,23 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "osf-kit",
+  "name": "agent-kit",
   "owner": {
     "name": "quangnx99",
     "email": "adquang199x@gmail.com"
   },
   "metadata": {
-    "description": "OSF kit — OpenSpec-flow skills for Claude Code",
-    "version": "1.1.0"
+    "description": "Agent kit — OpenSpec-flow skills for Claude Code",
+    "version": "1.2.0"
   },
   "plugins": [
     {
-      "name": "osf",
-      "description": "OSF skills + agents: brainstorm → spec → tdd → code → verify → e2e → knowledge",
-      "version": "1.1.0",
+      "name": "agent",
+      "description": "Agent kit skills + agents: brainstorm → spec → tdd → code → verify → e2e → knowledge",
+      "version": "1.2.0",
       "source": "./",
       "category": "development",
       "keywords": [
-        "osf",
+        "agent-kit",
         "openspec",
         "skills"
       ],
@@ -25,8 +25,8 @@
         "name": "quangnx99",
         "email": "adquang199x@gmail.com"
       },
-      "homepage": "https://github.com/quangnx99/osf-kit",
-      "repository": "https://github.com/quangnx99/osf-kit"
+      "homepage": "https://github.com/quangnx99/agent-kit",
+      "repository": "https://github.com/quangnx99/agent-kit"
     }
   ]
 }

@@ -2,7 +2,7 @@
 name: "brainstorm"
 description: "Start of every dev request: grill the requirement until zero fog, then run the chosen flow (default Full: spec → tdd → code → verify → e2e → knowledge). Work types: feature, refactor, perf, docs, test, ci, docker."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
 You turn a request (often from a boss, often vague) into a locked, testable plan. Brainstorm thoroughly: the quality of everything after this — spec, tests, code, e2e — depends on it.
@@ -15,7 +15,7 @@ BEFORE PROCEEDING: after the user confirms, invoke the Skill tool with "explore"
 
 ## Work type
 
-Classify the request first and say it in one line (`Loại việc: <type>`). The type adds its questions and checklist items to the shared ones below; when a request mixes types, apply each. Bugs go to `/osf fix`; small, already-decided changes go to `/osf chore`.
+Classify the request first and say it in one line (`Loại việc: <type>`). The type adds its questions and checklist items to the shared ones below; when a request mixes types, apply each. Bugs go to `/agent fix`; small, already-decided changes go to `/agent chore`.
 
 | Type | Look at first | Stress-test (★ = narrowest option grounded in the codebase) | Zero-fog additions |
 |---|---|---|---|
@@ -30,7 +30,7 @@ Classify the request first and say it in one line (`Loại việc: <type>`). The
 ## What you do
 
 - **Restate simply.** Explain the request in two plain sentences. Any part you cannot simplify is a gap — name it and turn it into a decision with options.
-- **Investigate before asking.** Map the code the request touches: entry points, data model, callers, tests, config. Use codebase-retrieval first, then Grep/Read. Use `osf-analyze` (with `Mode: deep` for multi-root, auth, public contracts) when the blast radius is unclear, and `osf-researcher` for external libraries, standards or versions.
+- **Investigate before asking.** Map the code the request touches: entry points, data model, callers, tests, config. Use codebase-retrieval first, then Grep/Read. Use `agent-analyze` (with `Mode: deep` for multi-root, auth, public contracts) when the blast radius is unclear, and `agent-researcher` for external libraries, standards or versions.
 - **Compare approaches** when more than one is reasonable: a small table of options with the good and bad of each, and your ★ choice grounded in the codebase.
 - **Draw** an ASCII diagram when a flow, state machine or data path is easier to see than to read.
 - **Surface risks**: what could break, which existing data or users are affected, what needs a migration or a rollback.

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>osf agents</title>
+<title>agent-kit</title>
 <link rel="icon" href="data:,">
 <style>
 /* Tokens: flat, one font, follows the system light/dark setting. */
@@ -242,7 +242,7 @@ body[data-drawer] .drawer { translate: 0 0; visibility: visible; transition: tra
 <body>
 <div class="app" id="app">
   <header class="app-top">
-    <div class="brand"><span class="brand-mark" aria-hidden="true">o</span><span>osf agents</span></div>
+    <div class="brand"><span class="brand-mark" aria-hidden="true">a</span><span>agent-kit</span></div>
     <div class="picker" id="picker">
       <button type="button" id="pickerBtn" aria-haspopup="true" aria-expanded="false" aria-controls="pickerMenu"><span class="crumb" id="pickerCrumb"></span><span class="name" id="pickerName">Đang tải…</span><svg class="ico ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="menu" id="pickerMenu"></div>
@@ -360,7 +360,7 @@ function ago(iso) {
   return `${Math.floor(s / 86400)} ngày trước`;
 }
 const hhmm = (iso) => { const t = msOf(iso); return t == null ? '' : new Date(t).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }); };
-const shortType = (t) => String(t || '').replace(/^osf:/, '');
+const shortType = (t) => String(t || '').replace(/^agent:/, '');
 const nameOf = (a) => a.description || shortType(a.type);
 const stOf = (a) => ST_OF[a.status] || 'pending';
 const byStart = (x, y) => String(x.startedAt || '').localeCompare(String(y.startedAt || ''));
@@ -420,7 +420,7 @@ async function loadProjects() {
   try {
     const { projects, defaultProject } = await getJson('/api/projects');
     S.projects = projects.map((p) => p.name);
-    S.agentProjects = new Set(projects.filter((p) => p.osfSessions > 0).map((p) => p.name));
+    S.agentProjects = new Set(projects.filter((p) => p.kitSessions > 0).map((p) => p.name));
     const labels = projectLabels(S.projects);
     S.labels = new Map(S.projects.map((n, i) => [n, labels[i]]));
     const hash = new URLSearchParams(location.hash.slice(1));
@@ -457,7 +457,7 @@ async function loadSessions(wantId) {
   try {
     const { sessions } = await getJson(`/api/sessions?project=${encodeURIComponent(project)}`);
     if (project !== S.project) return;
-    S.sessions = sessions.filter((s) => s.osfAgentCount > 0);
+    S.sessions = sessions.filter((s) => s.kitAgentCount > 0);
     S.sessionsLoaded = true;
     if (!S.sessions.length) {
       closeStream(); resetView(); S.sessionId = null; S.data = null; renderAll();
@@ -553,7 +553,7 @@ function openStream(id) {
 }
 function logWarnings(d) {
   const w = d.warnings || {};
-  if (w.malformedLines || w.badMeta || w.truncated || w.unlinkedAgents) console.info('osf agents: parse warnings', w);
+  if (w.malformedLines || w.badMeta || w.truncated || w.unlinkedAgents) console.info('agent-kit: parse warnings', w);
 }
 
 // ---------- view ----------
@@ -596,7 +596,7 @@ function skillName(d) {
   const sk = (d.skills || []).find((s) => /autopilot/.test(s.name)) || (d.skills || [])[0];
   if (!sk) return '';
   const n = String(sk.name).replace(/^\//, '');
-  return `/${n.includes(':') ? n : `osf:${n}`}`;
+  return `/${n.includes(':') ? n : `agent:${n}`}`;
 }
 function spanMeta(d, list) {
   const starts = list.map((a) => msOf(a.startedAt)).filter((x) => x != null);

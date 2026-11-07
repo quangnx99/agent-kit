@@ -2,7 +2,7 @@
 name: "browser"
 description: "Reproduce bugs, explore an app or run QA flows in a real browser via dev-browser, with screenshots as evidence."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
 Drive a real browser like a user, capture evidence, then trace root cause in the codebase.
@@ -22,7 +22,7 @@ If it is missing, do NOT install it yourself. Ask the user once: "dev-browser ch
 Then ask for the app URL if it is not obvious from context.
 
 **Arguments**:
-- `e2e` or `test` as first argument → **Mode C: QA TEST** (report-only). Rest = flow name + URL, e.g. `/osf browser e2e login http://localhost:3000`
+- `e2e` or `test` as first argument → **Mode C: QA TEST** (report-only). Rest = flow name + URL, e.g. `/agent browser e2e login http://localhost:3000`
 - `--headless` → no visible window. Default is headed so the user can watch.
 - `--connect` → attach to the user's running Chrome (remote debugging on; useful for logged-in sessions).
 
@@ -46,7 +46,7 @@ SCRIPT
 | Locate | `page.getByRole(role, { name })`, `getByLabel`, `getByPlaceholder`, `getByTestId`, `locator(css)` |
 | Act | `.click()`, `.fill()`, `.pressSequentially()` (key-by-key handlers/validation), `.hover()`, `.check()`, `.selectOption()`, `page.keyboard.press()` |
 | Wait | `locator.waitFor()`, `page.waitForURL("**/x")`, `page.waitForLoadState("networkidle")` |
-| Screenshot | `await saveScreenshot(await page.screenshot(), "osf-<HHMMSS>-step1.png")` → returns path in `~/.dev-browser/tmp/` |
+| Screenshot | `await saveScreenshot(await page.screenshot(), "kit-<HHMMSS>-step1.png")` → returns path in `~/.dev-browser/tmp/` |
 | Console errors | `page.on("console", m => m.type()==="error" && errs.push(m.text()))`; `page.on("pageerror", e => errs.push(e.message))` — log `errs` at end of the same script |
 | Responsive | `page.setViewportSize({ width: 375, height: 812 })` |
 | Measure | `page.evaluate(() => ...)` — plain JS only |
@@ -98,8 +98,8 @@ Keep a `CORRELATION MAP`: each piece of browser evidence (URL, failing click, co
    **Suggested fix**: …
    ```
 7. **ROUTE** (tell the user in their language, pass the diagnosis as context):
-   - SIMPLE (one cause, 1–2 files, no architectural impact) → `/osf apply`
-   - COMPLEX (multi-file, breaking, design decisions) → `/osf brainstorm`, then `/osf apply`
+   - SIMPLE (one cause, 1–2 files, no architectural impact) → `/agent apply`
+   - COMPLEX (multi-file, breaking, design decisions) → `/agent brainstorm`, then `/agent apply`
    - UNCERTAIN → say root cause isn't found yet; stay in this mode and run more scenarios.
 
 ## Mode B: EXPLORE
@@ -114,11 +114,11 @@ Keep a `CORRELATION MAP`: each piece of browser evidence (URL, failing click, co
    ```
    CRITICAL = broken function, data loss, crash, security. WARNING = degraded UX, visual glitch, a11y, missing validation. INFO = minor inconsistency.
 5. **REPORT** — `## Exploration Report`: **App URL**, **Flows tested**, **Findings** (count by severity), then `### Critical` / `### Warning` / `### Info` with evidence.
-6. **ROUTE** — Critical → REPRODUCE each, then `/osf apply` or `/osf brainstorm`; Warnings → one `/osf apply` batch (or `/osf brainstorm` if architectural); Info → note only.
+6. **ROUTE** — Critical → REPRODUCE each, then `/agent apply` or `/agent brainstorm`; Warnings → one `/agent apply` batch (or `/agent brainstorm` if architectural); Info → note only.
 
 ## Mode C: QA TEST
 
-Act as a QA tester for one flow and deliver a test report. **REPORT-ONLY**: never modify code, never invoke or suggest `/osf apply`, `/osf brainstorm` or `/osf fix`. If you're about to edit a file or route to a fix, STOP.
+Act as a QA tester for one flow and deliver a test report. **REPORT-ONLY**: never modify code, never invoke or suggest `/agent apply`, `/agent brainstorm` or `/agent fix`. If you're about to edit a file or route to a fix, STOP.
 
 1. **PARSE** — flow name and app URL; if either is missing, ask ONE question.
 2. **MAP** — `codebase-retrieval`: routes, components per step, API endpoints, state driving the flow.
@@ -159,7 +159,7 @@ Act as a QA tester for one flow and deliver a test report. **REPORT-ONLY**: neve
 
 ## VERIFY (post-fix)
 
-After `/osf apply`, rerun the same steps on `browser.getPage("main")` with screenshots at the same points:
+After `/agent apply`, rerun the same steps on `browser.getPage("main")` with screenshots at the same points:
 
 ```
 ## Verification
@@ -172,7 +172,7 @@ FAIL → back to TRACE with the new evidence.
 
 After your session ends (diagnosis routed, exploration reported, or verification done), clean up dev-browser artifacts:
 
-1. Keep a list of every file this session saved in `~/.dev-browser/tmp/` (via `saveScreenshot()` or `writeFile()`) as you create them. Give them a per-session prefix (e.g. `osf-<HHMMSS>-…`) so they are recognizable.
+1. Keep a list of every file this session saved in `~/.dev-browser/tmp/` (via `saveScreenshot()` or `writeFile()`) as you create them. Give them a per-session prefix (e.g. `kit-<HHMMSS>-…`) so they are recognizable.
 2. Delete only those files, by name: `rm -f ~/.dev-browser/tmp/<file1> ~/.dev-browser/tmp/<file2>`. Never `rm -rf ~/.dev-browser/tmp/*` — other sessions keep evidence there.
 3. If you lost track of which files are yours, list the folder (`ls -la ~/.dev-browser/tmp/`) and ask the user before deleting anything.
 
@@ -180,8 +180,8 @@ Exception: if the user asks to keep evidence files (e.g. for a bug report), skip
 
 ## Guardrails
 
-- **QA TEST is report-only** — no edits, no `/osf apply|brainstorm|fix`.
-- **Don't fix bugs yourself** in A/B — diagnose and route to `/osf apply` or `/osf brainstorm`.
+- **QA TEST is report-only** — no edits, no `/agent apply|brainstorm|fix`.
+- **Don't fix bugs yourself** in A/B — diagnose and route to `/agent apply` or `/agent brainstorm`.
 - **Always map with `codebase-retrieval`** before and during browser work; browser evidence without code is just symptoms.
 - **No JS-injected interactions** — user-like locator actions only.
 - **Evidence for every claim** — screenshot, console message, network log or code reference. Screenshot liberally; check console after every action.
@@ -193,4 +193,4 @@ Exception: if the user asks to keep evidence files (e.g. for a bug report), skip
 
 ## Next steps (Mode A/B only)
 
-Simple fix → `/osf apply` · complex → `/osf brainstorm` then `/osf apply` · more bugs → stay in `/osf browser` · full implementation check → `/osf verify` · QA report for a flow → `/osf browser e2e [flow] [url]`.
+Simple fix → `/agent apply` · complex → `/agent brainstorm` then `/agent apply` · more bugs → stay in `/agent browser` · full implementation check → `/agent verify` · QA report for a flow → `/agent browser e2e [flow] [url]`.

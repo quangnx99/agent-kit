@@ -1,1 +1,1 @@
-{"agentType":"osf:osf-apply","isBuiltIn":false,"description":"Implement demo","toolUseId":"toolu_apply","spawnDepth":1,"requestShape":"foreground","finished":true}
+{"agentType":"agent:agent-apply","isBuiltIn":false,"description":"Implement demo","toolUseId":"toolu_apply","spawnDepth":1,"requestShape":"foreground","finished":true}

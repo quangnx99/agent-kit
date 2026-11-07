@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// osf agents-viz — local, read-only web view of what Claude Code agents are doing.
+// agent-kit visualizer — local, read-only web view of what Claude Code agents are doing.
 // Zero dependencies. Binds 127.0.0.1 only. Never writes anywhere.
 import http from 'node:http';
 import fs from 'node:fs';
@@ -12,7 +12,7 @@ import {
 } from './parser.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const APP_ID = 'osf-agents-viz';
+const APP_ID = 'agent-kit-viz';
 const PORT_FIRST = 4317;
 const PORT_LAST = 4330;
 const DEBOUNCE_MS = 400;
@@ -247,14 +247,14 @@ export async function main(argv = process.argv.slice(2)) {
   for (const port of ports) {
     if (scan && await probe(port)) {
       const url = `http://127.0.0.1:${port}`;
-      console.log(`osf agents → ${url} (already running)`);
+      console.log(`agent-kit → ${url} (already running)`);
       if (opts.open) openBrowser(url);
       return null;
     }
     const err = await listen(server, port);
     if (!err) {
       const url = `http://127.0.0.1:${server.address().port}`;
-      console.log(`osf agents → ${url}`);
+      console.log(`agent-kit → ${url}`);
       console.log('Read-only, local only. Stop with Ctrl+C (or stop the background task).');
       if (opts.open) openBrowser(url);
       const stop = () => { server.closeAll(); process.exit(0); };
@@ -263,12 +263,12 @@ export async function main(argv = process.argv.slice(2)) {
       return server;
     }
     if (err.code !== 'EADDRINUSE' && err.code !== 'EACCES') {
-      console.error(`osf agents: cannot listen on ${port}: ${err.message}`);
+      console.error(`agent-kit: cannot listen on ${port}: ${err.message}`);
       process.exitCode = 1;
       return null;
     }
   }
-  console.error(`osf agents: no free port in ${ports[0]}–${ports[ports.length - 1]}`);
+  console.error(`agent-kit: no free port in ${ports[0]}–${ports[ports.length - 1]}`);
   process.exitCode = 1;
   return null;
 }

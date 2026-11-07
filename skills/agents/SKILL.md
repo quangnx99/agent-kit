@@ -2,10 +2,10 @@
 name: "agents"
 description: "Open a local, read-only web page showing what agents are doing in Claude Code sessions: who spawned whom, parallel waves, status and reports. Args: [--no-open] [--port=N]."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
-You start the osf agent visualizer. You do not spawn subagents and you do not write any file.
+You start the agent-kit visualizer. You do not spawn subagents and you do not write any file.
 
 ## Steps
 
@@ -18,7 +18,7 @@ You start the osf agent visualizer. You do not spawn subagents and you do not wr
    node "<skill directory>/../../bin/agents-viz/server.mjs" --project=<project dir> <flags>
    ```
    `<flags>` is the whitelisted list from step 1 (empty when none).
-3. Read the background output until the line `osf agents → http://127.0.0.1:<port>` appears (a few seconds). If it ends with `(already running)`, a server from an earlier call is still up and the command exits on its own — reuse that URL.
+3. Read the background output until the line `agent-kit → http://127.0.0.1:<port>` appears (a few seconds). If it ends with `(already running)`, a server from an earlier call is still up and the command exits on its own — reuse that URL.
 4. Tell the user, briefly:
    - the URL (the browser opens by itself unless `--no-open`)
    - header: one picker for project and session

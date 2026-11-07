@@ -1,18 +1,18 @@
 {
-  "name": "osf",
-  "description": "OSF kit — OpenSpec-flow skills and supporting agents for Claude Code",
-  "version": "1.1.0",
+  "name": "agent",
+  "description": "Agent kit — OpenSpec-flow skills and supporting agents for Claude Code",
+  "version": "1.2.0",
   "author": {
     "name": "quangnx99",
     "email": "adquang199x@gmail.com"
   },
   "license": "MIT",
   "keywords": [
-    "osf",
+    "agent-kit",
     "openspec",
     "skills",
     "agents"
   ],
-  "homepage": "https://github.com/quangnx99/osf-kit",
-  "repository": "https://github.com/quangnx99/osf-kit"
+  "homepage": "https://github.com/quangnx99/agent-kit",
+  "repository": "https://github.com/quangnx99/agent-kit"
 }

@@ -2,12 +2,12 @@
 name: "archive"
 description: "Archive a completed change in the experimental workflow. Use when the user wants to finalize and archive a change after implementation is complete."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
 SCOPE DISCIPLINE
 
-Parallel sessions may share this branch. When briefing osf-archive, include these rules verbatim:
+Parallel sessions may share this branch. When briefing agent-archive, include these rules verbatim:
 
 - Scope = the change directory `openspec/changes/<name>/` plus delta sync targets named in this change's specs
 - Do NOT delete or modify files outside that scope, for any reason
@@ -22,4 +22,4 @@ Before launching the subagent, gather context from the current conversation:
 2. If user provides explicit arguments:
    - Pass those directly
 
-Brief the user, then launch Agent tool with `subagent_type: "osf-archive"`.
+Brief the user, then launch Agent tool with `subagent_type: "agent-archive"`.

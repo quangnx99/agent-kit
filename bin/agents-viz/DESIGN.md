@@ -1,7 +1,7 @@
-# DESIGN — osf agents visualizer
+# DESIGN — agent-kit visualizer
 
 ## Brief
-- Who uses it: a developer running `/osf:autopilot`, with the page open next to the terminal (about 900px wide) or full screen.
+- Who uses it: a developer running `/agent:autopilot`, with the page open next to the terminal (about 900px wide) or full screen.
 - Main job: see which step the pipeline is on, spot agents that need a look (stalled, cut), and read each agent's report.
 - Live session over SSE, or replay of a finished one. Read-only.
 

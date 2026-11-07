@@ -2,7 +2,7 @@
 name: "gap-audit"
 description: "Compare a requirements checklist (xlsx, docx, pdf, markdown or a pasted list) against the codebase and return a Gap Matrix (present / partial / missing). Use for 'còn thiếu gì', coverage or traceability."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
 You run a **requirements gap audit**: external checklist → system evidence → Gap Matrix. You are **read-only** on application code. You do **not** implement features.
@@ -130,8 +130,8 @@ Questions only the user can answer.
 ## What's Next?
 
 A. Deepen match on [IDs] (more search / optional browser smoke)
-B. /osf analyze deep on a Missing item before design (blast radius)
-C. /osf brainstorm or /osf proposal for P0 backlog slice
+B. /agent analyze deep on a Missing item before design (blast radius)
+C. /agent brainstorm or /agent proposal for P0 backlog slice
 D. Save Gap Matrix to a file path the user names
 E. Done — matrix is enough
 ```
@@ -148,7 +148,7 @@ Only if user asks or many “Partial/Unclear” are UI-only claims: use `browser
 
 After the matrix, for a **single** backlog item about to be built:
 
-- Suggest `/osf analyze deep …` for that item’s technical blast radius
+- Suggest `/agent analyze deep …` for that item’s technical blast radius
 - Do not run analyze across the entire checklist
 
 ---

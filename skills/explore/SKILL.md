@@ -2,14 +2,14 @@
 name: "explore"
 description: "Internal: shared explore/plan stance loaded by brainstorm and fix — grilling until zero fog, teach-back, then one path question (direct / auto / Full). Not for direct use."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
 Shared explore mode. The command that loaded this (brainstorm or fix) adds its own guidance, stress-test items and checklist additions; this file provides everything else.
 
 > **CLI**: run `openspec` and shell commands from the workspace root, never `cd` first. If `openspec` is missing, do not install it — tell the user to run `! npm i -g @fission-ai/openspec@latest` and wait. `openspec init` is always `openspec init --tools none`.
 
-**Explore mode = no code.** You read, search, plan and delegate. Before any Edit, Write, NotebookEdit or file-modifying Bash, ask "am I composing a change?" — if yes, stop and delegate: code → osf-apply, spec → the `proposal` skill, verify → osf-verify, archive → osf-archive. "It's just one line" is not an exception. The only edits you ever make are bookkeeping: ticking `- [x]` in tasks.md after a parallel wave and copying `tdd-<capability>.md` parts into tdd.md.
+**Explore mode = no code.** You read, search, plan and delegate. Before any Edit, Write, NotebookEdit or file-modifying Bash, ask "am I composing a change?" — if yes, stop and delegate: code → agent-apply, spec → the `proposal` skill, verify → agent-verify, archive → agent-archive. "It's just one line" is not an exception. The only edits you ever make are bookkeeping: ticking `- [x]` in tasks.md after a parallel wave and copying `tdd-<capability>.md` parts into tdd.md.
 
 **Mode reset.** When loaded, you are a thinking partner again, whatever happened earlier: stop any implementation in progress, do not continue pending tasks, and if the user wants to keep coding, say you will offer the paths once the plan is locked.
 
@@ -17,11 +17,11 @@ Shared explore mode. The command that loaded this (brainstorm or fix) adds its o
 
 | Agent | Use for |
 |---|---|
-| osf-analyze | structural facts: callers, blast radius, contracts, permissions, persistence, tests. `Mode: quick` for one symbol, `standard` default, `deep` + `Dimensions:` for multi-root, auth, public contracts. Discover real roots; never hard-code folder names |
-| osf-researcher | external facts: library APIs, versions, standards, advisories |
-| osf-gap-audit | prefer the `gap-audit` skill; this agent only for an isolated full-matrix pass |
-| osf-apply · osf-verify · osf-archive | only after the user picks a path (below) |
-| osf-tdd · osf-e2e · osf-spec-review · osf-security · osf-knowledge | never directly — the `tdd`, `e2e`, `autopilot` and `knowledge` skills run them |
+| agent-analyze | structural facts: callers, blast radius, contracts, permissions, persistence, tests. `Mode: quick` for one symbol, `standard` default, `deep` + `Dimensions:` for multi-root, auth, public contracts. Discover real roots; never hard-code folder names |
+| agent-researcher | external facts: library APIs, versions, standards, advisories |
+| agent-gap-audit | prefer the `gap-audit` skill; this agent only for an isolated full-matrix pass |
+| agent-apply · agent-verify · agent-archive | only after the user picks a path (below) |
+| agent-tdd · agent-e2e · agent-spec-review · agent-security · agent-knowledge | never directly — the `tdd`, `e2e`, `autopilot` and `knowledge` skills run them |
 
 ---
 
@@ -29,7 +29,7 @@ Shared explore mode. The command that loaded this (brainstorm or fix) adds its o
 
 一度正しく、永遠に動く — do it right once, run forever. Every ambiguity left in the plan becomes a CRITICAL at verification.
 
-- **Silent on facts, relentless on decisions.** Never ask the user what the code can tell you — read it (or osf-analyze / osf-researcher). Every decision that changes user-visible behavior, scope, data or cost goes to the user, even when you have a ★.
+- **Silent on facts, relentless on decisions.** Never ask the user what the code can tell you — read it (or agent-analyze / agent-researcher). Every decision that changes user-visible behavior, scope, data or cost goes to the user, even when you have a ★.
 - **Feynman-first.** Restate requirements in the simplest words before asking anything; a part you cannot simplify is a gap.
 - **No fog.** "probably", "should work", "something like", "etc", "handle errors" mean undefined — dig until it is concrete.
 - **Grounded and visual.** Explore the real code; draw ASCII diagrams when a flow is easier to see.
@@ -113,7 +113,7 @@ D. Khác — bàn thêm
 If the work is not trivial, also offer one copyable line, e.g. `💡 Muốn chạy không cần trông: /goal run autopilot --full on the locked plan and resolve every CRITICAL`.
 
 **Routing the answer** (pass the locked summary, the review plan and every decision — answered rounds, accepted ★, `Assumed:` lines — verbatim; map "không tdd" → `--no-tdd`, "không e2e" → `--no-e2e`, "song song N" → `--parallel=N`):
-- **A** → run `git rev-parse HEAD` (the diff base), then Agent `osf-apply` with `Plan summary:` + `User choice: Implement directly without spec` + context. When it returns, verify (below).
+- **A** → run `git rev-parse HEAD` (the diff base), then Agent `agent-apply` with `Plan summary:` + `User choice: Implement directly without spec` + context. When it returns, verify (below).
 - **B** → Skill `autopilot` with the plan (Mode B; it composes its own chain).
 - **C** → Skill `autopilot` with `--full` and the plan (Mode B). When the plan says `E2E setup: approved: <cmd>`, include the line `Setup approved: <cmd>`.
 - **D** → keep exploring.
@@ -122,7 +122,7 @@ A loose answer ("làm luôn đi", "chạy hết") maps to the closest option —
 
 ## After a direct implementation (option A)
 
-Verify unless the change is trivial: Agent `osf-verify` with `Plan summary:` + context and `Diff base:` (say "Auto-verifying — <reason>"). Then offer, one line each, only what applies: `/osf e2e` for a new user journey or API flow; `/security-audit` when auth, payments, uploads, external input or secrets were touched; `/osf knowledge --repo` when the work changed how the system runs or is structured.
+Verify unless the change is trivial: Agent `agent-verify` with `Plan summary:` + context and `Diff base:` (say "Auto-verifying — <reason>"). Then offer, one line each, only what applies: `/agent e2e` for a new user journey or API flow; `/security-audit` when auth, payments, uploads, external input or secrets were touched; `/agent knowledge --repo` when the work changed how the system runs or is structured.
 
 ## Guardrails
 
@@ -130,4 +130,4 @@ Verify unless the change is trivial: Agent `osf-verify` with `Plan summary:` + c
 - Don't ask the path question before the teach-back is confirmed, the checklist passes and the reviewed plan is shown
 - Don't decide for the user: ★ is a proposal (autopilot is the only exception, as `Assumed:` lines)
 - Don't show code in the plan; don't create files the user did not ask for
-- Different kind of work → suggest `/osf brainstorm` (feature, refactor, perf, docs, test, ci, docker), `/osf fix` (bug) or `/osf chore` (small direct change)
+- Different kind of work → suggest `/agent brainstorm` (feature, refactor, perf, docs, test, ci, docker), `/agent fix` (bug) or `/agent chore` (small direct change)

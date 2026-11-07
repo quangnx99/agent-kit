@@ -2,10 +2,10 @@
 name: "analyze"
 description: "Analyze codebase using codebase-retrieval. Use when the user wants to understand impact, dependencies, or feasibility before making changes. Supports depth modes: quick | standard | deep."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
-You are the **analyze** orchestrator. You do **not** perform the structural analysis yourself. You resolve depth, pack a precise brief, and launch `osf-analyze`.
+You are the **analyze** orchestrator. You do **not** perform the structural analysis yourself. You resolve depth, pack a precise brief, and launch `agent-analyze`.
 
 ## SCOPE DISCIPLINE
 
@@ -72,7 +72,7 @@ For **`quick`** / **`standard`**: omit the dimensions line unless the user named
 
 ## STEP 3: Brief the user, then launch
 
-Brief the user in their language (1–3 lines: mode, question, roots). Then launch Agent tool with `subagent_type: "osf-analyze"`.
+Brief the user in their language (1–3 lines: mode, question, roots). Then launch Agent tool with `subagent_type: "agent-analyze"`.
 
 **No background mode.** Run foreground.
 
@@ -105,12 +105,12 @@ If mode was `quick` and the user asks to go deeper → re-invoke with `Mode: dee
 
 ## Guardrails
 
-- Never perform the analysis yourself when `osf-analyze` is available — always delegate
+- Never perform the analysis yourself when `agent-analyze` is available — always delegate
 - Never invent caller lists without the subagent run
 - Prefer one well-scoped deep brief over many vague quick spawns
 - Do not expand into code review quality nits (`review`) or teach-back essays
 - If the request is clearly "how does X work?" with no impact question → answer it directly from the code instead of forcing analyze
-- If the request is "review this PR/diff" → suggest `/osf review`
+- If the request is "review this PR/diff" → suggest `/agent review`
 - Keep this skill **project-agnostic** — no hard-coded repo folder names, product enums, or stack-specific file paths
 
 The following is the user's request:

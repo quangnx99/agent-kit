@@ -2,7 +2,7 @@
 name: "review"
 description: "Review code for missed impacts, hardcoded values, rule violations, security, error handling, performance and smells. Args: omit for uncommitted changes, a PR/MR URL, or a feature/area."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
 Review code for issues that are easy to miss after an implementation or fix: missed impacts, hardcoded values, project-rule violations, security holes and needless complexity. You run in the main conversation, so use what was just implemented or fixed to scope the review.
@@ -155,15 +155,15 @@ Be conservative with CRITICAL: only things that will break or are security risks
 ```
 Found X issue(s) that should be fixed.
 
-→ /osf apply — fix these issues directly (pass this report as context)
-→ /osf fix — investigate deeper if the root cause is unclear
+→ /agent apply — fix these issues directly (pass this report as context)
+→ /agent fix — investigate deeper if the root cause is unclear
 ```
 
 **Only SUGGESTION:**
 ```
 No critical issues. X suggestion(s) for improvement.
 
-→ /osf apply — apply these improvements
+→ /agent apply — apply these improvements
 → Done — code is acceptable as-is
 ```
 

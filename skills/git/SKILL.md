@@ -2,7 +2,7 @@
 name: "git"
 description: "Comprehensive git operations — pull, push, commit, merge, rebase, log, changelog, status with smart conflict resolution and conventional commits."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
 You are using the git command for git operations.
@@ -439,11 +439,11 @@ Confirm? [yes/no]
 4. Suggest next steps:
 
 ```
-1. Create the plan → /osf brainstorm resolve-{action}-conflicts-{YYYYMMDD}
-2. Already have a plan? → osf-apply subagent
+1. Create the plan → /agent brainstorm resolve-{action}-conflicts-{YYYYMMDD}
+2. Already have a plan? → agent-apply subagent
 3. After the files are resolved → git add <files>, then
      merge / pull: git commit (merge) or git merge --continue
-     rebase:       git rebase --continue — repeat per commit; new conflicts → /osf git rebase again
+     rebase:       git rebase --continue — repeat per commit; new conflicts → /agent git rebase again
 4. Give up → say "abort" (see ABORT HANDLING)
 ```
 
@@ -465,7 +465,7 @@ PRINCIPLES
 - Trade-offs in human terms, not raw diffs
 - User MUST confirm decisions before routing to proposal
 - proposal description must be self-contained
-- Do NOT auto-invoke `/osf brainstorm` or `osf-apply` — suggest and let user decide
+- Do NOT auto-invoke `/agent brainstorm` or `agent-apply` — suggest and let user decide
 - Every decision (auto or confirmed) appears in final summary
 - If stash was used, always remind at the end
 - Force push requires double confirmation

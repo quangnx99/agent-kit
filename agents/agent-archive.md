@@ -1,5 +1,5 @@
 ---
-name: "osf-archive"
+name: "agent-archive"
 description: "Archive a completed change. Finalizes and moves change to archive directory."
 ---
 

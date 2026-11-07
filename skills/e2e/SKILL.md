@@ -2,16 +2,16 @@
 name: "e2e"
 description: "End-to-end tests after implementation: full local environment in production mode, UI and API journeys for every spec scenario, stability gate, app-defect fix rounds. Args: [change-name] [flow] [--red-only] [--repeat=5]."
 metadata:
-  kit: osf
+  kit: agent
 ---
 
-You orchestrate end-to-end testing: **full local environment → journeys → tests → run against the real app → fix app defects → lock**. The goal is proof that every specified behavior works when the system runs the way it will in production — UI and API, all services up, production build. You do not write tests or code yourself — osf-e2e writes and runs tests, osf-apply fixes the app. You read, check, and route.
+You orchestrate end-to-end testing: **full local environment → journeys → tests → run against the real app → fix app defects → lock**. The goal is proof that every specified behavior works when the system runs the way it will in production — UI and API, all services up, production build. You do not write tests or code yourself — agent-e2e writes and runs tests, agent-apply fixes the app. You read, check, and route.
 
 This is not the `browser` skill: `browser` explores and reproduces by hand and leaves nothing behind; `e2e` leaves automated tests in the repo that run in CI. A flow found with `browser` is a good input for `e2e`.
 
 ## TEST LOCK (verbatim rules)
 
-Whenever you brief osf-apply after e2e tests exist, include this block verbatim (merge with any lock the `tdd` skill already recorded):
+Whenever you brief agent-apply after e2e tests exist, include this block verbatim (merge with any lock the `tdd` skill already recorded):
 
 ```
 TEST LOCK — tests were written first and are the specification.
@@ -37,11 +37,11 @@ Find the source, in this order:
 2. **OpenSpec change** without tdd.md → the journey scenarios in its specs
 3. **Flow description** in args or conversation (including a flow just walked with the `browser` skill)
 4. **Neither** → print one line and stop:
-   `osf:e2e needs a change name or a flow description — e.g. /osf e2e add-user-auth, or /osf e2e "guest checkout with a coupon".`
+   `agent:e2e needs a change name or a flow description — e.g. /agent e2e add-user-auth, or /agent e2e "guest checkout with a coupon".`
 
 ### Confirm the journeys (interactive only)
 
-Skip this in autopilot — osf-e2e derives the journeys itself and lists unspecified behaviors in its report.
+Skip this in autopilot — agent-e2e derives the journeys itself and lists unspecified behaviors in its report.
 
 Otherwise, draft the journey list yourself from the source above: ID, steps, expected outcome, spec source. Probe each journey for invalid input, wrong role / no permission, reload after the action, double submit, browser Back, empty and error states. Then show the list to the user once:
 
@@ -56,22 +56,22 @@ Otherwise, draft the journey list yourself from the source above: ID, steps, exp
 Trả lời "ok" = đồng ý danh sách và chấp nhận tất cả ★.
 ```
 
-Apply the answers, then pass the confirmed list to osf-e2e as `Acceptance criteria` together with the line `Journeys confirmed by user: yes`. In autopilot never send that line — osf-e2e then treats any list as a minimum and adds the journeys its surface rule and probes require. A behavior the user decided outside the spec should also be added to the spec — say so in the final output.
+Apply the answers, then pass the confirmed list to agent-e2e as `Acceptance criteria` together with the line `Journeys confirmed by user: yes`. In autopilot never send that line — agent-e2e then treats any list as a minimum and adds the journeys its surface rule and probes require. A behavior the user decided outside the spec should also be added to the spec — say so in the final output.
 
 ## Step 1: Check the e2e stack
 
 Look for an e2e framework (`playwright.config.*`, `cypress.config.*`, WebdriverIO, Detox/Maestro, API suites such as supertest/`WebApplicationFactory`/RestAssured/Newman) and how the app is started for it.
 
 - **Found** → proceed to Step 2
-- **None, interactive** → recommend one that fits the project (Playwright for web UI unless the ecosystem says otherwise; for API-only, the HTTP test client the stack already uses) and ask once: "Project chưa có framework e2e. Cài `<command>` không?" Yes → pass `Setup approved: <command>` to osf-e2e. No → stop and say which ACs stay pending
-- **None, autopilot, input has `Setup approved: <cmd>`** → the user approved it during brainstorm: pass it to osf-e2e and proceed to Step 2
+- **None, interactive** → recommend one that fits the project (Playwright for web UI unless the ecosystem says otherwise; for API-only, the HTTP test client the stack already uses) and ask once: "Project chưa có framework e2e. Cài `<command>` không?" Yes → pass `Setup approved: <command>` to agent-e2e. No → stop and say which ACs stay pending
+- **None, autopilot, input has `Setup approved: <cmd>`** → the user approved it during brainstorm: pass it to agent-e2e and proceed to Step 2
 - **None, autopilot, no approval** → do not install. Print ONLY:
   `⚠️ E2E skipped: <change-name> — no e2e framework (install: <command>)`
   and return in the same turn so the pipeline continues to verify
 
-## Step 2: Launch osf-e2e
+## Step 2: Launch agent-e2e
 
-Brief the user, then launch Agent tool with `subagent_type: "osf-e2e"`:
+Brief the user, then launch Agent tool with `subagent_type: "agent-e2e"`:
 
 ```
 Change name: <change-name>            (spec mode)
@@ -84,23 +84,23 @@ Docs: <paths>
 App start / base URL: <if already known from the project>
 ```
 
-Pass sources and the minimum list only. Never add rules that narrow the scope ("write only these tests", a fixed tag list, "do not test X") — osf-e2e decides the full journey set from the spec.
+Pass sources and the minimum list only. Never add rules that narrow the scope ("write only these tests", a fixed tag list, "do not test X") — agent-e2e decides the full journey set from the spec.
 
 ## Step 3: Read the report and act
 
-Read `## 🧪 E2E Report`. A result without that header, or one that says it was terminated early or is PARTIAL, is not a report: re-launch osf-e2e once with the same brief. Cut twice → stop. Interactive: report the step to resume. Autopilot: print ONLY `⛔ E2E stopped: <change-name> — osf-e2e cut off twice` and return — never print `✅ E2E complete` on a partial run.
+Read `## 🧪 E2E Report`. A result without that header, or one that says it was terminated early or is PARTIAL, is not a report: re-launch agent-e2e once with the same brief. Cut twice → stop. Interactive: report the step to resume. Autopilot: print ONLY `⛔ E2E stopped: <change-name> — agent-e2e cut off twice` and return — never print `✅ E2E complete` on a partial run.
 
-1. **Env blockers** → show them with the exact error. Interactive: stop and let the user fix the environment, then re-run `/osf e2e`. Autopilot: carry them as a warning and continue to Step 4
+1. **Env blockers** → show them with the exact error. Interactive: stop and let the user fix the environment, then re-run `/agent e2e`. Autopilot: carry them as a warning and continue to Step 4
 2. **Test faults remaining after 3 rounds** → show them; stop (interactive) or carry as warning (autopilot)
-3. **Test disputes** (osf-e2e thinks the spec, not the app, is wrong) → never let anyone edit the test to settle it. Interactive: show each dispute and let the user decide — fix the app, or change the spec and re-run `/osf e2e`. Autopilot: carry as warning
+3. **Test disputes** (agent-e2e thinks the spec, not the app, is wrong) → never let anyone edit the test to settle it. Interactive: show each dispute and let the user decide — fix the app, or change the spec and re-run `/agent e2e`. Autopilot: carry as warning
 4. **App defects** (the product diverges from the spec, including **unstable** ones that fail only on some runs) — this is the point of e2e:
    - `--red-only` → report them
-   - Otherwise (interactive and autopilot) → launch osf-apply with the SCOPE DISCIPLINE rules from the `apply` skill, the TEST LOCK block (locked e2e files + any tdd lock), the defect list (expected vs actual; for unstable ones the failure rate and suspected cause), and `Done = Stability command passes <N>/<N>`. Tell osf-apply that an unstable defect is fixed only when the cause is removed (race, double submit, unawaited request) — never by adding waits, retries or timeouts. Then re-run the Stability command yourself and compare `git hash-object` of the locked e2e files to the recorded lock. Hash differs → **CRITICAL: test lock broken**, do not accept. Test dispute reported → show the user and stop. Max 2 fix rounds, then report what remains
-5. **Unspecified behaviors** → interactive: ask the user in one round (options A/B/★/Khác), then re-run `/osf e2e` with the answers; autopilot: carry as warning
-6. **Lock** — confirm the `## E2E lock` hashes in tdd.md match the files on disk. You read and compare; osf-e2e writes the lock
+   - Otherwise (interactive and autopilot) → launch agent-apply with the SCOPE DISCIPLINE rules from the `apply` skill, the TEST LOCK block (locked e2e files + any tdd lock), the defect list (expected vs actual; for unstable ones the failure rate and suspected cause), and `Done = Stability command passes <N>/<N>`. Tell agent-apply that an unstable defect is fixed only when the cause is removed (race, double submit, unawaited request) — never by adding waits, retries or timeouts. Then re-run the Stability command yourself and compare `git hash-object` of the locked e2e files to the recorded lock. Hash differs → **CRITICAL: test lock broken**, do not accept. Test dispute reported → show the user and stop. Max 2 fix rounds, then report what remains
+5. **Unspecified behaviors** → interactive: ask the user in one round (options A/B/★/Khác), then re-run `/agent e2e` with the answers; autopilot: carry as warning
+6. **Lock** — confirm the `## E2E lock` hashes in tdd.md match the files on disk. You read and compare; agent-e2e writes the lock
 7. **User acceptance (interactive only)** — passing the spec is not the same as doing what the user meant. When everything is green, show the user each UI journey with its evidence path from the report and ask once:
    `Kết quả từng hành trình có đúng ý bạn không? Trả lời "ok", hoặc ghi AC nào sai và sai thế nào.`
-   Any AC the user rejects is a requirement gap, not a test fault: do not mark the e2e run complete; report it and recommend `/osf fix <AC>: <user's note>` (and updating the spec)
+   Any AC the user rejects is a requirement gap, not a test fault: do not mark the e2e run complete; report it and recommend `/agent fix <AC>: <user's note>` (and updating the spec)
 
 ## Step 4: Output
 
@@ -109,7 +109,7 @@ Read `## 🧪 E2E Report`. A result without that header, or one that says it was
 ✅ E2E complete: <change-name> (<pass>/<n> passing, <n> app defects, <n> unstable, <n> env blocked, stability <N>/<N>, spec coverage <c>/<t>, production build yes|no, fix rounds <r>, code changed yes|no)
 ```
 
-`code changed yes` means osf-apply changed production code during the fix rounds — autopilot then re-runs the verify and security gates.
+`code changed yes` means agent-apply changed production code during the fix rounds — autopilot then re-runs the verify and security gates.
 
 **User rejected an AC in step 7** — print this instead of the complete block:
 ```
@@ -117,7 +117,7 @@ Read `## 🧪 E2E Report`. A result without that header, or one that says it was
 
 **Source:** <change-name | flow>
 **Rejected:** AC-n — <user's note> (one line each)
-**Next:** `/osf fix <AC>: <note>` — and update the spec so the test checks what you actually meant
+**Next:** `/agent fix <AC>: <note>` — and update the spec so the test checks what you actually meant
 ```
 
 **Otherwise**:
@@ -140,7 +140,7 @@ Do not run verify or archive yourself — the user (or autopilot) routes that.
 
 ## Guardrails
 
-- Never write tests or production code yourself — osf-e2e and osf-apply do
+- Never write tests or production code yourself — agent-e2e and agent-apply do
 - Never install a framework without the user's go-ahead; never in autopilot
 - Local environment only — never shared/staging/production URLs
 - Spec coverage below 100% or a non-production build is always listed under Warnings
