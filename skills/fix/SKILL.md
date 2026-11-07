@@ -125,7 +125,7 @@ Diagram (ASCII) when it helps: Causal chains, state machines, data flows, depend
 
 ## Stress-test Questions
 
-Resolve these before ending discovery. Self-answer by exploring the codebase. Only surface items to the user that are genuinely ambiguous or require a personal/team style choice:
+Resolve these before ending discovery. Self-answer by exploring the codebase. Only surface items to the user that are genuinely ambiguous or require a personal or project style choice:
 
 1. Regression risks:
    "Could this fix break anything else:

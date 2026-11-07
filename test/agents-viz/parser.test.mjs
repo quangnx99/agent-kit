@@ -398,11 +398,10 @@ test('pipeline: full run in the new order maps every agent to its step', () => {
   assert.deepEqual(p.otherAgentIds, []);
 });
 
-test('pipeline: no kickoff step — old team kickoff agents are "other", --no-e2e still skips E2E', () => {
+test('pipeline: --no-e2e skips E2E; idle after archive marks Knowledge skipped', () => {
   const s = pipelineOf([
-    command('osf:team', 'add tags', 0),
-    wave('mK', 1, ['k1', 'osf:osf-pm'], ['k2', 'osf:osf-ba'], ['k3', 'osf:osf-qa'], ['k4', 'osf:osf-analyze']),
-    skillCall('sa', 'osf:autopilot', '--full --no-e2e --yes', 10),
+    skillCall('sa', 'osf:autopilot', '--full --no-e2e --yes', 0),
+    wave('mN', 1, ['n1', 'osf:osf-analyze']),
     wave('mG', 15, ['g1', 'osf:osf-spec-review']),
     wave('mA', 20, ['a1', 'osf:osf-apply']),
     wave('mV', 30, ['v1', 'osf:osf-security'], ['v2', 'osf:osf-verify']),
@@ -411,18 +410,11 @@ test('pipeline: no kickoff step — old team kickoff agents are "other", --no-e2
   const p = s.pipeline;
   const st = stepMap(p);
   assert.equal(p.kind, 'autopilot');
-  assert.ok(!p.steps.some((x) => x.key === 'kickoff'));
-  assert.ok(s.agents.every((a) => a.step !== 'kickoff'));
-  assert.deepEqual(p.otherAgentIds.sort(), ['g-k1', 'g-k2', 'g-k3']);
-  assert.equal(s.agents.find((a) => a.id === 'g-k4').step, 'spec');
+  assert.equal(s.agents.find((a) => a.id === 'g-n1').step, 'spec');
   assert.equal(st.e2e.state, 'skipped');
   assert.equal(st.archive.state, 'done');
   assert.equal(st.knowledge.state, 'skipped', 'idle after archive: knowledge never started');
   assert.equal(p.finished, true);
-
-  const teamOnly = pipelineOf([command('osf:team', 'x', 0), wave('mK', 1, ['k1', 'osf:osf-pm'])]);
-  assert.equal(teamOnly.pipeline.kind, 'none');
-  assert.ok(!teamOnly.pipeline.steps.some((x) => x.key === 'kickoff'));
 });
 
 test('pipeline: e2e finds app defects → coding fix in round 2 with an E2E loop note', () => {
@@ -461,7 +453,6 @@ test('pipeline: e2e finds app defects → coding fix in round 2 with an E2E loop
   assert.equal(st.security.round, 2);
   assert.equal(st.knowledge.state, 'done');
   assert.equal(p.finished, true);
-  assert.ok(!p.steps.some((x) => x.key === 'kickoff'));
 
   // Gates loop keeps its own wording.
   assert.equal(roundNote({ loops: [{ from: 'gates', to: 'coding', round: 2 }], steps: [] }, 1, 2), 'Security, Verify báo lỗi → sửa ở vòng 2');
@@ -517,7 +508,6 @@ test('pipeline: verified run loops apply → gates → apply → gates into roun
   const p = s.pipeline;
   const st = stepMap(p);
   assert.equal(p.kind, 'autopilot');
-  assert.ok(!st.kickoff);
   assert.deepEqual(p.loops, [{ from: 'gates', to: 'coding', round: 2 }]);
   assert.equal(p.round, 2);
   assert.equal(st.coding.round, 2);
