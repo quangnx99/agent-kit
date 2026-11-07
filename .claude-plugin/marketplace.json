@@ -2,18 +2,18 @@
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "osf-kit",
   "owner": {
-    "name": "Sơn",
-    "email": "son18122001@gmail.com"
+    "name": "quangnx99",
+    "email": "adquang199x@gmail.com"
   },
   "metadata": {
     "description": "OSF kit — OpenSpec-flow skills for Claude Code and OMP",
-    "version": "1.0.23"
+    "version": "1.0.24"
   },
   "plugins": [
     {
       "name": "osf",
       "description": "32 OSF skills + 15 supporting agents (brainstorm/team/apply/verify/…)",
-      "version": "1.0.23",
+      "version": "1.0.24",
       "source": "./",
       "category": "development",
       "keywords": [
@@ -22,11 +22,11 @@
         "skills"
       ],
       "author": {
-        "name": "Sơn",
-        "email": "son18122001@gmail.com"
+        "name": "quangnx99",
+        "email": "adquang199x@gmail.com"
       },
-      "homepage": "https://github.com/sonnguyen1812/osf-kit",
-      "repository": "https://github.com/sonnguyen1812/osf-kit"
+      "homepage": "https://github.com/quangnx99/osf-kit",
+      "repository": "https://github.com/quangnx99/osf-kit"
     }
   ]
 }

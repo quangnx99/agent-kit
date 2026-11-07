@@ -8,16 +8,16 @@ Marketplace `osf-kit`, plugin `osf`, `source: "./"`.
 
 ```bash
 # Claude Code
-claude plugin marketplace add sonnguyen1812/osf-kit && claude plugin install osf@osf-kit
+claude plugin marketplace add quangnx99/osf-kit && claude plugin install osf@osf-kit
 
 # OMP
-omp plugin install github:sonnguyen1812/osf-kit
+omp plugin install github:quangnx99/osf-kit
 ```
 
 Claude Code TUI (if the marketplace is not registered yet):
 
 ```text
-/plugin marketplace add sonnguyen1812/osf-kit
+/plugin marketplace add quangnx99/osf-kit
 /plugin install osf@osf-kit
 ```
 
@@ -34,7 +34,7 @@ claude plugin marketplace update osf-kit
 claude plugin update osf@osf-kit
 
 # OMP (reinstall from git; same command as install)
-omp plugin install github:sonnguyen1812/osf-kit
+omp plugin install github:quangnx99/osf-kit
 ```
 
 Restart the OMP session after update. Claude Code: restart or `/reload-plugins`.

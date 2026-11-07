@@ -1,10 +1,10 @@
 {
   "name": "osf",
   "description": "OSF kit — 32 OpenSpec-flow skills and 15 supporting agents for Claude Code and OMP",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "author": {
-    "name": "Sơn",
-    "email": "son18122001@gmail.com"
+    "name": "quangnx99",
+    "email": "adquang199x@gmail.com"
   },
   "license": "MIT",
   "keywords": [
@@ -14,6 +14,6 @@
     "agents",
     "omp"
   ],
-  "homepage": "https://github.com/sonnguyen1812/osf-kit",
-  "repository": "https://github.com/sonnguyen1812/osf-kit"
+  "homepage": "https://github.com/quangnx99/osf-kit",
+  "repository": "https://github.com/quangnx99/osf-kit"
 }

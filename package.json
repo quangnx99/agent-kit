@@ -1,6 +1,6 @@
 {
   "name": "osf",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "private": true,
   "scripts": {
     "test": "node --test \"test/**/*.test.mjs\""
@@ -17,7 +17,7 @@
   "omp": {},
   "repository": {
     "type": "git",
-    "url": "https://github.com/sonnguyen1812/osf-kit.git"
+    "url": "https://github.com/quangnx99/osf-kit.git"
   },
-  "homepage": "https://github.com/sonnguyen1812/osf-kit"
+  "homepage": "https://github.com/quangnx99/osf-kit"
 }
