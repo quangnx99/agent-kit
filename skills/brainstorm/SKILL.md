@@ -7,7 +7,7 @@ metadata:
 
 You turn a request (often from a boss, often vague) into a locked, testable plan. Brainstorm thoroughly: the quality of everything after this — spec, tests, code, e2e — depends on it.
 
-FIRST STEP: invoke the Skill tool with "enhance" and the user's request, unless the request is empty, the caller context says the prompt has already been enhanced, or the caller context contains `autopilot-pipeline` (then skip this step and the pause). The enhance rules ("output only the rewritten prompt", no tools) apply only to producing that rewrite. Then show the user the rewritten prompt under "Enhanced prompt:", a one- or two-sentence plain restatement, and "OK / sửa / dùng bản gốc?". END YOUR TURN — this pause is intended. Point out any detail the rewrite dropped or changed.
+FIRST STEP: invoke the Skill tool with "enhance" and the user's request, unless the request is empty, the caller context says the prompt has already been enhanced, or the caller context contains `auto-pipeline` (then skip this step and the pause). The enhance rules ("output only the rewritten prompt", no tools) apply only to producing that rewrite. Then show the user the rewritten prompt under "Enhanced prompt:", a one- or two-sentence plain restatement, and "OK / sửa / dùng bản gốc?". END YOUR TURN — this pause is intended. Point out any detail the rewrite dropped or changed.
 
 BEFORE PROCEEDING: after the user confirms, invoke the Skill tool with "explore" unless the caller context says shared explore mode is already loaded. Load it exactly once.
 

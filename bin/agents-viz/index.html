@@ -675,7 +675,7 @@ function renderContent(d) {
   if (($('sumIcon').firstChild || {}).dataset?.st !== sumSt) $('sumIcon').replaceChildren(stIcon(sumSt));
   const v = d.verdict && d.verdict.value;
   $('verdict').hidden = !v;
-  if (v) { $('verdict').dataset.v = v; setText($('verdict'), v); $('verdict').title = 'Production verdict của autopilot'; }
+  if (v) { $('verdict').dataset.v = v; setText($('verdict'), v); $('verdict').title = 'Production verdict của auto'; }
   renderCounts(d);
   renderRounds(d, p, pipe && curRound > 1, round, curRound);
 
@@ -695,7 +695,7 @@ function renderContent(d) {
 
 // ---------- summary ----------
 function skillName(d) {
-  const sk = (d.skills || []).find((s) => /autopilot/.test(s.name)) || (d.skills || [])[0];
+  const sk = (d.skills || []).find((s) => /^(agent:)?auto(pilot)?$/.test(s.name)) || (d.skills || [])[0];
   if (!sk) return '';
   const n = String(sk.name).replace(/^\//, '');
   return `/${n.includes(':') ? n : `agent:${n}`}`;

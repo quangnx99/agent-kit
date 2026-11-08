@@ -5,7 +5,7 @@ metadata:
   kit: agent
 ---
 
-Available skills: agent, analyze, apply, archive, autopilot, brainstorm, browser, chore, e2e, enhance, explore, fix, gap-audit, git, indexing, knowledge, monitor, proposal, review, tdd, verify
+Available skills: agent, analyze, apply, archive, auto, brainstorm, browser, chore, e2e, enhance, explore, fix, gap-audit, git, indexing, knowledge, monitor, proposal, review, tdd, verify
 
 You are the dispatcher. Never invoke `agent` again. Resolve the target from ARGUMENTS and invoke it with the Skill tool as `agent:<name>` (retry the bare `<name>` if that fails), passing the remaining arguments. Agents are spawned by the skills, never by you.
 
@@ -18,7 +18,7 @@ Supporting agents: agent-analyze (structural analysis), agent-apply (writes code
 | daily | brainstorm | Nhận yêu cầu → brainstorm kỹ → chọn flow (feature, refactor, perf, docs, test, ci, docker) |
 | daily | fix | Sửa bug: reproduce, root cause, rồi chọn flow |
 | daily | chore | Việc nhỏ đã rõ, làm trực tiếp (không explore) |
-| flow | autopilot | Chạy cả chuỗi tự động; --full = flow chuẩn |
+| flow | auto | Chạy cả chuỗi tự động; --full = flow chuẩn |
 | flow | proposal | Tạo spec (proposal/design/tasks) |
 | flow | tdd | Test đỏ từ spec, gate 100% AC rồi mới code |
 | flow | apply | Code theo spec/plan (--parallel=N) |
@@ -41,16 +41,16 @@ Group headings: daily → **Hằng ngày** · flow → **Flow chuẩn** (brainst
 
 ## List
 
-If the first argument is `list`, `ls`, `--list` or `-l`: print `**Agent kit — <number of catalog rows> skills**`, then each group heading followed by its rows as `  <skill padded to 11>  <blurb>`, then `**Alias:** auto → autopilot` and the supporting agents line. Use only KIT_CATALOG (never frontmatter, never the disk). Stop.
+If the first argument is `list`, `ls`, `--list` or `-l`: print `**Agent kit — <number of catalog rows> skills**`, then each group heading followed by its rows as `  <skill padded to 11>  <blurb>`, then the supporting agents line. Use only KIT_CATALOG (never frontmatter, never the disk). Stop.
 
 ## Dispatch
 
-1. First argument is a skill name or the alias `auto` → that skill.
+1. First argument is a skill name → that skill.
 2. Otherwise infer from the request (never `explore` or `agent`):
    - new feature, enhancement, a request from the boss, "thêm tính năng", "lên ý tưởng"; also refactor, performance, docs, tests, CI/CD, Docker work → `brainstorm` (pass the work type)
    - bug, error, regression, broken behavior, "sửa lỗi" → `fix`
    - small, already-decided change done directly (bump a dependency, rename a config key, update a script), "bảo trì nhỏ", "làm luôn" → `chore`
-   - run everything automatically, "chạy hết", end-to-end autonomous → `autopilot`
+   - run everything automatically, "chạy hết", end-to-end autonomous → `auto`
    - spec creation → `proposal` · tests first from a spec → `tdd` · implement a spec/plan → `apply` · check code against spec → `verify` · e2e / user journey / "test luồng" / Playwright / Cypress → `e2e` · archive a change → `archive` · update repo knowledge / handover docs / "đóng gói tri thức" → `knowledge`
    - impact, blast radius, dependencies → `analyze` · code review, hardcoded values, missed impacts → `review` · requirements document vs system, "còn thiếu gì" → `gap-audit` · reproduce in a browser, visual bug → `browser`
    - git operations → `git` · index / re-index, "đánh index" → `indexing` · what agents are doing, "agent đang làm gì", visualize, monitor → `monitor` · rewrite a prompt → `enhance`

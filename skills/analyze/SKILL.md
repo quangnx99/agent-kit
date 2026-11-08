@@ -99,7 +99,7 @@ Use neutral labels discovered from the workspace (e.g. `api`, `web`, `package-na
 
 Present the subagent report to the user (do not rewrite away `file:line` evidence).
 
-If the report includes **What's Next**, keep those options and help the user pick — do not auto-start `apply` / `proposal` unless they choose that path or a parent orchestrator (e.g. autopilot/explore) already authorized the next step.
+If the report includes **What's Next**, keep those options and help the user pick — do not auto-start `apply` / `proposal` unless they choose that path or a parent orchestrator (e.g. auto/explore) already authorized the next step.
 
 If mode was `quick` and the user asks to go deeper → re-invoke with `Mode: deep` and the same request (or enriched focus areas from the quick report).
 

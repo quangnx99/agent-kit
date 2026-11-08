@@ -32,9 +32,9 @@ The command must be **red-capable** (asserts the user's symptom, not "didn't cra
 
 If a red-capable command needs a new test or script, you cannot write it in explore mode. Make it **step 1 of the implementation plan**: "write a failing repro test at <seam>, run it, confirm it fails with the user's symptom, only then fix". Name the repro test's file path under **Files/areas** — agent-apply only touches files the plan names. Mark the root cause as `unconfirmed by runtime` until that step has run.
 
-If no loop is possible at all (needs production data, a device, a third-party account), say so explicitly, list what you tried, and ask the user for access, a redacted artifact (log, HAR, screenshot with timestamps), or permission to add temporary instrumentation. In autopilot, do not ask — proceed with code tracing and mark the root cause `unconfirmed by runtime`.
+If no loop is possible at all (needs production data, a device, a third-party account), say so explicitly, list what you tried, and ask the user for access, a redacted artifact (log, HAR, screenshot with timestamps), or permission to add temporary instrumentation. In auto, do not ask — proceed with code tracing and mark the root cause `unconfirmed by runtime`.
 
-**Hypotheses:** before testing any, write **3–5 ranked, falsifiable hypotheses** ("if X is the cause, then changing Y makes the bug disappear"). Show the ranked list to the user — they often know which one was just deployed or already ruled out (in autopilot, show it without waiting for an answer). Then test them against the loop, one variable at a time.
+**Hypotheses:** before testing any, write **3–5 ranked, falsifiable hypotheses** ("if X is the cause, then changing Y makes the bug disappear"). Show the ranked list to the user — they often know which one was just deployed or already ruled out (in auto, show it without waiting for an answer). Then test them against the loop, one variable at a time.
 
 ---
 

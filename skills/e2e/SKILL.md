@@ -30,7 +30,7 @@ TEST LOCK — tests were written first and are the specification.
 Arguments (all optional): `[change-name] [flow description] [--red-only] [--repeat=N]`
 - `--red-only`: write and run tests, report, no fix rounds
 - `--repeat=N`: stability gate repeats, default **5**
-- Input containing `CALLER_CONTEXT: autopilot-pipeline`: no questions to the user, fix rounds still run (Step 3), autopilot output contract (Step 4)
+- Input containing `CALLER_CONTEXT: auto-pipeline`: no questions to the user, fix rounds still run (Step 3), auto output contract (Step 4)
 
 Find the source, in this order:
 1. **`openspec/changes/<name>/tdd.md` with `## E2E pending`** (change name from args, conversation, or the single active change in `openspec list --json`) → those ACs
@@ -41,7 +41,7 @@ Find the source, in this order:
 
 ### Confirm the journeys (interactive only)
 
-Skip this in autopilot — agent-e2e derives the journeys itself and lists unspecified behaviors in its report.
+Skip this in auto — agent-e2e derives the journeys itself and lists unspecified behaviors in its report.
 
 Otherwise, draft the journey list yourself from the source above: ID, steps, expected outcome, spec source. Probe each journey for invalid input, wrong role / no permission, reload after the action, double submit, browser Back, empty and error states. Then show the list to the user once:
 
@@ -56,7 +56,7 @@ Otherwise, draft the journey list yourself from the source above: ID, steps, exp
 Trả lời "ok" = đồng ý danh sách và chấp nhận tất cả ★.
 ```
 
-Apply the answers, then pass the confirmed list to agent-e2e as `Acceptance criteria` together with the line `Journeys confirmed by user: yes`. In autopilot never send that line — agent-e2e then treats any list as a minimum and adds the journeys its surface rule and probes require. A behavior the user decided outside the spec should also be added to the spec — say so in the final output.
+Apply the answers, then pass the confirmed list to agent-e2e as `Acceptance criteria` together with the line `Journeys confirmed by user: yes`. In auto never send that line — agent-e2e then treats any list as a minimum and adds the journeys its surface rule and probes require. A behavior the user decided outside the spec should also be added to the spec — say so in the final output.
 
 ## Step 1: Check the e2e stack
 
@@ -64,8 +64,8 @@ Look for an e2e framework (`playwright.config.*`, `cypress.config.*`, WebdriverI
 
 - **Found** → proceed to Step 2
 - **None, interactive** → recommend one that fits the project (Playwright for web UI unless the ecosystem says otherwise; for API-only, the HTTP test client the stack already uses) and ask once: "Project chưa có framework e2e. Cài `<command>` không?" Yes → pass `Setup approved: <command>` to agent-e2e. No → stop and say which ACs stay pending
-- **None, autopilot, input has `Setup approved: <cmd>`** → the user approved it during brainstorm: pass it to agent-e2e and proceed to Step 2
-- **None, autopilot, no approval** → do not install. Print ONLY:
+- **None, auto, input has `Setup approved: <cmd>`** → the user approved it during brainstorm: pass it to agent-e2e and proceed to Step 2
+- **None, auto, no approval** → do not install. Print ONLY:
   `⚠️ E2E skipped: <change-name> — no e2e framework (install: <command>)`
   and return in the same turn so the pipeline continues to verify
 
@@ -88,15 +88,15 @@ Pass sources and the minimum list only. Never add rules that narrow the scope ("
 
 ## Step 3: Read the report and act
 
-Read `## 🧪 E2E Report`. A result without that header, or one that says it was terminated early or is PARTIAL, is not a report: re-launch agent-e2e once with the same brief. Cut twice → stop. Interactive: report the step to resume. Autopilot: print ONLY `⛔ E2E stopped: <change-name> — agent-e2e cut off twice` and return — never print `✅ E2E complete` on a partial run.
+Read `## 🧪 E2E Report`. A result without that header, or one that says it was terminated early or is PARTIAL, is not a report: re-launch agent-e2e once with the same brief. Cut twice → stop. Interactive: report the step to resume. Auto: print ONLY `⛔ E2E stopped: <change-name> — agent-e2e cut off twice` and return — never print `✅ E2E complete` on a partial run.
 
-1. **Env blockers** → show them with the exact error. Interactive: stop and let the user fix the environment, then re-run `/agent e2e`. Autopilot: carry them as a warning and continue to Step 4
-2. **Test faults remaining after 3 rounds** → show them; stop (interactive) or carry as warning (autopilot)
-3. **Test disputes** (agent-e2e thinks the spec, not the app, is wrong) → never let anyone edit the test to settle it. Interactive: show each dispute and let the user decide — fix the app, or change the spec and re-run `/agent e2e`. Autopilot: carry as warning
+1. **Env blockers** → show them with the exact error. Interactive: stop and let the user fix the environment, then re-run `/agent e2e`. Auto: carry them as a warning and continue to Step 4
+2. **Test faults remaining after 3 rounds** → show them; stop (interactive) or carry as warning (auto)
+3. **Test disputes** (agent-e2e thinks the spec, not the app, is wrong) → never let anyone edit the test to settle it. Interactive: show each dispute and let the user decide — fix the app, or change the spec and re-run `/agent e2e`. Auto: carry as warning
 4. **App defects** (the product diverges from the spec, including **unstable** ones that fail only on some runs) — this is the point of e2e:
    - `--red-only` → report them
-   - Otherwise (interactive and autopilot) → launch agent-apply with the SCOPE DISCIPLINE rules from the `apply` skill, the TEST LOCK block (locked e2e files + any tdd lock), the defect list (expected vs actual; for unstable ones the failure rate and suspected cause), and `Done = Stability command passes <N>/<N>`. Tell agent-apply that an unstable defect is fixed only when the cause is removed (race, double submit, unawaited request) — never by adding waits, retries or timeouts. Then re-run the Stability command yourself and compare `git hash-object` of the locked e2e files to the recorded lock. Hash differs → **CRITICAL: test lock broken**, do not accept. Test dispute reported → show the user and stop. Max 2 fix rounds, then report what remains
-5. **Unspecified behaviors** → interactive: ask the user in one round (options A/B/★/Khác), then re-run `/agent e2e` with the answers; autopilot: carry as warning
+   - Otherwise (interactive and auto) → launch agent-apply with the SCOPE DISCIPLINE rules from the `apply` skill, the TEST LOCK block (locked e2e files + any tdd lock), the defect list (expected vs actual; for unstable ones the failure rate and suspected cause), and `Done = Stability command passes <N>/<N>`. Tell agent-apply that an unstable defect is fixed only when the cause is removed (race, double submit, unawaited request) — never by adding waits, retries or timeouts. Then re-run the Stability command yourself and compare `git hash-object` of the locked e2e files to the recorded lock. Hash differs → **CRITICAL: test lock broken**, do not accept. Test dispute reported → interactive: show the user and stop; auto: list it in the report and return (the `auto` skill decides). Max 2 fix rounds, then report what remains
+5. **Unspecified behaviors** → interactive: ask the user in one round (options A/B/★/Khác), then re-run `/agent e2e` with the answers; auto: carry as warning
 6. **Lock** — confirm the `## E2E lock` hashes in tdd.md match the files on disk. You read and compare; agent-e2e writes the lock
 7. **User acceptance (interactive only)** — passing the spec is not the same as doing what the user meant. When everything is green, show the user each UI journey with its evidence path from the report and ask once:
    `Kết quả từng hành trình có đúng ý bạn không? Trả lời "ok", hoặc ghi AC nào sai và sai thế nào.`
@@ -104,12 +104,12 @@ Read `## 🧪 E2E Report`. A result without that header, or one that says it was
 
 ## Step 4: Output
 
-**Autopilot** (`CALLER_CONTEXT: autopilot-pipeline`): print ONLY this line and return in the same turn — no summary, no next-step suggestions:
+**Auto** (`CALLER_CONTEXT: auto-pipeline`): print ONLY this line and return in the same turn — no summary, no next-step suggestions:
 ```
 ✅ E2E complete: <change-name> (<pass>/<n> passing, <n> app defects, <n> unstable, <n> env blocked, stability <N>/<N>, spec coverage <c>/<t>, production build yes|no, fix rounds <r>, code changed yes|no)
 ```
 
-`code changed yes` means agent-apply changed production code during the fix rounds — autopilot then re-runs the verify and security gates.
+`code changed yes` means agent-apply changed production code during the fix rounds — auto then re-runs the verify and security gates.
 
 **User rejected an AC in step 7** — print this instead of the complete block:
 ```
@@ -136,12 +136,12 @@ Read `## 🧪 E2E Report`. A result without that header, or one that says it was
 **Warnings:** <env blockers, still-pending ACs, test faults, disputes, unspecified behaviors, console errors — or "none">
 ```
 
-Do not run verify or archive yourself — the user (or autopilot) routes that.
+Do not run verify or archive yourself — the user (or auto) routes that.
 
 ## Guardrails
 
 - Never write tests or production code yourself — agent-e2e and agent-apply do
-- Never install a framework without the user's go-ahead; never in autopilot
+- Never install a framework without the user's go-ahead; never in auto
 - Local environment only — never shared/staging/production URLs
 - Spec coverage below 100% or a non-production build is always listed under Warnings
 - Never edit a locked test to get green, and never let a subagent do it

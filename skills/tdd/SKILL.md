@@ -31,7 +31,7 @@ Arguments (all optional): `[change-name] [--line=80] [--branch=N] [--red-only] [
 - `--line` default **80** (percent, on production files changed by this work); `--branch` default off
 - `--red-only`: stop after the gate (no implementation)
 - `--parallel=N`: max concurrent agent-tdd workers, default **1**. Spec mode only — see Step 1 PARTS
-- Input containing `CALLER_CONTEXT: autopilot-pipeline` behaves like `--red-only` plus the autopilot output contract (Step 3)
+- Input containing `CALLER_CONTEXT: auto-pipeline` behaves like `--red-only` plus the auto output contract (Step 3)
 
 Find the specification source, in this order:
 
@@ -42,7 +42,7 @@ Find the specification source, in this order:
 
 Also collect relevant project docs (README, `docs/`, ADRs) by path — pass paths, not contents.
 
-**Plan mode only** — write the acceptance criteria list yourself from the conversation (ID, behavior, kind: happy/edge/error, level: unit/integration/e2e — user journeys are e2e). Unless in autopilot, show it to the user and ask once: "Đây là danh sách AC sẽ dùng làm đặc tả cho test — đúng chưa?" Proceed after confirmation or corrections. If the plan has 4+ independent behaviors or touches sensitive areas, recommend `/agent proposal` first but proceed if the user declines.
+**Plan mode only** — write the acceptance criteria list yourself from the conversation (ID, behavior, kind: happy/edge/error, level: unit/integration/e2e — user journeys are e2e). Unless in auto, show it to the user and ask once: "Đây là danh sách AC sẽ dùng làm đặc tả cho test — đúng chưa?" Proceed after confirmation or corrections. If the plan has 4+ independent behaviors or touches sensitive areas, recommend `/agent proposal` first but proceed if the user declines.
 
 ## Step 1: Red — launch agent-tdd
 
@@ -87,7 +87,7 @@ Behaviors that live only in design.md go to the part whose capability they serve
 
 Read the `## 🔴 TDD Red Phase Report`.
 
-- **Gate: FAIL** → show the reasons and stop. Suggest the concrete fix: clarify Unclear ACs, install the missing framework (show the command — never run installs yourself without the user saying so), or re-run `/agent tdd`. Autopilot: this is a hard stop — report it.
+- **Gate: FAIL** → show the reasons and stop. Suggest the concrete fix: clarify Unclear ACs, install the missing framework (show the command — never run installs yourself without the user saying so), or re-run `/agent tdd`. Auto: print the FAIL summary and return in the same turn — the `auto` skill decides the next step; never ask the user.
 - **Gate: PASS** → independently confirm before trusting it:
   1. Run the reported test command once → it must fail (Red). If everything passes, the gate is FAIL ("nothing to implement").
   2. `grep -rnoE "\[AC-[0-9]+\]"` over the locked files → every AC ID that is neither Unclear nor E2E pending appears.
@@ -95,7 +95,7 @@ Read the `## 🔴 TDD Red Phase Report`.
 
 ## Step 3: Hand off
 
-**Autopilot** (`CALLER_CONTEXT: autopilot-pipeline`): print ONLY this line and return in the same turn — no summary, no "ready", no next-step suggestions:
+**Auto** (`CALLER_CONTEXT: auto-pipeline`): print ONLY this line and return in the same turn — no summary, no "ready", no next-step suggestions:
 ```
 ✅ TDD gate passed: <change-name> (<covered>/<total> AC, <n> tests locked, <m> parts)
 ```
@@ -143,7 +143,7 @@ Final output:
 **Warnings:** <below-target files, pre-existing tests, unclear ACs — or "none">
 ```
 
-Do not run e2e, verify or archive yourself — the user (or autopilot) routes that.
+Do not run e2e, verify or archive yourself — the user (or auto) routes that.
 
 ## Guardrails
 

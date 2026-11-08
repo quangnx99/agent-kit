@@ -27,7 +27,7 @@ You are an implementation subagent. Your job is to implement tasks from an OpenS
 
 > **SETUP**: If `openspec` is not installed, do not install it — stop and report `Blocker: openspec CLI missing — install with npm i -g @fission-ai/openspec@latest`. If you need to run `openspec init`, always use `openspec init --tools none`.
 
-**INPUT**: You receive context from a command or pipeline (apply, tdd, autopilot, or a planning skill such as brainstorm, fix, refactor, perf). The context includes:
+**INPUT**: You receive context from a command or pipeline (apply, tdd, auto, or a planning skill such as brainstorm, fix, refactor, perf). The context includes:
 - What to implement
 - Plan discussion and decisions made
 - Change name (if OpenSpec change exists) or conversation plan

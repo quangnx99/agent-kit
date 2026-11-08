@@ -285,7 +285,7 @@ const stripTags = (s) => String(s).replace(/<\/?(?:command-[a-z]+|local-command-
 const CMD_RE = /<command-name>\s*\/?([^<\s]+)\s*<\/command-name>/;
 const ARGS_RE = /<command-args>([\s\S]*?)<\/command-args>/;
 
-// Autopilot's Done block: "**Production verdict**: READY | NOT READY".
+// Auto's Done block: "**Production verdict**: READY | NOT READY".
 const VERDICT_RE = /Production verdict\**\s*:\s*\**\s*(NOT READY|READY)\b/gi;
 
 export function parseMainTranscript(records) {
@@ -294,7 +294,7 @@ export function parseMainTranscript(records) {
   const results = new Map(); // tool_use_id -> {isError, status}
   let title = '';
   let cwd = null; // working directory of the session (repo root for path shortening)
-  let verdict = null; // last autopilot production verdict, if any
+  let verdict = null; // last auto production verdict, if any
   records.forEach((rec, order) => {
     if (!cwd && typeof rec.cwd === 'string' && rec.cwd) cwd = rec.cwd;
     if (rec.type === 'last-prompt' && typeof rec.lastPrompt === 'string' && !title) title = rec.lastPrompt;
@@ -552,11 +552,13 @@ export function computePipeline({ agents, waves, skills, mainMtimeMs, now }) {
   for (const a of agents) stepOf(a);
 
   const keys = STEP_ORDER;
-  // standalone: a single kit skill (e2e, tdd, apply, ...) ran without autopilot.
-  const kind = hasSkill('autopilot') ? 'autopilot'
+  // standalone: a single kit skill (e2e, tdd, apply, ...) ran without auto.
+  // 'autopilot' is the skill's old name, still found in older transcripts.
+  const isAuto = (s) => ['auto', 'autopilot'].includes(skillKey(s.name));
+  const kind = skills.some(isAuto) ? 'auto'
     : (hasSkill('proposal') || agents.some((a) => a.step !== 'other')) ? 'standalone' : 'none';
   const standalone = kind === 'standalone';
-  const flagged = (flag) => skills.some((s) => skillKey(s.name) === 'autopilot' &&
+  const flagged = (flag) => skills.some((s) => isAuto(s) &&
     new RegExp(`(^|\\s)${flag}(\\s|$)`).test(s.rawArgs || s.args || ''));
   const noTdd = flagged('--no-tdd');
   const noE2e = flagged('--no-e2e');

@@ -46,13 +46,13 @@ One request from start to handover:
 
 Spec comes before tdd on purpose: every spec scenario (WHEN/THEN) becomes an acceptance criterion, and every criterion becomes a failing test. The spec gate checks the spec before any test is written, and verify checks the code against both.
 
-Other paths at the same menu: **A. Làm luôn** (small work: code → verify) and **B. Auto** (autopilot picks the shortest chain that still verifies). Bugs start with `/agent fix`; small, already-decided changes with `/agent chore`.
+Other paths at the same menu: **A. Làm luôn** (small work: code → verify) and **B. Auto** (`auto` picks the shortest chain that still verifies). Bugs start with `/agent fix`; small, already-decided changes with `/agent chore`.
 
 ## Kit
 
 Daily: brainstorm (feature, refactor, perf, docs, test, ci, docker), fix, chore
 
-Flow: autopilot, proposal, tdd, apply, verify, e2e, archive, knowledge
+Flow: auto, proposal, tdd, apply, verify, e2e, archive, knowledge
 
 Investigate: analyze, review, gap-audit, browser
 
@@ -70,11 +70,13 @@ Stages stay in order; fan-out happens inside a stage, in the same working tree.
 
 - `/agent:apply <change> --parallel=N` — N agent-apply workers on file-disjoint batches, waves for dependencies, orchestrator ticks tasks.md
 - `/agent:tdd <change> --parallel=N` — one agent-tdd part per spec capability, merged into tdd.md
-- `/agent:autopilot … --parallel=N` — fans out analyze, tdd and implement; agent-security ‖ agent-verify always run together
+- `/agent:auto … --parallel=N` — fans out analyze, tdd and implement; agent-security ‖ agent-verify always run together
 
-## Autopilot verdict
+## Auto verdict
 
-Full ends with **READY** or **NOT READY**. NOT READY whenever e2e was skipped, did not reach the stability gate, covered less than 100% of the spec scenarios, or ran without a production build; or when a security/verify warning is open. Run cold (`/agent:autopilot <request>`), autopilot decides alone and tags each `Assumed:` line with its source: `codebase:`, `research:` or `★ default`; only unconfirmed `★ default` choices that change behavior, scope, data or cost block READY, listed first and marked ⛔.
+Once auto starts (B, C, or `/agent:auto`), it never asks again until Done: every remaining decision is taken by the decision list, the codebase, research or ★, and logged as an `Assumed:` line; anything it cannot resolve becomes a ⛔ blocker in the final report while the rest of the chain keeps running.
+
+Full ends with **READY** or **NOT READY**. NOT READY whenever e2e was skipped, did not reach the stability gate, covered less than 100% of the spec scenarios, or ran without a production build; or when a security/verify warning is open. Run cold (`/agent:auto <request>`), auto decides alone and tags each `Assumed:` line with its source: `codebase:`, `research:` or `★ default`; only unconfirmed `★ default` choices that change behavior, scope, data or cost block READY, listed first and marked ⛔.
 
 ## Knowledge
 

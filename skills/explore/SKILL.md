@@ -21,7 +21,7 @@ Shared explore mode. The command that loaded this (brainstorm or fix) adds its o
 | agent-researcher | external facts: library APIs, versions, standards, advisories |
 | agent-gap-audit | prefer the `gap-audit` skill; this agent only for an isolated full-matrix pass |
 | agent-apply · agent-verify · agent-archive | only after the user picks a path (below) |
-| agent-tdd · agent-e2e · agent-spec-review · agent-security · agent-knowledge | never directly — the `tdd`, `e2e`, `autopilot` and `knowledge` skills run them |
+| agent-tdd · agent-e2e · agent-spec-review · agent-security · agent-knowledge | never directly — the `tdd`, `e2e`, `auto` and `knowledge` skills run them |
 
 ---
 
@@ -55,7 +55,7 @@ Present options in plain words: one sentence on what is good, one on what is bad
 
 Adapted from the `grilling` skill in mattpocock/skills (MIT).
 
-**Autopilot gate:** with `CALLER_CONTEXT: autopilot-pipeline` or autopilot's overrides loaded, never ask: walk the tree yourself, take every ★, and record `Assumed: <decision> → <★ choice> (based on <source>)` where `<source>` is `codebase: <file or pattern>`, `research: <source>` or `★ default`.
+**Auto gate:** with `CALLER_CONTEXT: auto-pipeline` or auto's overrides loaded, never ask: walk the tree yourself, take every ★, and record `Assumed: <decision> → <★ choice> (based on <source>)` where `<source>` is `codebase: <file or pattern>`, `research: <source>` or `★ default`.
 
 Otherwise map the work as a design tree and ask it in rounds. The **frontier** is every open decision whose prerequisites are settled; ask the whole frontier in one round, then wait. Format, in the user's language:
 
@@ -104,18 +104,19 @@ After each round, probe every newly settled decision and add the branches the co
 
 Chọn đường triển khai:
 A. Làm luôn — việc nhỏ (1–3 task, một chỗ): code → verify
-B. Auto — autopilot tự chọn chuỗi ngắn nhất vẫn đủ kiểm chứng
+B. Auto — auto tự chọn chuỗi ngắn nhất vẫn đủ kiểm chứng
 C. ★ Full — spec → spec gate → tdd → code → security ‖ verify → e2e trên môi trường local đầy đủ (production build, UI + API) → archive → đóng gói tri thức
 D. Khác — bàn thêm
+B và C chạy tới khi xong, không hỏi lại: mọi quyết định còn lại agent tự chốt theo ★ và ghi vào báo cáo cuối.
 (Có thể thêm: "không tdd", "không e2e", "song song N")
 ```
 
-If the work is not trivial, also offer one copyable line, e.g. `💡 Muốn chạy không cần trông: /goal run autopilot --full on the locked plan and resolve every CRITICAL`.
+If the work is not trivial, also offer one copyable line, e.g. `💡 Muốn chạy không cần trông: /goal run auto --full on the locked plan and resolve every CRITICAL`.
 
 **Routing the answer** (pass the locked summary, the review plan and every decision — answered rounds, accepted ★, `Assumed:` lines — verbatim; map "không tdd" → `--no-tdd`, "không e2e" → `--no-e2e`, "song song N" → `--parallel=N`):
 - **A** → run `git rev-parse HEAD` (the diff base), then Agent `agent-apply` with `Plan summary:` + `User choice: Implement directly without spec` + context. When it returns, verify (below).
-- **B** → Skill `autopilot` with the plan (Mode B; it composes its own chain).
-- **C** → Skill `autopilot` with `--full` and the plan (Mode B). When the plan says `E2E setup: approved: <cmd>`, include the line `Setup approved: <cmd>`.
+- **B** → Skill `auto` with the plan (Mode B; it composes its own chain).
+- **C** → Skill `auto` with `--full` and the plan (Mode B). When the plan says `E2E setup: approved: <cmd>`, include the line `Setup approved: <cmd>`.
 - **D** → keep exploring.
 
 A loose answer ("làm luôn đi", "chạy hết") maps to the closest option — say which one you picked.
@@ -128,6 +129,6 @@ Verify unless the change is trivial: Agent `agent-verify` with `Plan summary:` +
 
 - No code, specs, verification or archiving yourself — delegate
 - Don't ask the path question before the teach-back is confirmed, the checklist passes and the reviewed plan is shown
-- Don't decide for the user: ★ is a proposal (autopilot is the only exception, as `Assumed:` lines)
+- Don't decide for the user: ★ is a proposal (auto is the only exception, as `Assumed:` lines)
 - Don't show code in the plan; don't create files the user did not ask for
 - Different kind of work → suggest `/agent brainstorm` (feature, refactor, perf, docs, test, ci, docker), `/agent fix` (bug) or `/agent chore` (small direct change)

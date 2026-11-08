@@ -45,7 +45,7 @@ Evaluate the conversation context to decide the next phase.
 - Interview the user in rounds, with no fixed round cap: each round asks every open decision whose prerequisites are already settled, each with options A/B/★/Khác and "ok" accepting every ★. After each round, add the follow-up decisions the answers opened (failure path, edge cases, who else is affected, existing data, how to test) and ask the next round
 - When no open decision remains, proceed to Phase 2
 
-**Bias toward action on details, not on decisions.** Fill in low-impact details and facts yourself. Anything that changes user-visible behavior, scope, data, or cost goes to the user. In autopilot (`CALLER_CONTEXT: autopilot-pipeline`), never ask: take the ★ option and list each as `Assumed: <decision> → <choice> (based on <source>)` in proposal.md, where `<source>` is one of `codebase: <file or pattern>` · `research: <source>` · `★ default` (no precedent).
+**Bias toward action on details, not on decisions.** Fill in low-impact details and facts yourself. Anything that changes user-visible behavior, scope, data, or cost goes to the user. In auto (`CALLER_CONTEXT: auto-pipeline`), never ask: take the ★ option and list each as `Assumed: <decision> → <choice> (based on <source>)` in proposal.md, where `<source>` is one of `codebase: <file or pattern>` · `research: <source>` · `★ default` (no precedent).
 
 ---
 
@@ -128,7 +128,7 @@ Once the request is clear:
 
 - Create ALL artifacts needed for implementation (as defined by schema's `apply.requires`)
 - Always read dependency artifacts before creating a new one
-- Fill in facts and low-impact details yourself to keep momentum; decisions that change behavior, scope, data or cost still go to the user (Phase 1), or become `Assumed:` lines in autopilot
+- Fill in facts and low-impact details yourself to keep momentum; decisions that change behavior, scope, data or cost still go to the user (Phase 1), or become `Assumed:` lines in auto
 - If a change with that name already exists, suggest continuing that change instead
 - Verify each artifact file exists after writing before proceeding to next
 
@@ -144,11 +144,11 @@ Output this marker line with the change name:
 
 **How you finish depends on who called you:**
 
-**If your input contains `CALLER_CONTEXT: autopilot-pipeline`** (the autopilot orchestrator invoked you):
+**If your input contains `CALLER_CONTEXT: auto-pipeline`** (the auto orchestrator invoked you):
 - Print ONLY the marker line above — nothing else.
 - Do NOT write "stop", "your job is done", "Ready for implementation", a closing summary, a farewell, or "let me know if you want to continue". Those phrases read as a turn boundary and cause the pipeline to halt before implementation — this is exactly the failure to avoid.
-- The autopilot pipeline continues in the SAME turn: autopilot runs its next step right after your marker (agent-spec-review in the Full pipeline). Hand back so the pipeline proceeds — do NOT end the turn, do NOT wait for confirmation.
-- Do NOT launch agent-apply or any other subagent yourself — autopilot routes that.
+- The auto pipeline continues in the SAME turn: auto runs its next step right after your marker (agent-spec-review in the Full pipeline). Hand back so the pipeline proceeds — do NOT end the turn, do NOT wait for confirmation.
+- Do NOT launch agent-apply or any other subagent yourself — auto routes that.
 
 **Otherwise** (standalone `/agent proposal`, or any other caller):
 - Print the marker, then **stop your own execution immediately** and return control to the caller in the same turn.

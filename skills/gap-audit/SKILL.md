@@ -136,7 +136,7 @@ D. Save Gap Matrix to a file path the user names
 E. Done — matrix is enough
 ```
 
-Do **not** auto-start implement/autopilot unless the user picks C (or equivalent) and confirms scope.
+Do **not** auto-start implement/auto unless the user picks C (or equivalent) and confirms scope.
 
 ---
 

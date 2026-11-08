@@ -141,9 +141,9 @@ test('parallel wave: two Agent calls in one assistant message share a wave', () 
 test('skill call node: agents attach to the skill that spawned them', () => {
   const s = parseSession({
     mainText: jl(
-      { type: 'user', uuid: 'c1', timestamp: '2026-01-01T09:00:00Z', message: { role: 'user', content: '<command-name>/agent:autopilot</command-name><command-args>go</command-args>' } },
+      { type: 'user', uuid: 'c1', timestamp: '2026-01-01T09:00:00Z', message: { role: 'user', content: '<command-name>/agent:auto</command-name><command-args>go</command-args>' } },
       { type: 'assistant', uuid: 'k1', timestamp: '2026-01-01T09:01:00Z', message: { id: 'mk', content: [{ type: 'tool_use', id: 'sk1', name: 'Skill', input: { skill: 'agent:tdd', args: 'x' } }] } },
-      callLine('mw', 'tu1', 'agent:agent-tdd', { attributionSkill: 'agent:autopilot' }),
+      callLine('mw', 'tu1', 'agent:agent-tdd', { attributionSkill: 'agent:auto' }),
       callLine('mz', 'tu2', 'agent:agent-tdd'),
     ),
     agents: [
@@ -152,7 +152,7 @@ test('skill call node: agents attach to the skill that spawned them', () => {
     ],
     now: NOW,
   });
-  assert.deepEqual(s.skills.map((k) => [k.name, k.source]), [['agent:autopilot', 'command'], ['agent:tdd', 'tool']]);
+  assert.deepEqual(s.skills.map((k) => [k.name, k.source]), [['agent:auto', 'command'], ['agent:tdd', 'tool']]);
   const byId = Object.fromEntries(s.agents.map((a) => [a.id, a.skillId]));
   assert.equal(byId.x1, s.skills[0].id, 'attributionSkill wins when the skill appears earlier');
   assert.equal(byId.x2, 'sk1', 'otherwise the most recent skill call');
@@ -288,7 +288,7 @@ test('projectDirName mirrors Claude Code naming', () => {
 test('fixture session on disk parses into the expected tree', () => {
   const s = loadSession(ROOT, 'D--demo-app', 'sess-1', { now: NOW, knownTypes: ['agent-apply', 'agent-archive', 'agent-verify'] });
   assert.equal(s.warnings.malformedLines, 1);
-  assert.deepEqual(s.skills.map((k) => k.name), ['agent:autopilot', 'agent:archive']);
+  assert.deepEqual(s.skills.map((k) => k.name), ['agent:auto', 'agent:archive']);
   const by = Object.fromEntries(s.agents.map((a) => [a.id, a]));
   assert.equal(by.a1apply.status, 'done');
   assert.equal(by.a2explore.status, 'done');
@@ -298,7 +298,7 @@ test('fixture session on disk parses into the expected tree', () => {
   assert.equal(by.a1apply.skillId, s.skills[0].id);
   assert.equal(by.a3archive.skillId, 'toolu_skill_archive');
   assert.equal(by.a2explore.isKitAgent, false);
-  assert.equal(s.title, '/agent:autopilot add a demo command');
+  assert.equal(s.title, '/agent:auto add a demo command');
 });
 
 // ---------- labels & pipeline ----------
@@ -367,7 +367,7 @@ const roundNote = new Function(`${/function roundNote\([\s\S]*?\r?\n}\r?\n/.exec
 
 test('pipeline: full run in the new order maps every agent to its step', () => {
   const s = pipelineOf([
-    skillCall('sa', 'agent:autopilot', '--full --parallel=3 --yes', 0),
+    skillCall('sa', 'agent:auto', '--full --parallel=3 --yes', 0),
     wave('mS', 1, ['n1', 'agent:agent-analyze'], ['n2', 'agent:agent-researcher']),
     skillCall('sp', 'agent:proposal', 'create the change', 5),
     wave('mG1', 10, ['g1', 'agent:agent-spec-review']),
@@ -382,7 +382,7 @@ test('pipeline: full run in the new order maps every agent to its step', () => {
   ]);
   const p = s.pipeline;
   const st = stepMap(p);
-  assert.equal(p.kind, 'autopilot');
+  assert.equal(p.kind, 'auto');
   assert.deepEqual(p.steps.map((x) => x.key), ['spec', 'specGate', 'tdd', 'coding', 'security', 'verify', 'e2e', 'archive', 'knowledge']);
   assert.deepEqual(p.steps.map((x) => x.label), ['Spec', 'Spec gate', 'TDD', 'Coding', 'Security', 'Verify', 'E2E', 'Archive', 'Knowledge']);
   const want = { n1: 'spec', n2: 'spec', g1: 'specGate', t1: 'tdd', t2: 'tdd', a1: 'coding', v1: 'security', v2: 'verify', e1: 'e2e', r1: 'archive', k1: 'knowledge' };
@@ -400,7 +400,7 @@ test('pipeline: full run in the new order maps every agent to its step', () => {
 
 test('pipeline: --no-e2e skips E2E; idle after archive marks Knowledge skipped', () => {
   const s = pipelineOf([
-    skillCall('sa', 'agent:autopilot', '--full --no-e2e --yes', 0),
+    skillCall('sa', 'agent:auto', '--full --no-e2e --yes', 0),
     wave('mN', 1, ['n1', 'agent:agent-analyze']),
     wave('mG', 15, ['g1', 'agent:agent-spec-review']),
     wave('mA', 20, ['a1', 'agent:agent-apply']),
@@ -409,7 +409,7 @@ test('pipeline: --no-e2e skips E2E; idle after archive marks Knowledge skipped',
   ]);
   const p = s.pipeline;
   const st = stepMap(p);
-  assert.equal(p.kind, 'autopilot');
+  assert.equal(p.kind, 'auto');
   assert.equal(s.agents.find((a) => a.id === 'g-n1').step, 'spec');
   assert.equal(st.e2e.state, 'skipped');
   assert.equal(st.archive.state, 'done');
@@ -419,7 +419,7 @@ test('pipeline: --no-e2e skips E2E; idle after archive marks Knowledge skipped',
 
 test('pipeline: e2e finds app defects → coding fix in round 2 with an E2E loop note', () => {
   const lines = [
-    skillCall('sa', 'agent:autopilot', '--full', 0),
+    skillCall('sa', 'agent:auto', '--full', 0),
     wave('mA1', 1, ['a1', 'agent:agent-apply', 'Implement']),
     wave('mV1', 5, ['s1', 'agent:agent-security', 'Security gate'], ['v1', 'agent:agent-verify', 'Verify gate']),
     wave('mE1', 10, ['e1', 'agent:agent-e2e', 'E2E journeys']),
@@ -460,7 +460,7 @@ test('pipeline: e2e finds app defects → coding fix in round 2 with an E2E loop
 
 test('pipeline: active session after archive waits on Knowledge', () => {
   const s = pipelineOf([
-    skillCall('sa', 'agent:autopilot', '--full', 0),
+    skillCall('sa', 'agent:auto', '--full', 0),
     wave('mA', 1, ['a1', 'agent:agent-apply']),
     wave('mV', 5, ['s1', 'agent:agent-security'], ['v1', 'agent:agent-verify']),
     wave('mR', 10, ['r1', 'agent:agent-archive']),
@@ -472,7 +472,7 @@ test('pipeline: active session after archive waits on Knowledge', () => {
   assert.equal(stepMap(p).e2e.state, 'skipped');
 
   const running = pipelineOf([
-    skillCall('sa', 'agent:autopilot', '--full', 0),
+    skillCall('sa', 'agent:auto', '--full', 0),
     wave('mR', 10, ['r1', 'agent:agent-archive']),
     skillCall('sk', 'agent:knowledge', 'change', 12),
   ], { mainMtimeMs: NOW });
@@ -482,7 +482,7 @@ test('pipeline: active session after archive waits on Knowledge', () => {
 
 test('pipeline: an idle run whose archive failed stops at Archive, not finished', () => {
   const lines = [
-    skillCall('sa', 'agent:autopilot', '--full', 0),
+    skillCall('sa', 'agent:auto', '--full', 0),
     wave('mA', 1, ['a1', 'agent:agent-apply']),
     wave('mV', 5, ['s1', 'agent:agent-security'], ['v1', 'agent:agent-verify']),
     wave('mR', 10, ['r1', 'agent:agent-archive']),
@@ -498,7 +498,7 @@ test('pipeline: an idle run whose archive failed stops at Archive, not finished'
 
 test('pipeline: verified run loops apply → gates → apply → gates into round 2', () => {
   const s = pipelineOf([
-    skillCall('sa', 'agent:autopilot', 'build it', 0),
+    skillCall('sa', 'agent:auto', 'build it', 0),
     wave('m1', 1, ['a1', 'agent:agent-apply']),
     wave('m2', 10, ['s1', 'agent:agent-security'], ['v1', 'agent:agent-verify']),
     wave('m3', 12, ['a2', 'agent:agent-apply']),
@@ -507,7 +507,7 @@ test('pipeline: verified run loops apply → gates → apply → gates into roun
   ]);
   const p = s.pipeline;
   const st = stepMap(p);
-  assert.equal(p.kind, 'autopilot');
+  assert.equal(p.kind, 'auto');
   assert.deepEqual(p.loops, [{ from: 'gates', to: 'coding', round: 2 }]);
   assert.equal(p.round, 2);
   assert.equal(st.coding.round, 2);
@@ -531,7 +531,7 @@ test('pipeline: Explore-only session has no pipeline', () => {
 
 test('pipeline: current step is the latest wave with a running agent', () => {
   const s = pipelineOf([
-    skillCall('sa', 'agent:autopilot', 'x', 0),
+    skillCall('sa', 'agent:auto', 'x', 0),
     wave('m1', 1, ['a1', 'agent:agent-apply']),
     wave('m2', 10, ['s1', 'agent:agent-security'], ['v1', 'agent:agent-verify']),
   ], { running: ['s1'], mainMtimeMs: NOW });
@@ -546,13 +546,13 @@ test('pipeline: current step is the latest wave with a running agent', () => {
 
 test('pipeline: active session between steps waits on the next step; skill start makes a step active', () => {
   // After coding the gates are next.
-  const gatesNext = pipelineOf([skillCall('sa', 'agent:autopilot', 'x', 0), wave('m1', 1, ['a1', 'agent:agent-apply'])], { mainMtimeMs: NOW });
+  const gatesNext = pipelineOf([skillCall('sa', 'agent:auto', 'x', 0), wave('m1', 1, ['a1', 'agent:agent-apply'])], { mainMtimeMs: NOW });
   assert.deepEqual(gatesNext.pipeline.current, ['security', 'verify']);
   assert.equal(stepMap(gatesNext.pipeline).security.state, 'waiting');
 
   // After the gates with no e2e evidence and no step from an earlier round: the next step is unknown.
   const waiting = pipelineOf([
-    skillCall('sa', 'agent:autopilot', 'x', 0), wave('m1', 1, ['a1', 'agent:agent-apply']),
+    skillCall('sa', 'agent:auto', 'x', 0), wave('m1', 1, ['a1', 'agent:agent-apply']),
     wave('m2', 5, ['s1', 'agent:agent-security'], ['v1', 'agent:agent-verify']),
   ], { mainMtimeMs: NOW });
   assert.deepEqual(waiting.pipeline.current, []);
@@ -561,14 +561,14 @@ test('pipeline: active session between steps waits on the next step; skill start
   assert.equal(stepMap(waiting.pipeline).e2e.state, 'pending');
 
   // Only E2E needs evidence: after the spec gate, TDD is still named as next.
-  const knownNext = pipelineOf([skillCall('sa', 'agent:autopilot', 'x', 0), wave('mG', 1, ['g1', 'agent:agent-spec-review'])], { mainMtimeMs: NOW });
+  const knownNext = pipelineOf([skillCall('sa', 'agent:auto', 'x', 0), wave('mG', 1, ['g1', 'agent:agent-spec-review'])], { mainMtimeMs: NOW });
   assert.deepEqual(knownNext.pipeline.current, ['tdd'], 'steps other than e2e are still named');
   assert.equal(stepMap(knownNext.pipeline).tdd.state, 'waiting');
 
-  const spec = pipelineOf([skillCall('sa', 'agent:autopilot', 'x', 0), skillCall('sp', 'agent:proposal', 'y', 1)], { mainMtimeMs: NOW });
+  const spec = pipelineOf([skillCall('sa', 'agent:auto', 'x', 0), skillCall('sp', 'agent:proposal', 'y', 1)], { mainMtimeMs: NOW });
   assert.deepEqual(spec.pipeline.current, ['spec']);
   assert.equal(stepMap(spec.pipeline).spec.state, 'running');
-  assert.equal(spec.pipeline.kind, 'autopilot');
+  assert.equal(spec.pipeline.kind, 'auto');
 });
 
 test('placeholder agent shows a starting label; finished agents carry a result line', () => {
@@ -583,7 +583,7 @@ test('placeholder agent shows a starting label; finished agents carry a result l
 
 test('attempts: consecutive fan-out waves of one step are one attempt; a re-run after a cut is a new one', () => {
   const s = pipelineOf([
-    skillCall('sa', 'agent:autopilot', 'x --parallel=3', 0),
+    skillCall('sa', 'agent:auto', 'x --parallel=3', 0),
     wave('mT1', 1, ['t1', 'agent:agent-tdd', 'TDD part 1: store'], ['t2', 'agent:agent-tdd', 'TDD part 2: cli']),
     wave('mT2', 3, ['t3', 'agent:agent-tdd', 'TDD part 3: search']),
     wave('mA1', 5, ['a1', 'agent:agent-apply', 'Implement wave 0 batch B0']),
@@ -601,14 +601,14 @@ test('attempts: consecutive fan-out waves of one step are one attempt; a re-run 
   assert.equal(st.security.state, 'done', 'the latest attempt decides the state');
 
   const same = pipelineOf([
-    skillCall('sa', 'agent:autopilot', 'x', 0),
+    skillCall('sa', 'agent:auto', 'x', 0),
     wave('mA1', 1, ['a1', 'agent:agent-apply', 'Implement batch B1']),
     wave('mA2', 5, ['a2', 'agent:agent-apply', 'Implement batch B1']),
   ], { cut: ['a1'] });
   assert.equal(stepMap(same.pipeline).coding.attempts, 2, 're-run with the same description');
 
   const regate = pipelineOf([
-    skillCall('sa', 'agent:autopilot', 'x', 0),
+    skillCall('sa', 'agent:auto', 'x', 0),
     wave('mG1', 1, ['g1', 'agent:agent-spec-review', 'Spec gate review']),
     wave('mG2', 5, ['g2', 'agent:agent-spec-review', 'Spec gate re-review']),
   ]);
@@ -617,7 +617,7 @@ test('attempts: consecutive fan-out waves of one step are one attempt; a re-run 
 
 test('stopped: idle session that stopped after Coding is not finished', () => {
   const s = pipelineOf([
-    skillCall('sa', 'agent:autopilot', 'x', 0),
+    skillCall('sa', 'agent:auto', 'x', 0),
     wave('mT', 1, ['t1', 'agent:agent-tdd', 'TDD']),
     wave('mA', 5, ['a1', 'agent:agent-apply', 'Implement']),
   ]);
@@ -635,7 +635,7 @@ test('stopped: idle session that stopped after Coding is not finished', () => {
   assert.equal(st.specGate.state, 'skipped', 'no agents before a later started step');
 
   const cutGates = pipelineOf([
-    skillCall('sa', 'agent:autopilot', 'x', 0),
+    skillCall('sa', 'agent:auto', 'x', 0),
     wave('mA', 1, ['a1', 'agent:agent-apply', 'Implement']),
     wave('mV', 5, ['s1', 'agent:agent-security', 'Security'], ['v1', 'agent:agent-verify', 'Verify']),
   ], { cut: ['s1'] });
@@ -648,7 +648,7 @@ test('stopped: idle session that stopped after Coding is not finished', () => {
 
 test('finished: run like 9c6aba05 (fan-out, re-review, gates re-run after cut, archive)', () => {
   const s = pipelineOf([
-    skillCall('sa', 'agent:autopilot', '--full --parallel=3 --no-e2e', 10),
+    skillCall('sa', 'agent:auto', '--full --parallel=3 --no-e2e', 10),
     skillCall('sp', 'agent:proposal', 'create', 11),
     wave('mG1', 15, ['g1', 'agent:agent-spec-review', 'Spec gate review']),
     wave('mG2', 20, ['g2', 'agent:agent-spec-review', 'Spec gate re-review']),
@@ -729,7 +729,7 @@ test('labels: PowerShell maps like Bash', () => {
 
 test('waiting after a coding loop: gates are next and keep earlier-round agents apart', () => {
   const s = pipelineOf([
-    skillCall('sa', 'agent:autopilot', 'build it', 0),
+    skillCall('sa', 'agent:auto', 'build it', 0),
     wave('m1', 1, ['a1', 'agent:agent-apply']),
     wave('m2', 10, ['s1', 'agent:agent-security'], ['v1', 'agent:agent-verify']),
     wave('m3', 12, ['a2', 'agent:agent-apply']),
@@ -748,7 +748,7 @@ test('waiting after a coding loop: gates are next and keep earlier-round agents 
 
   // With e2e evidence from round 1, E2E is named as next once the gates pass again.
   const e2e = pipelineOf([
-    skillCall('sa', 'agent:autopilot', 'build it', 0),
+    skillCall('sa', 'agent:auto', 'build it', 0),
     wave('m1', 1, ['a1', 'agent:agent-apply']),
     wave('m2', 5, ['s1', 'agent:agent-security'], ['v1', 'agent:agent-verify']),
     wave('m3', 10, ['e1', 'agent:agent-e2e']),
@@ -760,12 +760,12 @@ test('waiting after a coding loop: gates are next and keep earlier-round agents 
   assert.deepEqual(stepMap(e2e.pipeline).e2e.prevAgentIds, ['g-e1']);
 });
 
-test('session exposes cwd and the last autopilot production verdict', () => {
+test('session exposes cwd and the last auto production verdict', () => {
   const say = (text, min) => ({ type: 'assistant', uuid: `t-${min}`, timestamp: at(min), message: { id: `mt-${min}`, content: [{ type: 'text', text }] } });
   const lines = [
     { type: 'user', uuid: 'u0', cwd: 'D:\Projects\tasklist', timestamp: at(0), message: { role: 'user', content: 'go' } },
     say('**Production verdict**: NOT READY\n- e2e skipped', 5),
-    say('## ✅ Autopilot Complete\n\n**Production verdict**: READY', 9),
+    say('## ✅ Auto Complete\n\n**Production verdict**: READY', 9),
   ];
   const s = parseSession({ mainText: jl(...lines), mainMtimeMs: NOW, agents: [], now: NOW });
   assert.equal(s.cwd, 'D:\Projects\tasklist');
@@ -784,4 +784,9 @@ test('listSessions titles a slash command once, without the repeated command nam
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('pipeline: older transcripts with the old skill name agent:autopilot still count as auto', () => {
+  const p = pipelineOf([skillCall('sa', 'agent:autopilot', '--full --no-e2e', 0)]).pipeline;
+  assert.equal(p.kind, 'auto');
 });

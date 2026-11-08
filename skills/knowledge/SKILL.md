@@ -32,7 +32,7 @@ Diff base: <commit>          (when known)
 
 ## Step 3: Output
 
-**Autopilot** (`CALLER_CONTEXT: autopilot-pipeline`): print ONLY
+**Auto** (`CALLER_CONTEXT: auto-pipeline`): print ONLY
 ```
 ✅ Knowledge updated: <change-name> (<n> files)
 ```
