@@ -78,3 +78,9 @@ test('versions agree across manifests', () => {
   const versions = JSON.stringify(market).match(/"version":"[^"]+"/g) ?? [];
   for (const v of versions) assert.equal(v, `"version":"${pkg}"`, '.claude-plugin/marketplace.json');
 });
+
+test('CHANGELOG top entry is the current version', () => {
+  const pkg = JSON.parse(read('package.json')).version;
+  const top = read('CHANGELOG.md').match(/^## (\S+)/m)[1];
+  assert.equal(top, pkg, 'add a CHANGELOG.md entry for this version');
+});

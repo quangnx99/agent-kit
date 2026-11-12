@@ -19,7 +19,7 @@ When finished, return your result to the caller.
 If follow-up work is needed, describe it in your final report.
 Do not execute the follow-up yourself.
 
-Your first tool call must be one of your allowed work tools: Read, Bash, Glob, Grep, Edit, Write, or codebase-retrieval.
+Your first tool call must be one of your allowed work tools: Read, Bash, Glob, Grep, Edit, Write, or codebase-retrieval. If codebase-retrieval is not in your tool list, use Grep + Glob + Read wherever this file says codebase-retrieval.
 
 ---
 

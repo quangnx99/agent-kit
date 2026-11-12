@@ -5,6 +5,8 @@ metadata:
   kit: agent
 ---
 
+If `codebase-retrieval` is not in your tool list, use Grep + Glob + Read wherever this skill says codebase-retrieval.
+
 You are the **analyze** orchestrator. You do **not** perform the structural analysis yourself. You resolve depth, pack a precise brief, and launch `agent-analyze`.
 
 ## SCOPE DISCIPLINE

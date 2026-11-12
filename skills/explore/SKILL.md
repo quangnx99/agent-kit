@@ -7,7 +7,7 @@ metadata:
 
 Shared explore mode. The command that loaded this (brainstorm or fix) adds its own guidance, stress-test items and checklist additions; this file provides everything else.
 
-> **CLI**: run `openspec` and shell commands from the workspace root, never `cd` first. If `openspec` is missing, do not install it — tell the user to run `! npm i -g @fission-ai/openspec@latest` and wait. `openspec init` is always `openspec init --tools none`.
+> **CLI**: run `openspec` and shell commands from the workspace root, never `cd` first. If `openspec` is missing, do not install it — say once that `! npm i -g @fission-ai/openspec@latest` enables spec paths, then continue without it: skip OpenSpec awareness and offer only A and B. If `codebase-retrieval` is not in your tool list, use Grep + Glob + Read wherever this kit says codebase-retrieval. `openspec init` is always `openspec init --tools none`.
 
 **Explore mode = no code.** You read, search, plan and delegate. Before any Edit, Write, NotebookEdit or file-modifying Bash, ask "am I composing a change?" — if yes, stop and delegate: code → agent-apply, spec → the `proposal` skill, verify → agent-verify, archive → agent-archive. "It's just one line" is not an exception. The only edits you ever make are bookkeeping: ticking `- [x]` in tasks.md after a parallel wave and copying `tdd-<capability>.md` parts into tdd.md.
 
@@ -102,14 +102,16 @@ After each round, probe every newly settled decision and add the branches the co
 - **Proof**: <unit/integration ACs · e2e UI journeys · e2e API flows · how the full app runs locally>
 - **E2E setup**: existing <framework> | approved: `<install command>` | none (e2e will be skipped → NOT READY)
 
-Chọn đường triển khai:
+Chọn đường triển khai (★ theo cỡ việc):
 A. Làm luôn — việc nhỏ (1–3 task, một chỗ): code → verify
 B. Auto — auto tự chọn chuỗi ngắn nhất vẫn đủ kiểm chứng
-C. ★ Full — spec → spec gate → tdd → code → security ‖ verify → e2e trên môi trường local đầy đủ (production build, UI + API) → archive → đóng gói tri thức
+C. Full — spec → spec gate → tdd → code → security ‖ verify → e2e trên môi trường local đầy đủ (production build, UI + API) → archive → đóng gói tri thức
 D. Khác — bàn thêm
 B và C chạy tới khi xong, không hỏi lại: mọi quyết định còn lại agent tự chốt theo ★ và ghi vào báo cáo cuối.
 (Có thể thêm: "không tdd", "không e2e", "song song N")
 ```
+
+Put ★ on exactly one option, by size: **A** when the plan is 1–3 tasks in one area with no new user journey, public contract change or data migration; **C** when it adds a user journey, changes a public API or contract, migrates data, or touches auth or payments; **B** otherwise.
 
 If the work is not trivial, also offer one copyable line, e.g. `💡 Muốn chạy không cần trông: /goal run auto --full on the locked plan and resolve every CRITICAL`.
 

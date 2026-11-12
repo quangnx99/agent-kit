@@ -30,6 +30,8 @@ Then restart Claude Code or run `/reload-plugins`.
 
 Version is pinned in `plugin.json`. Bump it on every release or users will not get the new tree.
 
+Checks: `npm test` (catalogs, versions, CHANGELOG) and `npm run eval` (behavior evals through `claude -p`; costs tokens). Release notes: CHANGELOG.md.
+
 ## Flow
 
 One request from start to handover:
@@ -37,7 +39,7 @@ One request from start to handover:
 ```
 /agent brainstorm <request>
   → grill until zero fog → teach-back → "Ready to Implement"
-  → C. ★ Full:
+  → C. Full (★ when it adds a user journey, changes a contract, migrates data, or touches auth/payments):
      spec → spec gate → tdd (failing tests) → code
           → security ‖ verify (code vs spec, tdd tests green)
           → e2e (full local environment, production build, UI + API, stability gate)
@@ -46,7 +48,7 @@ One request from start to handover:
 
 Spec comes before tdd on purpose: every spec scenario (WHEN/THEN) becomes an acceptance criterion, and every criterion becomes a failing test. The spec gate checks the spec before any test is written, and verify checks the code against both.
 
-Other paths at the same menu: **A. Làm luôn** (small work: code → verify) and **B. Auto** (`auto` picks the shortest chain that still verifies). Bugs start with `/agent fix`; small, already-decided changes with `/agent chore`.
+Other paths at the same menu: **A. Làm luôn** (★ for 1–3 tasks in one area: code → verify) and **B. Auto** (★ otherwise: `auto` picks the shortest chain that still verifies). Brainstorm runs `enhance` on the request only with `--enhance`. Without `openspec` or `codebase-retrieval` the kit falls back to the plan paths and Grep + Glob + Read. Bugs start with `/agent fix`; small, already-decided changes with `/agent chore`.
 
 ## Kit
 

@@ -5,6 +5,8 @@ metadata:
   kit: agent
 ---
 
+If `codebase-retrieval` is not in your tool list, use Grep + Glob + Read wherever this skill says codebase-retrieval.
+
 Drive a real browser like a user, capture evidence, then trace root cause in the codebase.
 
 **Input**: a bug report (Mode A: REPRODUCE), a request to explore the app (Mode B: EXPLORE), or a flow to test as QA (Mode C: QA TEST).

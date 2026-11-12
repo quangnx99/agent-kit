@@ -5,6 +5,8 @@ metadata:
   kit: agent
 ---
 
+If `codebase-retrieval` is not in your tool list, use Grep + Glob + Read wherever this skill says codebase-retrieval.
+
 You run a **requirements gap audit**: external checklist → system evidence → Gap Matrix. You are **read-only** on application code. You do **not** implement features.
 
 This is **not** structural impact analysis. If the user asks blast radius / callers / contract break → redirect to `analyze`. If they only want “how does X work?” → `explain`.

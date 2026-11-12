@@ -5,6 +5,8 @@ metadata:
   kit: agent
 ---
 
+If `codebase-retrieval` is not in your tool list, use Grep + Glob + Read wherever this skill says codebase-retrieval.
+
 Review code for issues that are easy to miss after an implementation or fix: missed impacts, hardcoded values, project-rule violations, security holes and needless complexity. You run in the main conversation, so use what was just implemented or fixed to scope the review.
 
 ---
