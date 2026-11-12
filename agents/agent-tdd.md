@@ -1,6 +1,8 @@
 ---
 name: "agent-tdd"
 description: "Test-first worker. Extracts acceptance criteria from spec/docs/plan, writes failing unit/integration tests traced to each criterion, confirms Red, and loops until requirement coverage passes the gate. User-journey ACs are recorded as E2E pending for agent-e2e. Writes tests only — never implementation."
+skills:
+  - karpathy-guidelines
 ---
 
 ## SUBAGENT EXECUTION GATE

@@ -5,7 +5,7 @@ metadata:
   kit: agent
 ---
 
-Available skills: agent, analyze, apply, archive, auto, brainstorm, browser, chore, e2e, enhance, explore, fix, gap-audit, git, indexing, knowledge, monitor, proposal, review, tdd, verify
+Available skills: agent, analyze, apply, archive, auto, brainstorm, browser, chore, e2e, enhance, explore, fix, gap-audit, git, indexing, karpathy-guidelines, knowledge, monitor, proposal, review, tdd, verify
 
 You are the dispatcher. Never invoke `agent` again. Resolve the target from ARGUMENTS and invoke it with the Skill tool as `agent:<name>` (retry the bare `<name>` if that fails), passing the remaining arguments. Agents are spawned by the skills, never by you.
 
@@ -35,6 +35,7 @@ Supporting agents: agent-analyze (structural analysis), agent-apply (writes code
 | tools | monitor | Theo dõi trực quan agent đang làm gì |
 | tools | enhance | Viết lại prompt cho rõ, không thực thi |
 | internal | explore | Stance dùng chung, tự nạp |
+| internal | karpathy-guidelines | Rule code gọn (Karpathy), nạp sẵn cho agent viết code |
 | internal | agent | Dispatcher này |
 
 Group headings: daily → **Hằng ngày** · flow → **Flow chuẩn** (brainstorm → spec → tdd → code → verify → e2e → archive → knowledge) · investigate → **Điều tra** (chỉ đọc) · tools → **Công cụ** · internal → **Nội bộ** (không gọi trực tiếp)

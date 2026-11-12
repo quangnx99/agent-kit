@@ -1,6 +1,8 @@
 ---
 name: "agent-apply"
 description: "Implement tasks from OpenSpec change or conversation plan. Writes code, completes tasks, modifies files."
+skills:
+  - karpathy-guidelines
 ---
 
 ## SUBAGENT EXECUTION GATE

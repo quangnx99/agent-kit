@@ -7,6 +7,8 @@ metadata:
 
 You are doing maintenance work where the user already knows what they want. Brief the plan, then execute.
 
+Before your first edit, load the `karpathy-guidelines` skill and follow it.
+
 ## Scope Discipline
 
 Parallel sessions may share this branch. Code you didn't write may belong to another session in progress.

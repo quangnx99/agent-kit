@@ -58,7 +58,7 @@ Investigate: analyze, review, gap-audit, browser
 
 Tools: git, indexing, monitor, enhance
 
-Internal: explore, agent
+Internal: explore, karpathy-guidelines, agent
 
 Agents: agent-analyze, agent-apply, agent-archive, agent-e2e, agent-gap-audit, agent-knowledge, agent-researcher, agent-security, agent-spec-review, agent-tdd, agent-verify
 
